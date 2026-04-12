@@ -1,14 +1,8 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// Gemini API via REST directa — no depèn del SDK ni de la versió instal·lada
+// Usa fetch natiu de Node 18+
 
-let model;
-
-function getModel() {
-  if (!model) {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-  }
-  return model;
-}
+const MODEL = 'gemini-1.5-flash';
+const API_URL = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent`;
 
 async function generarPregunta(nodeId, temari, idioma = 'catala') {
   const idiomaText = idioma === 'castella' ? 'en castellano' : 'en català';
@@ -30,11 +24,27 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
   "explicacio": "explicació breu de per qué A és correcta"
 }`;
 
-  const m = getModel();
-  const result = await m.generateContent(prompt);
-  const text = result.response.text().trim();
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
 
-  // Strip possible markdown code fences from Gemini response
+  const response = await fetch(`${API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${err}`);
+  }
+
+  const json = await response.json();
+  const text = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (!text) throw new Error('Resposta buida de Gemini');
+
   const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
   const data = JSON.parse(jsonStr);
 
