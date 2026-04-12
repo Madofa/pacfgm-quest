@@ -4,8 +4,12 @@
 const MODEL = 'gemini-2.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-async function generarPregunta(nodeId, temari, idioma = 'catala') {
+async function generarPregunta(nodeId, temari, idioma = 'catala', pregsAnteriors = []) {
   const idiomaText = idioma === 'castella' ? 'en castellano' : 'en català';
+
+  const evitarBlock = pregsAnteriors.length > 0
+    ? `\nIMPORTANT: Aquestes preguntes ja s'han fet en aquesta sessió — NO les repeteixis ni facis variacions similars:\n${pregsAnteriors.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n`
+    : '';
 
   const prompt = `Ets un professor expert que prepara estudiants per a les proves d'accés als cicles formatius de grau mitjà de Catalunya (PACFGM).
 
@@ -13,7 +17,7 @@ Matèria/Node: ${nodeId}
 Contingut oficial: ${temari}
 Nivell: ESO bàsic (PACFGM)
 Idioma de resposta: ${idiomaText}
-
+${evitarBlock}
 Genera UNA sola pregunta de tipus test amb 4 opcions. La pregunta ha de ser clara, breu i adequada al nivell. Les opcions han de tenir una sola resposta clarament correcta. L'explicació ha de ser breu i didàctica (màxim 2 línies).
 
 Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:

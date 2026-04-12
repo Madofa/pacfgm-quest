@@ -48,8 +48,15 @@ async function generar(req, res) {
       numeroPreg = 1;
     }
 
+    // Recollir preguntes ja fetes en aquesta sessió per evitar repeticions
+    const [pregsExistents] = await pool.query(
+      'SELECT pregunta_text FROM preguntes_log WHERE sessio_id = ? ORDER BY numero_pregunta ASC',
+      [sessioId]
+    );
+    const pregsAnteriors = pregsExistents.map(p => p.pregunta_text);
+
     // Generate question via Gemini
-    const question = await generarPregunta(node_id, node.temari, idioma);
+    const question = await generarPregunta(node_id, node.temari, idioma, pregsAnteriors);
 
     // Store question — pack opcions + explicacio together so we can retrieve at answer time
     await pool.query(
