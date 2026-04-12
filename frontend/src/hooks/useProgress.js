@@ -11,14 +11,17 @@ export function useProgress() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [p, st, rv] = await Promise.all([
+      const [p, st] = await Promise.all([
         api.progres.meu(),
         api.progres.skillTree(),
-        api.progres.revisions(),
       ]);
       setProgres(p);
       setSkillTree(st);
-      setRevisions(rv.revisions || []);
+      // Revisions per separat — si falla no afecta el progrés principal
+      try {
+        const rv = await api.progres.revisions();
+        setRevisions(rv.revisions || []);
+      } catch { setRevisions([]); }
     } catch (err) {
       setError(err.error || 'Error carregant el progrés');
     } finally {
