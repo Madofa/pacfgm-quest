@@ -1,9 +1,10 @@
-require('dotenv').config();
+require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// cPanel/Passenger inyecta PORT como URL — forzar número
+const PORT = parseInt(process.env.PORT) || 3000;
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
