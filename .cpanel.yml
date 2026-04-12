@@ -2,4 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/r307889/pacfgm-quest/backend/
-    - /bin/cp -rf backend/. $DEPLOYPATH
+    - /bin/cp -rf $TRAVIS_BUILD_DIR/backend/. $DEPLOYPATH
