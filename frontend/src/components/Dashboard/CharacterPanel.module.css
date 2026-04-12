@@ -14,17 +14,9 @@
   50%       { transform: translateY(-8px); }
 }
 
-.spritePlaceholder {
-  width: 120px;
-  height: 144px;
-  border: 2px solid;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg-panel-2);
-  font-size: 56px;
-  transition: box-shadow 0.3s;
+.spriteImg {
+  display: block;
+  transition: filter 0.3s;
 }
 
 .info {
