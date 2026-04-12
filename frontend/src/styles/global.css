@@ -1,0 +1,97 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-deep);
+  background-image:
+    linear-gradient(rgba(26, 58, 92, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 58, 92, 0.15) 1px, transparent 1px);
+  background-size: 32px 32px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanlines CRT */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Panel RPG */
+.panel-rpg {
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  box-shadow:
+    0 0 8px rgba(0, 255, 159, 0.08),
+    inset 0 0 16px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.panel-rpg:hover {
+  border-color: var(--color-border-glow);
+  box-shadow:
+    0 0 16px rgba(0, 255, 159, 0.15),
+    inset 0 0 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Text neó */
+.text-neon-green {
+  color: var(--color-neon-green);
+  text-shadow:
+    0 0 4px var(--color-neon-green),
+    0 0 8px rgba(0, 255, 159, 0.5);
+}
+
+.text-gold {
+  color: var(--color-gold);
+  text-shadow:
+    0 0 4px var(--color-gold),
+    0 0 8px rgba(255, 215, 0, 0.4);
+}
+
+.text-game {
+  font-family: var(--font-game);
+  line-height: 1.8;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg-deep); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-glow);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-neon-green-dim); }
+
+/* Utilitats */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}

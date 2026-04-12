@@ -1,0 +1,53 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.spriteArea {
+  animation: sprite-float 2s ease-in-out infinite;
+}
+
+@keyframes sprite-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.spritePlaceholder {
+  width: 80px;
+  height: 96px;
+  border: 2px solid;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-panel-2);
+  transition: box-shadow 0.3s;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.alias {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-md);
+  color: var(--color-text-primary);
+  letter-spacing: 1px;
+}
+
+.rang {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  letter-spacing: 2px;
+}
+
+.nivell {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap');
+
+:root {
+  /* Fons */
+  --color-bg-deep:     #080c14;
+  --color-bg-panel:    #0d1526;
+  --color-bg-panel-2:  #111d35;
+
+  /* Bordes */
+  --color-border:      #1a3a5c;
+  --color-border-glow: #2a5a8c;
+
+  /* Accents principals */
+  --color-neon-green:      #00ff9f;
+  --color-neon-green-dim:  #00cc7a;
+  --color-neon-orange:     #ff6b35;
+  --color-neon-red:        #ff3860;
+
+  /* Or */
+  --color-gold:     #ffd700;
+  --color-gold-dim: #cc9900;
+
+  /* Colors per matèria */
+  --color-mates:      #ff6b35;
+  --color-ciencies:   #06d6a0;
+  --color-tecnologia: #118ab2;
+  --color-catala:     #ffd700;
+  --color-castella:   #9b5de5;
+  --color-angles:     #f72585;
+  --color-social:     #4ecdc4;
+
+  /* Text */
+  --color-text-primary:   #c8d8e8;
+  --color-text-secondary: #7a9ab8;
+  --color-text-disabled:  #3a5070;
+
+  /* Fonts */
+  --font-game: 'Press Start 2P', monospace;
+  --font-body: 'Nunito', sans-serif;
+
+  /* Mides font game */
+  --font-size-game-xl: 14px;
+  --font-size-game-lg: 11px;
+  --font-size-game-md: 9px;
+  --font-size-game-sm: 7px;
+
+  /* Mides font body */
+  --font-size-body-lg: 18px;
+  --font-size-body-md: 16px;
+  --font-size-body-sm: 14px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* Breakpoints (com a referència — usar en media queries) */
+  --bp-mobile:  480px;
+  --bp-tablet:  768px;
+  --bp-desktop: 1024px;
+}
