@@ -130,23 +130,38 @@ async function generar(req, res) {
       const newBankRows = [];
 
       for (let i = 0; i < newCount; i++) {
-        const q = await generarPregunta(
-          node_id, node.temari, idioma,
-          [...textsUsats, ...newBankRows.map(r => r.pregunta_text)]
-        );
-        const [ins] = await pool.query(
-          `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
-           VALUES (?, ?, ?, ?, ?)`,
-          [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
-        );
-        newBankRows.push({
-          id:               ins.insertId,
-          pregunta_text:    q.pregunta,
-          opcions:          JSON.stringify(q.opcions),
-          resposta_correcta: q.correcta,
-          explicacio:       q.explicacio,
-        });
-        textsUsats.push(q.pregunta);
+        try {
+          const q = await generarPregunta(
+            node_id, node.temari, idioma,
+            [...textsUsats, ...newBankRows.map(r => r.pregunta_text)]
+          );
+          const [ins] = await pool.query(
+            `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
+             VALUES (?, ?, ?, ?, ?)`,
+            [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+          );
+          newBankRows.push({
+            id:                ins.insertId,
+            pregunta_text:     q.pregunta,
+            opcions:           JSON.stringify(q.opcions),
+            resposta_correcta: q.correcta,
+            explicacio:        q.explicacio,
+          });
+          textsUsats.push(q.pregunta);
+        } catch (geminiErr) {
+          // Gemini ha fallat — usar pregunta aleatòria del banc si n'hi ha
+          console.warn(`[generar] Gemini error (slot ${i+1}): ${geminiErr.message}`);
+          const usedIds = [...dueRows.map(q => q.id), ...newBankRows.map(q => q.id)];
+          const placeholders = usedIds.length > 0 ? `AND id NOT IN (${usedIds.map(() => '?').join(',')})` : '';
+          const [bankFallback] = await pool.query(
+            `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
+            [node_id, ...usedIds]
+          );
+          if (bankFallback.length > 0) {
+            newBankRows.push(bankFallback[0]);
+            textsUsats.push(bankFallback[0].pregunta_text);
+          }
+        }
       }
 
       // 3. Combinar: repàs primer, noves al final
