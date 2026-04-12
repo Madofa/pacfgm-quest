@@ -1,7 +1,7 @@
 // Gemini API via REST directa — no depèn del SDK ni de la versió instal·lada
 // Usa fetch natiu de Node 18+
 
-const MODEL = 'gemini-pro';
+const MODEL = 'gemini-2.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 async function generarPregunta(nodeId, temari, idioma = 'catala') {
