@@ -17,7 +17,7 @@ git pull origin main
 
 # 2. Migració DB
 echo "→ Migrant base de dades..."
-$NODE backend/scripts/migrate-nodes.js
+cd "$REPO/backend" && $NODE scripts/migrate-nodes.js && cd "$REPO"
 
 # 3. Copia frontend
 echo "→ Copiant frontend..."
