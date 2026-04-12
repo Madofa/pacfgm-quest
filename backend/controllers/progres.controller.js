@@ -59,25 +59,27 @@ async function revisionsAvui(req, res) {
   const usuariId = req.usuari.id;
   try {
     const avui = new Date().toISOString().split('T')[0];
+
+    // Nodes que tenen preguntes individuals pendents de repàs avui
     const [rows] = await pool.query(
-      `SELECT r.node_id, r.propera_revisio, r.interval_dies, r.num_revisions,
-              p.millor_puntuacio, n.titol, n.materia
-       FROM revisio_programada r
-       JOIN progres_nodes p ON p.usuari_id = r.usuari_id AND p.node_id = r.node_id
-       WHERE r.usuari_id = ? AND r.propera_revisio <= ?
-       ORDER BY r.propera_revisio ASC`,
+      `SELECT pb.node_id,
+              COUNT(*)                     AS preguntes_pendents,
+              MIN(sr.propera_revisio)      AS propera_revisio,
+              AVG(sr.consecutives_correctes) AS mitja_consolidacio
+       FROM sr_pregunta sr
+       JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
+       WHERE sr.usuari_id = ? AND sr.propera_revisio <= ?
+       GROUP BY pb.node_id
+       ORDER BY propera_revisio ASC`,
       [usuariId, avui]
     );
 
-    // Afegir info de títol des del skill tree
     const result = rows.map(r => ({
-      node_id:          r.node_id,
-      titol:            NODES[r.node_id]?.titol || r.node_id,
-      materia:          r.materia,
-      propera_revisio:  r.propera_revisio,
-      interval_dies:    r.interval_dies,
-      num_revisions:    r.num_revisions,
-      millor_puntuacio: r.millor_puntuacio,
+      node_id:             r.node_id,
+      titol:               NODES[r.node_id]?.titol || r.node_id,
+      materia:             NODES[r.node_id]?.materia || '',
+      preguntes_pendents:  parseInt(r.preguntes_pendents),
+      propera_revisio:     r.propera_revisio,
     }));
 
     return res.json({ revisions: result, total: result.length });

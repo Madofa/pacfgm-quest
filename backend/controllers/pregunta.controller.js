@@ -3,29 +3,93 @@ const { NODES } = require('../data/skillTree');
 const { generarPregunta } = require('../services/gemini.service');
 const { calcularNivell, calcularRang, calcularXpSessio } = require('../utils/xp');
 
+// Intervals SR per pregunta individual (dies)
+// Index = acierts consecutius (0 = acabada de fallar, 4 = dominada)
+const SR_Q_INTERVALS = [1, 3, 7, 14, 30];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+
+function parseOpcions(raw) {
+  if (!raw) return [];
+  const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  // Format antic: { opcions: [...], explicacio: "..." }
+  // Format nou: [...]
+  return Array.isArray(parsed) ? parsed : (parsed.opcions || []);
+}
+
+function parseExplicacio(preg) {
+  // Format nou: columna explicacio directa
+  if (preg.explicacio) return preg.explicacio;
+  // Format antic: dins opcions JSON
+  try {
+    const parsed = typeof preg.opcions === 'string' ? JSON.parse(preg.opcions) : preg.opcions;
+    return parsed?.explicacio || '';
+  } catch { return ''; }
+}
+
+async function actualitzarSR(usuariId, preguntaBankId, esCorrecte) {
+  const [srRows] = await pool.query(
+    'SELECT * FROM sr_pregunta WHERE usuari_id = ? AND pregunta_id = ?',
+    [usuariId, preguntaBankId]
+  );
+
+  const avui = new Date().toISOString().split('T')[0];
+
+  if (srRows.length === 0) {
+    const consecutives = esCorrecte ? 1 : 0;
+    const interval = SR_Q_INTERVALS[Math.min(consecutives, SR_Q_INTERVALS.length - 1)];
+    const dataRevisio = new Date();
+    dataRevisio.setDate(dataRevisio.getDate() + interval);
+    await pool.query(
+      `INSERT INTO sr_pregunta
+         (usuari_id, pregunta_id, propera_revisio, interval_dies, num_revisions, consecutives_correctes)
+       VALUES (?, ?, ?, ?, 1, ?)`,
+      [usuariId, preguntaBankId, dataRevisio.toISOString().split('T')[0], interval, consecutives]
+    );
+  } else {
+    const sr = srRows[0];
+    const consecutives = esCorrecte
+      ? Math.min(sr.consecutives_correctes + 1, SR_Q_INTERVALS.length - 1)
+      : 0;
+    const interval = SR_Q_INTERVALS[consecutives];
+    const dataRevisio = new Date();
+    dataRevisio.setDate(dataRevisio.getDate() + interval);
+    await pool.query(
+      `UPDATE sr_pregunta
+       SET propera_revisio = ?, interval_dies = ?, num_revisions = num_revisions + 1,
+           consecutives_correctes = ?
+       WHERE usuari_id = ? AND pregunta_id = ?`,
+      [dataRevisio.toISOString().split('T')[0], interval, consecutives, usuariId, preguntaBankId]
+    );
+  }
+}
+
+// ── GENERAR ───────────────────────────────────────────────────────────────────
+
 async function generar(req, res) {
   const { node_id, idioma = 'catala' } = req.body;
   const usuariId = req.usuari.id;
 
   if (!node_id) return res.status(400).json({ error: 'Falta node_id' });
-
   const node = NODES[node_id];
   if (!node) return res.status(404).json({ error: 'Node no trobat' });
 
   try {
-    // Check node is available for this user
-    const [progesRows] = await pool.query(
+    // Verificar que el node és accessible
+    const [progresRows] = await pool.query(
       'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
       [usuariId, node_id]
     );
-    const estat = progesRows.length > 0 ? progesRows[0].estat : 'bloquejat';
+    const estat = progresRows.length > 0 ? progresRows[0].estat : 'bloquejat';
     if (estat === 'bloquejat') {
       return res.status(403).json({ error: 'Node bloquejat. Completa el node anterior primer.' });
     }
 
-    // Resume open session if < 5 questions answered
+    // Comprovar si hi ha sessió oberta amb preguntes pendents
     const [openSessions] = await pool.query(
-      `SELECT s.id, COUNT(p.id) AS respostes
+      `SELECT s.id,
+              COUNT(p.id)                                    AS total_preguntes,
+              SUM(p.resposta_alumne IS NOT NULL)             AS respostes
        FROM sessions_estudi s
        LEFT JOIN preguntes_log p ON p.sessio_id = s.id
        WHERE s.usuari_id = ? AND s.node_id = ? AND s.completada = FALSE
@@ -34,57 +98,102 @@ async function generar(req, res) {
       [usuariId, node_id]
     );
 
-    let sessioId, numeroPreg;
+    let sessioId;
 
-    if (openSessions.length > 0 && openSessions[0].respostes < 5) {
-      sessioId  = openSessions[0].id;
-      numeroPreg = openSessions[0].respostes + 1;
+    if (openSessions.length > 0 && parseInt(openSessions[0].total_preguntes) >= 5
+        && parseInt(openSessions[0].respostes) < 5) {
+      // Reprendre sessió existent — preguntes ja carregades
+      sessioId = openSessions[0].id;
     } else {
+      // Nova sessió — construir el conjunt de 5 preguntes
       const [newSessio] = await pool.query(
         'INSERT INTO sessions_estudi (usuari_id, node_id) VALUES (?, ?)',
         [usuariId, node_id]
       );
-      sessioId  = newSessio.insertId;
-      numeroPreg = 1;
+      sessioId = newSessio.insertId;
+
+      // 1. Preguntes de repàs pendents per a aquest node i usuari
+      const avui = new Date().toISOString().split('T')[0];
+      const [dueRows] = await pool.query(
+        `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio
+         FROM sr_pregunta sr
+         JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
+         WHERE sr.usuari_id = ? AND pb.node_id = ? AND sr.propera_revisio <= ?
+         ORDER BY sr.propera_revisio ASC, sr.consecutives_correctes ASC
+         LIMIT 5`,
+        [usuariId, node_id, avui]
+      );
+
+      // 2. Generar preguntes noves per als llocs restants
+      const newCount = 5 - dueRows.length;
+      const textsUsats = dueRows.map(q => q.pregunta_text);
+      const newBankRows = [];
+
+      for (let i = 0; i < newCount; i++) {
+        const q = await generarPregunta(
+          node_id, node.temari, idioma,
+          [...textsUsats, ...newBankRows.map(r => r.pregunta_text)]
+        );
+        const [ins] = await pool.query(
+          `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
+           VALUES (?, ?, ?, ?, ?)`,
+          [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+        );
+        newBankRows.push({
+          id:               ins.insertId,
+          pregunta_text:    q.pregunta,
+          opcions:          JSON.stringify(q.opcions),
+          resposta_correcta: q.correcta,
+          explicacio:       q.explicacio,
+        });
+        textsUsats.push(q.pregunta);
+      }
+
+      // 3. Combinar: repàs primer, noves al final
+      const allQ = [...dueRows, ...newBankRows];
+
+      // 4. Pre-popular preguntes_log amb totes les preguntes de la sessió
+      for (let i = 0; i < allQ.length; i++) {
+        const q = allQ[i];
+        const opcions = typeof q.opcions === 'string' ? q.opcions : JSON.stringify(q.opcions);
+        await pool.query(
+          `INSERT INTO preguntes_log
+             (sessio_id, numero_pregunta, pregunta_bank_id, pregunta_text, opcions,
+              resposta_correcta, explicacio)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [sessioId, i + 1, q.id, q.pregunta_text, opcions, q.resposta_correcta, q.explicacio]
+        );
+      }
     }
 
-    // Recollir preguntes ja fetes en aquesta sessió per evitar repeticions
-    const [pregsExistents] = await pool.query(
-      'SELECT pregunta_text FROM preguntes_log WHERE sessio_id = ? ORDER BY numero_pregunta ASC',
+    // Retornar la pròxima pregunta sense respondre
+    const [pending] = await pool.query(
+      `SELECT * FROM preguntes_log
+       WHERE sessio_id = ? AND resposta_alumne IS NULL
+       ORDER BY numero_pregunta ASC LIMIT 1`,
       [sessioId]
     );
-    const pregsAnteriors = pregsExistents.map(p => p.pregunta_text);
 
-    // Generate question via Gemini
-    const question = await generarPregunta(node_id, node.temari, idioma, pregsAnteriors);
+    if (!pending.length) {
+      return res.status(409).json({ error: 'No hi ha preguntes pendents. Crida /finalitzar.' });
+    }
 
-    // Store question — pack opcions + explicacio together so we can retrieve at answer time
-    await pool.query(
-      `INSERT INTO preguntes_log
-         (sessio_id, numero_pregunta, pregunta_text, opcions, resposta_correcta)
-       VALUES (?, ?, ?, ?, ?)`,
-      [
-        sessioId,
-        numeroPreg,
-        question.pregunta,
-        JSON.stringify({ opcions: question.opcions, explicacio: question.explicacio }),
-        question.correcta,
-      ]
-    );
+    const preg = pending[0];
 
     return res.json({
       sessio_id:       sessioId,
-      numero_pregunta: numeroPreg,
+      numero_pregunta: preg.numero_pregunta,
       total_preguntes: 5,
-      pregunta:        question.pregunta,
-      opcions:         question.opcions,
+      pregunta:        preg.pregunta_text,
+      opcions:         parseOpcions(preg.opcions),
     });
   } catch (err) {
     console.error('Error generant pregunta:', err);
-    const msg = err?.message || String(err);
-    return res.status(500).json({ error: 'Error generant la pregunta', detall: msg });
+    return res.status(500).json({ error: 'Error generant la pregunta', detall: err?.message || String(err) });
   }
 }
+
+// ── RESPOSTA ──────────────────────────────────────────────────────────────────
 
 async function resposta(req, res) {
   const { sessio_id, resposta: respostaAlumne, temps_ms = 0 } = req.body;
@@ -105,7 +214,7 @@ async function resposta(req, res) {
     if (sessions.length === 0) return res.status(404).json({ error: 'Sessió no trobada' });
     if (sessions[0].completada) return res.status(409).json({ error: 'Sessió ja completada' });
 
-    // Get the latest unanswered question
+    // Obtenir la pròxima pregunta sense respondre
     const [preguntes] = await pool.query(
       `SELECT * FROM preguntes_log
        WHERE sessio_id = ? AND resposta_alumne IS NULL
@@ -118,12 +227,9 @@ async function resposta(req, res) {
 
     const preg = preguntes[0];
     const esCorrecte = respostaAlumne.toUpperCase() === preg.resposta_correcta;
+    const explicacio = parseExplicacio(preg);
 
-    let explicacio = '';
-    try {
-      explicacio = JSON.parse(preg.opcions).explicacio || '';
-    } catch { /* ignore */ }
-
+    // Desar resposta
     await pool.query(
       `UPDATE preguntes_log
        SET resposta_alumne = ?, correcte = ?, temps_resposta_ms = ?
@@ -131,11 +237,16 @@ async function resposta(req, res) {
       [respostaAlumne.toUpperCase(), esCorrecte, temps_ms, preg.id]
     );
 
+    // Actualitzar SR per a aquesta pregunta individual
+    if (preg.pregunta_bank_id) {
+      await actualitzarSR(usuariId, preg.pregunta_bank_id, esCorrecte);
+    }
+
     const [counts] = await pool.query(
       `SELECT
-         COUNT(*) AS total,
+         COUNT(*)                     AS total,
          SUM(resposta_alumne IS NOT NULL) AS respostes,
-         SUM(correcte = TRUE) AS encerts
+         SUM(correcte = TRUE)         AS encerts
        FROM preguntes_log WHERE sessio_id = ?`,
       [sessio_id]
     );
@@ -156,6 +267,8 @@ async function resposta(req, res) {
   }
 }
 
+// ── FINALITZAR ────────────────────────────────────────────────────────────────
+
 async function finalitzar(req, res) {
   const { sessio_id } = req.body;
   const usuariId = req.usuari.id;
@@ -174,8 +287,8 @@ async function finalitzar(req, res) {
 
     const [resultats] = await pool.query(
       `SELECT
-         COUNT(*) AS total,
-         SUM(correcte = TRUE) AS encerts,
+         COUNT(*)                           AS total,
+         SUM(correcte = TRUE)               AS encerts,
          SUM(COALESCE(temps_resposta_ms, 0)) AS total_ms
        FROM preguntes_log WHERE sessio_id = ?`,
       [sessio_id]
@@ -186,12 +299,11 @@ async function finalitzar(req, res) {
     const total_ms  = parseInt(resultats[0].total_ms) || 0;
     const puntuacio = Math.round((encerts / total) * 100);
     const superat   = puntuacio >= 60;
-    const dominat   = puntuacio >= 90;
 
     const [usuaris] = await pool.query('SELECT * FROM usuaris WHERE id = ?', [usuariId]);
     const usuari = usuaris[0];
 
-    // Update streak
+    // Actualitzar ratxa
     const avui = new Date().toISOString().split('T')[0];
     const ahir = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     let novaRacha = 1;
@@ -211,7 +323,7 @@ async function finalitzar(req, res) {
     const nouNivell      = calcularNivell(nou_xp_total);
     const nouRang        = calcularRang(nouNivell);
 
-    // Close session
+    // Tancar sessió
     await pool.query(
       `UPDATE sessions_estudi
        SET completada = TRUE, superat = ?, puntuacio = ?,
@@ -221,7 +333,7 @@ async function finalitzar(req, res) {
       [superat, puntuacio, encerts, xp_guanyat, sessio_id]
     );
 
-    // Update user
+    // Actualitzar usuari
     await pool.query(
       `UPDATE usuaris
        SET xp_total = ?, xp_setmana = ?, nivell = ?, rang = ?,
@@ -230,105 +342,35 @@ async function finalitzar(req, res) {
       [nou_xp_total, nou_xp_setmana, nouNivell, nouRang, novaRacha, avui, usuariId]
     );
 
-    // XP audit log
+    // Audit XP
     await pool.query(
       'INSERT INTO xp_log (usuari_id, xp_delta, motiu, referencia) VALUES (?, ?, ?, ?)',
       [usuariId, xp_guanyat, 'sessio_completada', sessio_id]
     );
 
-    // ── INTERVALS DE REPETICIÓ ESPACIADA ─────────────────
-    const SR_INTERVALS = [3, 7, 14, 30, 90]; // dies
-
-    // Update node progress + unlock children
+    // ── Estat del node ────────────────────────────────────────────────────────
     let nodesDesbloquejats = [];
-    let proximaRevisio = null;
-    let srMissatge = null;
 
     if (superat) {
-      // Comprovar si ja existeix una revisió programada per aquest node
-      const [srRows] = await pool.query(
-        'SELECT * FROM revisio_programada WHERE usuari_id = ? AND node_id = ?',
+      // Comprovar si és la primera vegada que supera el node
+      const [existingNode] = await pool.query(
+        "SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ? AND estat IN ('completat','dominat')",
         [usuariId, sessio.node_id]
       );
+      const primerCop = existingNode.length === 0;
 
-      let nouEstat = 'completat';
+      // Comprovar si el node mereix estat 'dominat':
+      // 3 últimes sessions completades (inclosa aquesta) amb puntuació >= 80
+      const [recentSessions] = await pool.query(
+        `SELECT puntuacio FROM sessions_estudi
+         WHERE usuari_id = ? AND node_id = ? AND completada = TRUE AND superat = TRUE
+         ORDER BY creat_at DESC LIMIT 3`,
+        [usuariId, sessio.node_id]
+      );
+      const dominat = recentSessions.length >= 3
+        && recentSessions.every(s => s.puntuacio >= 80);
 
-      if (srRows.length === 0) {
-        // Primera vegada que supera el node → programar revisió a +3 dies
-        const dataRevisio = new Date();
-        dataRevisio.setDate(dataRevisio.getDate() + SR_INTERVALS[0]);
-        const dataStr = dataRevisio.toISOString().split('T')[0];
-
-        await pool.query(
-          `INSERT INTO revisio_programada (usuari_id, node_id, propera_revisio, interval_dies, num_revisions)
-           VALUES (?, ?, ?, ?, 0)`,
-          [usuariId, sessio.node_id, dataStr, SR_INTERVALS[0]]
-        );
-        proximaRevisio = dataStr;
-        srMissatge = `Node après! Repàs programat d'aquí ${SR_INTERVALS[0]} dies.`;
-
-        // Desbloquejar fills
-        for (const fillId of (node?.fills || [])) {
-          const [existing] = await pool.query(
-            'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
-            [usuariId, fillId]
-          );
-          if (existing.length === 0) {
-            await pool.query(
-              'INSERT INTO progres_nodes (usuari_id, node_id, estat) VALUES (?, ?, ?)',
-              [usuariId, fillId, 'disponible']
-            );
-            nodesDesbloquejats.push(fillId);
-          } else if (existing[0].estat === 'bloquejat') {
-            await pool.query(
-              'UPDATE progres_nodes SET estat = ? WHERE usuari_id = ? AND node_id = ?',
-              ['disponible', usuariId, fillId]
-            );
-            nodesDesbloquejats.push(fillId);
-          }
-        }
-      } else {
-        // Revisió d'un node ja après — actualitzar interval SR
-        const sr = srRows[0];
-        const numRevisions = sr.num_revisions + 1;
-        let nouInterval = sr.interval_dies;
-        let nouSrMissatge = '';
-
-        if (puntuacio >= 75) {
-          // Bon rendiment → avançar interval
-          const indexActual = SR_INTERVALS.indexOf(sr.interval_dies);
-          const indexSeguent = Math.min(indexActual + 1, SR_INTERVALS.length - 1);
-          nouInterval = SR_INTERVALS[indexSeguent];
-
-          if (indexSeguent >= SR_INTERVALS.length - 1 && puntuacio >= 75) {
-            // Ha completat tots els intervals → dominat!
-            nouEstat = 'dominat';
-            nouSrMissatge = 'Has dominat aquest tema completament!';
-          } else {
-            nouSrMissatge = `Excel·lent! Proper repàs d'aquí ${nouInterval} dies.`;
-          }
-        } else if (puntuacio >= 55) {
-          // Rendiment acceptable → mantenir interval
-          nouSrMissatge = `Bé! Repetim d'aquí ${nouInterval} dies per consolidar.`;
-        } else {
-          // Mal rendiment → tornar a l'inici del cicle
-          nouInterval = SR_INTERVALS[0];
-          nouSrMissatge = `Necessites més pràctica. Repàs d'aquí ${nouInterval} dies.`;
-        }
-
-        const dataRevisio = new Date();
-        dataRevisio.setDate(dataRevisio.getDate() + nouInterval);
-        const dataStr = dataRevisio.toISOString().split('T')[0];
-
-        await pool.query(
-          `UPDATE revisio_programada
-           SET propera_revisio = ?, interval_dies = ?, num_revisions = ?
-           WHERE usuari_id = ? AND node_id = ?`,
-          [dataStr, nouInterval, numRevisions, usuariId, sessio.node_id]
-        );
-        proximaRevisio = dataStr;
-        srMissatge = nouSrMissatge;
-      }
+      const nouEstat = dominat ? 'dominat' : 'completat';
 
       await pool.query(
         `INSERT INTO progres_nodes
@@ -344,6 +386,28 @@ async function finalitzar(req, res) {
         [usuariId, sessio.node_id, nouEstat, puntuacio, xp_guanyat]
       );
 
+      // Desbloquejar fills si és el primer cop que supera
+      if (primerCop) {
+        for (const fillId of (node?.fills || [])) {
+          const [existing] = await pool.query(
+            'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
+            [usuariId, fillId]
+          );
+          if (existing.length === 0) {
+            await pool.query(
+              "INSERT INTO progres_nodes (usuari_id, node_id, estat) VALUES (?, ?, 'disponible')",
+              [usuariId, fillId]
+            );
+            nodesDesbloquejats.push(fillId);
+          } else if (existing[0].estat === 'bloquejat') {
+            await pool.query(
+              "UPDATE progres_nodes SET estat = 'disponible' WHERE usuari_id = ? AND node_id = ?",
+              [usuariId, fillId]
+            );
+            nodesDesbloquejats.push(fillId);
+          }
+        }
+      }
     } else {
       await pool.query(
         `INSERT INTO progres_nodes (usuari_id, node_id, estat, intents)
@@ -353,17 +417,32 @@ async function finalitzar(req, res) {
       );
     }
 
+    // Resum SR de la sessió: quantes preguntes queden pendents per a demà
+    const [srResum] = await pool.query(
+      `SELECT
+         SUM(sr.consecutives_correctes >= 4) AS dominades,
+         SUM(sr.consecutives_correctes  = 0)  AS pendents_dema,
+         MIN(sr.propera_revisio)              AS propera_revisio
+       FROM preguntes_log pl
+       JOIN sr_pregunta sr ON sr.pregunta_id = pl.pregunta_bank_id AND sr.usuari_id = ?
+       WHERE pl.sessio_id = ?`,
+      [usuariId, sessio_id]
+    );
+
     return res.json({
       puntuacio,
       superat,
       xp_guanyat,
       node_completat:      superat,
       nodes_desbloquejats: nodesDesbloquejats,
-      rang_nou:            nouRang !== usuari.rang    ? nouRang   : null,
+      rang_nou:            nouRang   !== usuari.rang   ? nouRang   : null,
       nivell_nou:          nouNivell !== usuari.nivell ? nouNivell : null,
       nova_racha:          novaRacha,
-      propera_revisio:     proximaRevisio,
-      sr_missatge:         srMissatge,
+      sr_resum: {
+        dominades:      parseInt(srResum[0]?.dominades)     || 0,
+        pendents_dema:  parseInt(srResum[0]?.pendents_dema) || 0,
+        propera_revisio: srResum[0]?.propera_revisio || null,
+      },
     });
   } catch (err) {
     console.error('Error finalitzant sessió:', err);
