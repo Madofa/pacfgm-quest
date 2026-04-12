@@ -74,7 +74,8 @@ async function generar(req, res) {
     });
   } catch (err) {
     console.error('Error generant pregunta:', err);
-    return res.status(500).json({ error: 'Error generant la pregunta' });
+    const msg = err?.message || String(err);
+    return res.status(500).json({ error: 'Error generant la pregunta', detall: msg });
   }
 }
 
