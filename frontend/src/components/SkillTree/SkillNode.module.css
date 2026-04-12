@@ -2,14 +2,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-panel);
   border: 1px solid;
   border-radius: 2px;
   cursor: not-allowed;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-  min-width: 100px;
+  min-width: 140px;
   position: relative;
 }
 
@@ -18,8 +18,8 @@
 }
 
 .clickable:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 18px var(--node-color) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 0 24px var(--node-color) !important;
 }
 
 .clickable:active {
@@ -27,7 +27,7 @@
 }
 
 .bloquejat {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 .dominat {
@@ -35,17 +35,17 @@
 }
 
 .estat {
-  font-size: 16px;
+  font-size: 22px;
   line-height: 1;
 }
 
 .titol {
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-text-primary);
   text-align: center;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 .bloquejat .titol {
@@ -54,6 +54,6 @@
 
 .score {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--node-color);
 }

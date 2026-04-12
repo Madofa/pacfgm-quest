@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 .spriteArea {
@@ -11,18 +11,19 @@
 
 @keyframes sprite-float {
   0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-6px); }
+  50%       { transform: translateY(-8px); }
 }
 
 .spritePlaceholder {
-  width: 80px;
-  height: 96px;
+  width: 120px;
+  height: 144px;
   border: 2px solid;
   border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-bg-panel-2);
+  font-size: 56px;
   transition: box-shadow 0.3s;
 }
 
@@ -30,14 +31,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-sm);
 }
 
 .alias {
   font-family: var(--font-game);
   font-size: var(--font-size-game-md);
   color: var(--color-text-primary);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-align: center;
 }
 
 .rang {
@@ -48,6 +50,6 @@
 
 .nivell {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-secondary);
 }

@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: var(--spacing-md) var(--spacing-xl);
   border-bottom: 1px solid var(--color-border);
-  background: rgba(8, 12, 20, 0.9);
+  background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
@@ -37,7 +37,7 @@
   font-family: var(--font-game);
   font-size: var(--font-size-game-md);
   color: var(--color-text-secondary);
-  letter-spacing: 3px;
+  letter-spacing: 4px;
 }
 
 .main {
@@ -45,7 +45,7 @@
   flex-direction: column;
   gap: var(--spacing-xl);
   padding: var(--spacing-xl);
-  max-width: 900px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
@@ -53,7 +53,7 @@
 /* Selector de materia */
 .materiaNav {
   display: flex;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -62,40 +62,40 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-panel);
   border: 1px solid var(--color-border);
   border-radius: 2px;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  min-width: 64px;
+  min-width: 90px;
 }
 
 .materiaBtn:hover {
   border-color: var(--mat-color);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 .materiaBtn.actiu {
   border-color: var(--mat-color);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--mat-color) 40%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--mat-color) 40%, transparent);
   background: var(--color-bg-panel-2);
 }
 
 .materiaIcon {
-  font-size: 20px;
+  font-size: 28px;
 }
 
 .materiaAbbr {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--mat-color);
 }
 
 .materiaProgress {
   font-family: var(--font-game);
-  font-size: 6px;
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-disabled);
 }
 
@@ -109,7 +109,7 @@
 }
 
 @keyframes panel-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -123,12 +123,12 @@
 .materiaFullLabel {
   font-family: var(--font-game);
   font-size: var(--font-size-game-md);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .materiaStats {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-disabled);
 }
 
@@ -137,7 +137,7 @@
   align-items: center;
   gap: 0;
   flex-wrap: wrap;
-  row-gap: var(--spacing-lg);
+  row-gap: var(--spacing-xl);
 }
 
 .nodeWrapper {
@@ -146,8 +146,8 @@
 }
 
 .connector {
-  width: 32px;
-  height: 2px;
+  width: 48px;
+  height: 3px;
   background: var(--color-border);
   position: relative;
   flex-shrink: 0;
@@ -156,15 +156,15 @@
 .connector::after {
   content: '';
   position: absolute;
-  right: -4px;
-  top: -3px;
-  border: 4px solid transparent;
+  right: -5px;
+  top: -4px;
+  border: 5px solid transparent;
   border-left-color: var(--color-border);
 }
 
 .connectorActive {
   background: var(--mat-color);
-  box-shadow: 0 0 6px var(--mat-color);
+  box-shadow: 0 0 8px var(--mat-color);
 }
 
 .connectorActive::after {
@@ -192,13 +192,13 @@
   align-items: center;
   gap: var(--spacing-sm);
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-secondary);
 }
 
 .legendDot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 1px;
   border: 1px solid;
 }
@@ -212,12 +212,12 @@
 @media (max-width: 600px) {
   .main { padding: var(--spacing-md); }
   .chain { flex-direction: column; align-items: flex-start; }
-  .connector { width: 2px; height: 24px; }
+  .connector { width: 3px; height: 32px; }
   .connector::after {
-    right: -3px;
-    bottom: -4px;
+    right: -4px;
+    bottom: -5px;
     top: auto;
-    border: 4px solid transparent;
+    border: 5px solid transparent;
     border-top-color: var(--color-border);
     border-left-color: transparent;
   }

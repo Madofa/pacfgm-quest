@@ -29,26 +29,9 @@ export default function Dashboard() {
       </header>
 
       <main className={styles.main}>
-        {/* Columna izquierda — personaje */}
+        {/* Columna esquerra — personatge */}
         <aside className={`${styles.sidePanel} panel-rpg animate-panel-in`}>
           <CharacterPanel usuari={usuari} />
-          <div className={styles.divider} />
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>RATXA</span>
-            <StreakCounter dies={progres?.racha_dies || 0} />
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>EXAMEN</span>
-            <BossTimer />
-          </div>
-          <div className={styles.divider} />
-          <div className={styles.nodeProgress}>
-            <span className={styles.statLabel}>PROGRÉS</span>
-            <span className={styles.nodeCount}>
-              <span className="text-neon-green text-game">{nodesCompletats}</span>
-              <span className={styles.nodeTotal}> / {totalNodes}</span>
-            </span>
-          </div>
         </aside>
 
         {/* Columna central — stats */}
@@ -72,16 +55,42 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* CTA — ir al árbol */}
+          {/* CTA */}
           <button
             className={`${styles.ctaBtn} animate-panel-in`}
             style={{ animationDelay: '0.15s' }}
             onClick={() => navigate('/skill-tree')}
           >
             <span className={styles.ctaIcon}>⚔</span>
-            <span>CONTINUAR ENTRENANT</span>
+            <span>{nodesCompletats === 0 ? 'COMEÇAR ENTRENAMENT' : 'CONTINUAR ENTRENANT'}</span>
           </button>
         </section>
+
+        {/* Columna dreta — estadístiques */}
+        <aside className={`${styles.rightPanel} panel-rpg animate-panel-in`} style={{ animationDelay: '0.08s' }}>
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>RATXA</span>
+            <StreakCounter dies={progres?.racha_dies || 0} />
+          </div>
+
+          <div className={styles.divider} />
+
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>EXAMEN</span>
+            <BossTimer />
+          </div>
+
+          <div className={styles.divider} />
+
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>PROGRÉS</span>
+            <span className={styles.nodeCount}>
+              <span className="text-neon-green text-game">{nodesCompletats}</span>
+              <span className={styles.nodeTotal}> / {totalNodes}</span>
+            </span>
+            <span className={styles.statSub}>nodes completats</span>
+          </div>
+        </aside>
       </main>
     </div>
   );

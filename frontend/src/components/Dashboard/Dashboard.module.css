@@ -11,7 +11,7 @@
   justify-content: space-between;
   padding: var(--spacing-md) var(--spacing-xl);
   border-bottom: 1px solid var(--color-border);
-  background: rgba(8, 12, 20, 0.9);
+  background: rgba(8, 12, 20, 0.95);
   backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
@@ -19,8 +19,8 @@
 }
 
 .logo {
-  font-size: var(--font-size-game-md);
-  letter-spacing: 3px;
+  font-size: var(--font-size-game-lg);
+  letter-spacing: 4px;
 }
 
 .nav {
@@ -37,6 +37,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   cursor: pointer;
   transition: color 0.2s, border-color 0.2s;
+  letter-spacing: 1px;
 }
 
 .navBtn:hover {
@@ -49,25 +50,45 @@
   border-color: var(--color-neon-red);
 }
 
-/* Main layout */
+/* Main layout — 3 columnes: personatge | contingut | stats */
 .main {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 280px 1fr 260px;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg) var(--spacing-xl);
   flex: 1;
-  max-width: 1200px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  align-items: start;
 }
 
-/* Side panel */
+/* Side panel — personatge */
 .sidePanel {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   align-self: start;
+  position: sticky;
+  top: 88px;
+}
+
+/* Right panel — stats */
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  align-self: start;
+  position: sticky;
+  top: 88px;
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .divider {
@@ -75,28 +96,23 @@
   background: var(--color-border);
 }
 
-.statRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .statLabel {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-disabled);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
-.nodeProgress {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.statSub {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-disabled);
 }
 
 .nodeCount {
   font-family: var(--font-game);
   font-size: var(--font-size-game-md);
+  line-height: 2;
 }
 
 .nodeTotal {
@@ -112,14 +128,14 @@
 
 .panelTitle {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-text-disabled);
   letter-spacing: 3px;
   margin-bottom: var(--spacing-md);
 }
 
 .xpPanel {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
 }
 
 .xpTotal {
@@ -129,7 +145,8 @@
 }
 
 .radarPanel {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  min-height: 320px;
 }
 
 .loading {
@@ -153,18 +170,45 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-md);
-  letter-spacing: 2px;
-  transition: background 0.2s, box-shadow 0.2s;
-  box-shadow: 0 0 16px rgba(0, 255, 159, 0.3);
+  letter-spacing: 3px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 0 24px rgba(0, 255, 159, 0.35);
 }
 
 .ctaBtn:hover {
   background: var(--color-neon-green-dim);
-  box-shadow: 0 0 24px rgba(0, 255, 159, 0.5);
+  box-shadow: 0 0 40px rgba(0, 255, 159, 0.55);
+  transform: translateY(-2px);
 }
 
 .ctaIcon {
-  font-size: 20px;
+  font-size: 24px;
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .main {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .rightPanel {
+    grid-column: 1;
+    grid-row: 2;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+  }
+
+  .statBlock {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .divider {
+    display: none;
+  }
 }
 
 /* Mobile */
@@ -172,6 +216,10 @@
   .main {
     grid-template-columns: 1fr;
     padding: var(--spacing-md);
+  }
+
+  .sidePanel {
+    position: static;
   }
 
   .header {

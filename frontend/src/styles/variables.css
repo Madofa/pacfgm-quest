@@ -38,23 +38,24 @@
   --font-game: 'Press Start 2P', monospace;
   --font-body: 'Nunito', sans-serif;
 
-  /* Mides font game */
-  --font-size-game-xl: 14px;
-  --font-size-game-lg: 11px;
-  --font-size-game-md: 9px;
-  --font-size-game-sm: 7px;
+  /* Mides font game — escalades per fer-les llegibles */
+  --font-size-game-xl: 20px;
+  --font-size-game-lg: 15px;
+  --font-size-game-md: 12px;
+  --font-size-game-sm: 9px;
+  --font-size-game-xs: 7px;
 
   /* Mides font body */
-  --font-size-body-lg: 18px;
-  --font-size-body-md: 16px;
-  --font-size-body-sm: 14px;
+  --font-size-body-lg: 20px;
+  --font-size-body-md: 17px;
+  --font-size-body-sm: 15px;
 
   /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
+  --spacing-xs: 6px;
+  --spacing-sm: 10px;
+  --spacing-md: 20px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
 
   /* Breakpoints (com a referència — usar en media queries) */
   --bp-mobile:  480px;
