@@ -1,14 +1,11 @@
 /**
  * Migració: actualitza progres_nodes al nou skill tree (35 nodes reals PACFGM)
- * Executa: node backend/scripts/migrate-nodes.js
+ * S'executa automàticament en arrencar el servidor.
+ * També pot executar-se manualment si cal.
  */
 
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env'), override: true });
-
-const pool = require('../db/connection');
 const { NODES } = require('../data/skillTree');
 
-// Nodes arrel (sense pare — un per matèria)
 const ROOT_NODES = [
   'mates-nombres',
   'catala-comprensio',
@@ -21,7 +18,7 @@ const ROOT_NODES = [
 
 const VALID_IDS = Object.keys(NODES);
 
-async function run() {
+async function migrateNodes(pool) {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
@@ -32,11 +29,12 @@ async function run() {
       `DELETE FROM progres_nodes WHERE node_id NOT IN (${placeholders})`,
       VALID_IDS
     );
-    console.log(`[migrate] Eliminats ${del.affectedRows} registres obsolets`);
+    if (del.affectedRows > 0) {
+      console.log(`[migrate] Eliminats ${del.affectedRows} nodes obsolets`);
+    }
 
     // 2) Obtenir tots els usuaris
     const [usuaris] = await conn.execute('SELECT id FROM usuaris');
-    console.log(`[migrate] ${usuaris.length} usuaris trobats`);
 
     // 3) Re-seed nodes arrel per a cada usuari
     let seedCount = 0;
@@ -55,18 +53,18 @@ async function run() {
         }
       }
     }
-    console.log(`[migrate] Creats ${seedCount} nous registres arrel`);
 
     await conn.commit();
-    console.log('[migrate] Migració completada correctament ✓');
+    if (seedCount > 0) {
+      console.log(`[migrate] Nodes arrel creats: ${seedCount}`);
+    }
+    console.log('[migrate] OK');
   } catch (err) {
     await conn.rollback();
-    console.error('[migrate] ERROR — rollback:', err.message);
-    process.exit(1);
+    console.error('[migrate] ERROR:', err.message);
   } finally {
     conn.release();
-    await pool.end();
   }
 }
 
-run();
+module.exports = { migrateNodes };

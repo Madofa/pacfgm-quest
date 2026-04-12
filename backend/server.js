@@ -1,6 +1,8 @@
 require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
+const pool = require('./db/connection');
+const { migrateNodes } = require('./scripts/migrate-nodes');
 
 const app = express();
 // cPanel/Passenger inyecta PORT como URL — forzar número
@@ -19,8 +21,9 @@ app.get('/api/health', (req, res) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`PACFGM Quest API running on port ${PORT}`);
+    await migrateNodes(pool);
   });
 }
 
