@@ -2,44 +2,75 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: var(--spacing-xs);
 }
 
 .label {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-sm);
+  font-size: var(--font-size-game-xs);
   color: var(--color-neon-orange);
   letter-spacing: 2px;
 }
 
 .countdown {
   display: flex;
-  align-items: baseline;
-  gap: 2px;
+  align-items: center;
+  gap: var(--spacing-xs);
   font-family: var(--font-game);
   color: var(--color-neon-orange);
-  text-shadow: 0 0 6px var(--color-neon-orange);
+  text-shadow: 0 0 8px var(--color-neon-orange);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .value {
   font-size: var(--font-size-game-lg);
+  line-height: 1;
 }
 
 .unit {
-  font-size: var(--font-size-game-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
 }
 
 .sep {
+  font-family: var(--font-game);
   font-size: var(--font-size-game-md);
-  opacity: 0.5;
+  color: var(--color-text-disabled);
+  align-self: flex-start;
+  padding-top: 2px;
 }
 
+.date {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
+}
+
+.done {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-neon-green);
+  text-shadow: 0 0 8px var(--color-neon-green);
+  letter-spacing: 2px;
+}
+
+/* Urgent: quan queden menys de 30 dies */
 .urgent .countdown {
+  animation: boss-pulse 1.5s ease-in-out infinite;
+}
+.urgent .label {
   animation: boss-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes boss-pulse {
-  0%, 100% { color: var(--color-neon-orange); text-shadow: 0 0 6px var(--color-neon-orange); }
-  50%       { color: var(--color-neon-red);   text-shadow: 0 0 12px var(--color-neon-red); }
+  0%, 100% { color: var(--color-neon-orange); text-shadow: 0 0 8px var(--color-neon-orange); }
+  50%       { color: var(--color-neon-red);   text-shadow: 0 0 16px var(--color-neon-red); }
 }
