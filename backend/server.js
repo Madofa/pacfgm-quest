@@ -21,6 +21,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/gemini-models', async (req, res) => {
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
+    const data = await r.json();
+    const names = (data.models || []).map(m => m.name);
+    res.json({ models: names });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Servir frontend estàtic
 const publicDir = path.join(__dirname, 'public');
 app.use(express.static(publicDir));
