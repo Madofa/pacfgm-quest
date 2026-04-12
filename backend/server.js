@@ -1,6 +1,7 @@
 require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const pool = require('./db/connection');
 const { migrateNodes } = require('./scripts/migrate-nodes');
 
@@ -18,6 +19,13 @@ app.use('/api/grup',     require('./routes/grup.routes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Servir frontend estàtic
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 if (require.main === module) {
