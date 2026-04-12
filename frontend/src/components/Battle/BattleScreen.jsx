@@ -45,7 +45,7 @@ export default function BattleScreen() {
     setFeedback(null);
     setError('');
     try {
-      const data = await api.pregunta.generar(nodeId, 'castella');
+      const data = await api.pregunta.generar(nodeId, 'catala');
       setSessioId(data.sessio_id);
       setPregunta(data);
       setNumeroPregunta(data.numero_pregunta);
@@ -53,7 +53,7 @@ export default function BattleScreen() {
       setTempsInici(Date.now());
       setFase('pregunta');
     } catch (err) {
-      setError(err.error || 'Error cargando la pregunta');
+      setError(err.error || 'Error carregant la pregunta');
       setFase('error');
     }
   }
@@ -73,7 +73,7 @@ export default function BattleScreen() {
       });
       setFase('resultat');
     } catch (err) {
-      setError(err.error || 'Error al responder');
+      setError(err.error || 'Error en respondre');
     }
   }
 
@@ -92,7 +92,7 @@ export default function BattleScreen() {
       setResultatFinal(data);
       setFase('final');
     } catch (err) {
-      setError(err.error || 'Error al finalizar');
+      setError(err.error || 'Error en finalitzar');
       setFase('error');
     }
   }
@@ -104,7 +104,7 @@ export default function BattleScreen() {
   if (fase === 'carregant') {
     return (
       <div className={styles.fullCenter}>
-        <div className={styles.loadingText} style={{ color: cfg.color }}>GENERANDO PREGUNTA...</div>
+        <div className={styles.loadingText} style={{ color: cfg.color }}>GENERANT PREGUNTA...</div>
         <div className={styles.loadingDots}>
           <span /><span /><span />
         </div>
@@ -117,7 +117,7 @@ export default function BattleScreen() {
     return (
       <div className={styles.fullCenter}>
         <div className={styles.errorText}>{error}</div>
-        <button className={styles.btnSecondary} onClick={() => navigate('/skill-tree')}>Volver al árbol</button>
+        <button className={styles.btnSecondary} onClick={() => navigate('/skill-tree')}>Tornar a l'arbre</button>
       </div>
     );
   }
@@ -130,46 +130,46 @@ export default function BattleScreen() {
         <div className={styles.finalCard}>
           <div className={styles.finalIcon}>{superat ? '⭐' : '💀'}</div>
           <div className={styles.finalTitle} style={{ color: superat ? 'var(--color-neon-green)' : 'var(--color-neon-red)' }}>
-            {superat ? '¡VICTORIA!' : 'DERROTA'}
+            {superat ? 'VICTÒRIA!' : 'DERROTA'}
           </div>
           <div className={styles.finalScore}>{resultatFinal.puntuacio}%</div>
 
           <div className={styles.finalStats}>
             <div className={styles.finalStat}>
-              <span className={styles.finalStatLabel}>XP GANADO</span>
+              <span className={styles.finalStatLabel}>XP GUANYAT</span>
               <span className={styles.finalStatVal} style={{ color: 'var(--color-gold)' }}>+{resultatFinal.xp_guanyat}</span>
             </div>
             {resultatFinal.rang_nou && (
               <div className={styles.finalStat}>
-                <span className={styles.finalStatLabel}>NUEVO RANGO</span>
+                <span className={styles.finalStatLabel}>NOU RANG</span>
                 <span className={styles.finalStatVal} style={{ color: 'var(--color-neon-orange)' }}>{resultatFinal.rang_nou.toUpperCase()}</span>
               </div>
             )}
             {resultatFinal.nodes_desbloquejats?.length > 0 && (
               <div className={styles.finalStat}>
-                <span className={styles.finalStatLabel}>DESBLOQUEADO</span>
+                <span className={styles.finalStatLabel}>DESBLOQUEJAT</span>
                 <span className={styles.finalStatVal} style={{ color: 'var(--color-neon-green)' }}>
-                  {resultatFinal.nodes_desbloquejats.length} nodo{resultatFinal.nodes_desbloquejats.length > 1 ? 's' : ''}
+                  {resultatFinal.nodes_desbloquejats.length} node{resultatFinal.nodes_desbloquejats.length > 1 ? 's' : ''}
                 </span>
               </div>
             )}
             <div className={styles.finalStat}>
-              <span className={styles.finalStatLabel}>RACHA</span>
-              <span className={styles.finalStatVal} style={{ color: 'var(--color-gold)' }}>🔥 {resultatFinal.nova_racha} días</span>
+              <span className={styles.finalStatLabel}>RATXA</span>
+              <span className={styles.finalStatVal} style={{ color: 'var(--color-gold)' }}>🔥 {resultatFinal.nova_racha} dies</span>
             </div>
           </div>
 
           <div className={styles.finalBtns}>
             {!superat && (
               <button className={styles.btnPrimary} style={{ '--btn-color': cfg.color }} onClick={carregarPregunta}>
-                REINTENTAR
+                TORNAR A INTENTAR
               </button>
             )}
             <button className={styles.btnSecondary} onClick={() => navigate('/skill-tree')}>
-              ÁRBOL
+              ARBRE
             </button>
             <button className={styles.btnSecondary} onClick={() => navigate('/')}>
-              DASHBOARD
+              INICI
             </button>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function BattleScreen() {
           <div className={`${styles.feedback} ${feedback.correcte ? styles.feedbackOk : styles.feedbackKo}`}>
             <div className={styles.feedbackIcon}>{feedback.correcte ? '✓' : '✗'}</div>
             <div className={styles.feedbackText}>
-              <strong>{feedback.correcte ? '¡Correcto!' : `Incorrecto — la respuesta era ${feedback.correcta}`}</strong>
+              <strong>{feedback.correcte ? 'Correcte!' : `Incorrecte — la resposta era ${feedback.correcta}`}</strong>
               {feedback.explicacio && <p className={styles.feedbackExpl}>{feedback.explicacio}</p>}
             </div>
             <button
@@ -254,7 +254,7 @@ export default function BattleScreen() {
               style={{ '--cfg-color': cfg.color }}
               onClick={seguentPregunta}
             >
-              {feedback.progres?.respostes_fetes >= 5 ? 'VER RESULTADO ▶' : 'SIGUIENTE ▶'}
+              {feedback.progres?.respostes_fetes >= 5 ? 'VEURE RESULTAT ▶' : 'SEGÜENT ▶'}
             </button>
           </div>
         )}

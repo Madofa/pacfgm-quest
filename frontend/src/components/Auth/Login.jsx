@@ -19,7 +19,7 @@ export default function Login() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err.error || 'Error al iniciar sesión');
+      setError(err.error || 'Error en iniciar sessió');
     } finally {
       setLoading(false);
     }
@@ -31,7 +31,7 @@ export default function Login() {
         <div className={styles.header}>
           <div className={`${styles.logo} text-neon-green text-game`}>PACFGM</div>
           <div className={`${styles.subtitle} text-game`}>QUEST</div>
-          <p className={styles.tagline}>Entrena. Sube de nivel. Aprueba.</p>
+          <p className={styles.tagline}>Entrena. Puja de nivell. Aprova.</p>
         </div>
 
         <form className={`${styles.form} panel-rpg animate-panel-in`} onSubmit={handleSubmit}>
@@ -65,7 +65,7 @@ export default function Login() {
           {error && <div className={styles.error}>{error}</div>}
 
           <button className={styles.submitBtn} type="submit" disabled={loading}>
-            {loading ? 'CONECTANDO...' : '▶ INICIAR SESIÓN'}
+            {loading ? 'CONNECTANT...' : '▶ INICIAR SESSIÓ'}
           </button>
         </form>
 

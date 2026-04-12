@@ -22,9 +22,9 @@ export default function Dashboard() {
       <header className={styles.header}>
         <div className={`${styles.logo} text-neon-green text-game`}>PACFGM QUEST</div>
         <nav className={styles.nav}>
-          <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ÁRBOL</button>
-          <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RANKING</button>
-          <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SALIR</button>
+          <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
+          <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RÀNQUING</button>
+          <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SORTIR</button>
         </nav>
       </header>
 
@@ -34,7 +34,7 @@ export default function Dashboard() {
           <CharacterPanel usuari={usuari} />
           <div className={styles.divider} />
           <div className={styles.statRow}>
-            <span className={styles.statLabel}>RACHA</span>
+            <span className={styles.statLabel}>RATXA</span>
             <StreakCounter dies={progres?.racha_dies || 0} />
           </div>
           <div className={styles.statRow}>
@@ -43,7 +43,7 @@ export default function Dashboard() {
           </div>
           <div className={styles.divider} />
           <div className={styles.nodeProgress}>
-            <span className={styles.statLabel}>PROGRESO</span>
+            <span className={styles.statLabel}>PROGRÉS</span>
             <span className={styles.nodeCount}>
               <span className="text-neon-green text-game">{nodesCompletats}</span>
               <span className={styles.nodeTotal}> / {totalNodes}</span>
@@ -55,7 +55,7 @@ export default function Dashboard() {
         <section className={styles.centerPanel}>
           {/* XP */}
           <div className={`panel-rpg ${styles.xpPanel} animate-panel-in`} style={{ animationDelay: '0.05s' }}>
-            <div className={styles.panelTitle}>EXPERIENCIA</div>
+            <div className={styles.panelTitle}>EXPERIÈNCIA</div>
             <XPBar xp_total={progres?.xp_total || 0} nivell={usuari?.nivell || 1} />
             <div className={styles.xpTotal}>
               Total: <span className="text-gold text-game">{(progres?.xp_total || 0).toLocaleString()} XP</span>
@@ -64,9 +64,9 @@ export default function Dashboard() {
 
           {/* Radar */}
           <div className={`panel-rpg ${styles.radarPanel} animate-panel-in`} style={{ animationDelay: '0.1s' }}>
-            <div className={styles.panelTitle}>ATRIBUTOS</div>
+            <div className={styles.panelTitle}>ATRIBUTS</div>
             {loading ? (
-              <div className={styles.loading}>Cargando...</div>
+              <div className={styles.loading}>Carregant...</div>
             ) : (
               <StatsRadar nodes={skillTree} />
             )}
@@ -79,7 +79,7 @@ export default function Dashboard() {
             onClick={() => navigate('/skill-tree')}
           >
             <span className={styles.ctaIcon}>⚔</span>
-            <span>CONTINUAR ENTRENANDO</span>
+            <span>CONTINUAR ENTRENANT</span>
           </button>
         </section>
       </main>

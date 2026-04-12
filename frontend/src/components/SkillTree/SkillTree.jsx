@@ -47,9 +47,9 @@ export default function SkillTree() {
     <div className={styles.page}>
       {/* Header */}
       <header className={styles.header}>
-        <button className={styles.backBtn} onClick={() => navigate('/')}>◄ DASHBOARD</button>
-        <div className={`${styles.title} text-game`}>ÁRBOL DE HABILIDADES</div>
-        <button className={styles.backBtn} onClick={logout}>SALIR</button>
+        <button className={styles.backBtn} onClick={() => navigate('/')}>◄ INICI</button>
+        <div className={`${styles.title} text-game`}>ARBRE D'HABILITATS</div>
+        <button className={styles.backBtn} onClick={logout}>SORTIR</button>
       </header>
 
       <main className={styles.main}>
@@ -78,12 +78,12 @@ export default function SkillTree() {
               {cfg.icon} {cfg.label.toUpperCase()}
             </span>
             <span className={styles.materiaStats}>
-              {nodesActius.filter(n => n.estat === 'completat' || n.estat === 'dominat').length} / {nodesActius.length} completados
+              {nodesActius.filter(n => n.estat === 'completat' || n.estat === 'dominat').length} / {nodesActius.length} completats
             </span>
           </div>
 
           {loading ? (
-            <div className={styles.loading}>Cargando...</div>
+            <div className={styles.loading}>Carregant...</div>
           ) : (
             <div className={styles.chain}>
               {nodesActius.map((node, i) => (
@@ -106,10 +106,10 @@ export default function SkillTree() {
         {/* Leyenda */}
         <div className={styles.legend}>
           {[
-            { estat: 'bloquejat',  label: 'Bloqueado' },
+            { estat: 'bloquejat',  label: 'Bloquejat' },
             { estat: 'disponible', label: 'Disponible' },
-            { estat: 'completat',  label: 'Completado' },
-            { estat: 'dominat',    label: 'Dominado'   },
+            { estat: 'completat',  label: 'Completat' },
+            { estat: 'dominat',    label: 'Dominat'   },
           ].map(({ estat, label }) => (
             <div key={estat} className={styles.legendItem}>
               <span className={`${styles.legendDot} ${styles[`dot_${estat}`]}`} />
