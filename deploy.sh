@@ -7,6 +7,7 @@ REPO="/home/r307889/repositories/pacfgm-quest"
 PUBLIC="/home/r307889/quest.sinilos.com/public"
 APP_DOMAIN="quest.sinilos.com"
 NODE="/home/r307889/nodevenv/quest.sinilos.com/16/bin/node"
+NPM="/home/r307889/nodevenv/quest.sinilos.com/16/bin/npm"
 
 echo "=== DEPLOY pacfgm-quest ==="
 
@@ -15,15 +16,19 @@ echo "→ Git pull..."
 cd "$REPO"
 git pull origin main
 
-# 2. Migració DB
+# 2. Dependències backend
+echo "→ Instal·lant dependències backend..."
+( cd "$REPO/backend" && $NPM install --production --silent )
+
+# 3. Migració DB
 echo "→ Migrant base de dades..."
-cd "$REPO/backend" && $NODE scripts/migrate-nodes.js && cd "$REPO"
+( cd "$REPO/backend" && $NODE scripts/migrate-nodes.js )
 
-# 3. Copia frontend
+# 4. Copia frontend
 echo "→ Copiant frontend..."
-cp -r frontend/dist/. "$PUBLIC/"
+cp -r "$REPO/frontend/dist/." "$PUBLIC/"
 
-# 4. Reinici backend
+# 5. Reinici backend
 echo "→ Reiniciant backend..."
 uapi NodeJS restart_app domain="$APP_DOMAIN" 2>/dev/null \
   && echo "   Backend reiniciat via uapi" \
