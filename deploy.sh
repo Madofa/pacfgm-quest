@@ -6,6 +6,7 @@ set -e
 REPO="/home/r307889/repositories/pacfgm-quest"
 PUBLIC="/home/r307889/quest.sinilos.com/public"
 APP_DOMAIN="quest.sinilos.com"
+NODE="/home/r307889/nodevenv/quest.sinilos.com/16/bin/node"
 
 echo "=== DEPLOY pacfgm-quest ==="
 
@@ -16,7 +17,7 @@ git pull origin main
 
 # 2. Migració DB
 echo "→ Migrant base de dades..."
-node backend/scripts/migrate-nodes.js
+$NODE backend/scripts/migrate-nodes.js
 
 # 3. Copia frontend
 echo "→ Copiant frontend..."
