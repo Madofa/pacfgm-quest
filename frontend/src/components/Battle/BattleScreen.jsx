@@ -7,6 +7,10 @@ import styles from './BattleScreen.module.css';
 const OPCIONS = ['A', 'B', 'C', 'D'];
 const TEMPS_LIMIT = 30; // segons
 
+function getTimerEnabled() {
+  return localStorage.getItem('timerEnabled') !== 'false';
+}
+
 export default function BattleScreen() {
   const { nodeId }  = useParams();
   const navigate    = useNavigate();
@@ -23,13 +27,14 @@ export default function BattleScreen() {
   const [temps, setTemps]             = useState(TEMPS_LIMIT);
   const [tempsInici, setTempsInici]   = useState(null);
   const [error, setError]             = useState('');
+  const [timerEnabled]                = useState(getTimerEnabled);
 
   // Cargar primera pregunta
   useEffect(() => { carregarPregunta(); }, [nodeId]);
 
-  // Timer
+  // Timer (només si està activat)
   useEffect(() => {
-    if (fase !== 'pregunta') return;
+    if (fase !== 'pregunta' || !timerEnabled) return;
     const id = setInterval(() => {
       setTemps(t => {
         if (t <= 1) { clearInterval(id); respondre(null); return 0; }
@@ -37,7 +42,7 @@ export default function BattleScreen() {
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [fase, numeroPregunta]);
+  }, [fase, numeroPregunta, timerEnabled]);
 
   async function carregarPregunta() {
     setFase('carregant');
@@ -200,14 +205,18 @@ export default function BattleScreen() {
         </div>
       </header>
 
-      {/* Timer */}
-      <div className={styles.timerBar}>
-        <div
-          className={styles.timerFill}
-          style={{ width: `${pctTemps}%`, background: colorTemps, boxShadow: `0 0 8px ${colorTemps}` }}
-        />
-      </div>
-      <div className={styles.timerNum} style={{ color: colorTemps }}>{temps}s</div>
+      {/* Timer (opcional) */}
+      {timerEnabled && (
+        <>
+          <div className={styles.timerBar}>
+            <div
+              className={styles.timerFill}
+              style={{ width: `${pctTemps}%`, background: colorTemps, boxShadow: `0 0 8px ${colorTemps}` }}
+            />
+          </div>
+          <div className={styles.timerNum} style={{ color: colorTemps }}>{temps}s</div>
+        </>
+      )}
 
       <main className={styles.main}>
         {/* Pregunta */}

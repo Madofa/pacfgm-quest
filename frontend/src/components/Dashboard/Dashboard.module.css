@@ -103,6 +103,29 @@
   letter-spacing: 2px;
 }
 
+.toggleBtn {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  letter-spacing: 2px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  background: transparent;
+  transition: all 0.2s;
+  width: 100%;
+}
+.toggleOn {
+  border-color: var(--color-neon-green);
+  color: var(--color-neon-green);
+}
+.toggleOn:hover { background: rgba(0,255,159,0.1); }
+.toggleOff {
+  border-color: var(--color-text-disabled);
+  color: var(--color-text-disabled);
+}
+.toggleOff:hover { background: rgba(255,255,255,0.05); }
+
 .statSub {
   font-family: var(--font-body);
   font-size: var(--font-size-body-sm);

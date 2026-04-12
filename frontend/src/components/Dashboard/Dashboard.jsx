@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProgress } from '../../hooks/useProgress';
@@ -12,6 +13,15 @@ export default function Dashboard() {
   const { usuari, logout } = useAuth();
   const { progres, skillTree, loading } = useProgress();
   const navigate = useNavigate();
+  const [timerEnabled, setTimerEnabled] = useState(
+    localStorage.getItem('timerEnabled') !== 'false'
+  );
+
+  function toggleTimer() {
+    const nou = !timerEnabled;
+    setTimerEnabled(nou);
+    localStorage.setItem('timerEnabled', String(nou));
+  }
 
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
   const totalNodes = skillTree.length;
@@ -89,6 +99,15 @@ export default function Dashboard() {
               <span className={styles.nodeTotal}> / {totalNodes}</span>
             </span>
             <span className={styles.statSub}>nodes completats</span>
+          </div>
+
+          <div className={styles.divider} />
+
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>AJUSTOS</span>
+            <button className={`${styles.toggleBtn} ${timerEnabled ? styles.toggleOn : styles.toggleOff}`} onClick={toggleTimer}>
+              ⏱ TEMPS {timerEnabled ? 'ON' : 'OFF'}
+            </button>
           </div>
         </aside>
       </main>
