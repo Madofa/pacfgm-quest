@@ -162,7 +162,18 @@ export default function BattleScreen() {
               <span className={styles.finalStatLabel}>RATXA</span>
               <span className={styles.finalStatVal} style={{ color: 'var(--color-gold)' }}>🔥 {resultatFinal.nova_racha} dies</span>
             </div>
+            {resultatFinal.propera_revisio && (
+              <div className={styles.finalStat}>
+                <span className={styles.finalStatLabel}>PROPER REPÀS</span>
+                <span className={styles.finalStatVal} style={{ color: 'var(--color-neon-orange)' }}>
+                  {resultatFinal.propera_revisio}
+                </span>
+              </div>
+            )}
           </div>
+          {resultatFinal.sr_missatge && (
+            <div className={styles.srMissatge}>{resultatFinal.sr_missatge}</div>
+          )}
 
           <div className={styles.finalBtns}>
             {!superat && (

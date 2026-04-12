@@ -28,8 +28,9 @@ export const api = {
     me:       () => request('/api/auth/me'),
   },
   progres: {
-    meu:       () => request('/api/progres/meu'),
-    skillTree: () => request('/api/progres/skill-tree'),
+    meu:        () => request('/api/progres/meu'),
+    skillTree:  () => request('/api/progres/skill-tree'),
+    revisions:  () => request('/api/progres/revisions'),
   },
   pregunta: {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),

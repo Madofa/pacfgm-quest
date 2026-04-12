@@ -55,4 +55,36 @@ async function skillTree(req, res) {
   }
 }
 
-module.exports = { meu, skillTree };
+async function revisionsAvui(req, res) {
+  const usuariId = req.usuari.id;
+  try {
+    const avui = new Date().toISOString().split('T')[0];
+    const [rows] = await pool.query(
+      `SELECT r.node_id, r.propera_revisio, r.interval_dies, r.num_revisions,
+              p.millor_puntuacio, n.titol, n.materia
+       FROM revisio_programada r
+       JOIN progres_nodes p ON p.usuari_id = r.usuari_id AND p.node_id = r.node_id
+       WHERE r.usuari_id = ? AND r.propera_revisio <= ?
+       ORDER BY r.propera_revisio ASC`,
+      [usuariId, avui]
+    );
+
+    // Afegir info de títol des del skill tree
+    const result = rows.map(r => ({
+      node_id:          r.node_id,
+      titol:            NODES[r.node_id]?.titol || r.node_id,
+      materia:          r.materia,
+      propera_revisio:  r.propera_revisio,
+      interval_dies:    r.interval_dies,
+      num_revisions:    r.num_revisions,
+      millor_puntuacio: r.millor_puntuacio,
+    }));
+
+    return res.json({ revisions: result, total: result.length });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui };

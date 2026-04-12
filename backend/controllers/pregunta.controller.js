@@ -229,16 +229,107 @@ async function finalitzar(req, res) {
       [usuariId, xp_guanyat, 'sessio_completada', sessio_id]
     );
 
+    // ── INTERVALS DE REPETICIÓ ESPACIADA ─────────────────
+    const SR_INTERVALS = [3, 7, 14, 30, 90]; // dies
+
     // Update node progress + unlock children
     let nodesDesbloquejats = [];
+    let proximaRevisio = null;
+    let srMissatge = null;
+
     if (superat) {
-      const nouEstat = dominat ? 'dominat' : 'completat';
+      // Comprovar si ja existeix una revisió programada per aquest node
+      const [srRows] = await pool.query(
+        'SELECT * FROM revisio_programada WHERE usuari_id = ? AND node_id = ?',
+        [usuariId, sessio.node_id]
+      );
+
+      let nouEstat = 'completat';
+
+      if (srRows.length === 0) {
+        // Primera vegada que supera el node → programar revisió a +3 dies
+        const dataRevisio = new Date();
+        dataRevisio.setDate(dataRevisio.getDate() + SR_INTERVALS[0]);
+        const dataStr = dataRevisio.toISOString().split('T')[0];
+
+        await pool.query(
+          `INSERT INTO revisio_programada (usuari_id, node_id, propera_revisio, interval_dies, num_revisions)
+           VALUES (?, ?, ?, ?, 0)`,
+          [usuariId, sessio.node_id, dataStr, SR_INTERVALS[0]]
+        );
+        proximaRevisio = dataStr;
+        srMissatge = `Node après! Repàs programat d'aquí ${SR_INTERVALS[0]} dies.`;
+
+        // Desbloquejar fills
+        for (const fillId of (node?.fills || [])) {
+          const [existing] = await pool.query(
+            'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
+            [usuariId, fillId]
+          );
+          if (existing.length === 0) {
+            await pool.query(
+              'INSERT INTO progres_nodes (usuari_id, node_id, estat) VALUES (?, ?, ?)',
+              [usuariId, fillId, 'disponible']
+            );
+            nodesDesbloquejats.push(fillId);
+          } else if (existing[0].estat === 'bloquejat') {
+            await pool.query(
+              'UPDATE progres_nodes SET estat = ? WHERE usuari_id = ? AND node_id = ?',
+              ['disponible', usuariId, fillId]
+            );
+            nodesDesbloquejats.push(fillId);
+          }
+        }
+      } else {
+        // Revisió d'un node ja après — actualitzar interval SR
+        const sr = srRows[0];
+        const numRevisions = sr.num_revisions + 1;
+        let nouInterval = sr.interval_dies;
+        let nouSrMissatge = '';
+
+        if (puntuacio >= 75) {
+          // Bon rendiment → avançar interval
+          const indexActual = SR_INTERVALS.indexOf(sr.interval_dies);
+          const indexSeguent = Math.min(indexActual + 1, SR_INTERVALS.length - 1);
+          nouInterval = SR_INTERVALS[indexSeguent];
+
+          if (indexSeguent >= SR_INTERVALS.length - 1 && puntuacio >= 75) {
+            // Ha completat tots els intervals → dominat!
+            nouEstat = 'dominat';
+            nouSrMissatge = 'Has dominat aquest tema completament!';
+          } else {
+            nouSrMissatge = `Excel·lent! Proper repàs d'aquí ${nouInterval} dies.`;
+          }
+        } else if (puntuacio >= 55) {
+          // Rendiment acceptable → mantenir interval
+          nouSrMissatge = `Bé! Repetim d'aquí ${nouInterval} dies per consolidar.`;
+        } else {
+          // Mal rendiment → tornar a l'inici del cicle
+          nouInterval = SR_INTERVALS[0];
+          nouSrMissatge = `Necessites més pràctica. Repàs d'aquí ${nouInterval} dies.`;
+        }
+
+        const dataRevisio = new Date();
+        dataRevisio.setDate(dataRevisio.getDate() + nouInterval);
+        const dataStr = dataRevisio.toISOString().split('T')[0];
+
+        await pool.query(
+          `UPDATE revisio_programada
+           SET propera_revisio = ?, interval_dies = ?, num_revisions = ?
+           WHERE usuari_id = ? AND node_id = ?`,
+          [dataStr, nouInterval, numRevisions, usuariId, sessio.node_id]
+        );
+        proximaRevisio = dataStr;
+        srMissatge = nouSrMissatge;
+      }
+
       await pool.query(
         `INSERT INTO progres_nodes
            (usuari_id, node_id, estat, intents, millor_puntuacio, xp_acumulat, completat_at)
          VALUES (?, ?, ?, 1, ?, ?, NOW())
          ON DUPLICATE KEY UPDATE
-           estat            = IF(millor_puntuacio < VALUES(millor_puntuacio), VALUES(estat), estat),
+           estat            = IF(VALUES(estat) = 'dominat', 'dominat',
+                               IF(millor_puntuacio < VALUES(millor_puntuacio), VALUES(estat), estat)),
            millor_puntuacio = GREATEST(millor_puntuacio, VALUES(millor_puntuacio)),
            intents          = intents + 1,
            xp_acumulat      = xp_acumulat + VALUES(xp_acumulat),
@@ -246,25 +337,6 @@ async function finalitzar(req, res) {
         [usuariId, sessio.node_id, nouEstat, puntuacio, xp_guanyat]
       );
 
-      for (const fillId of (node?.fills || [])) {
-        const [existing] = await pool.query(
-          'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
-          [usuariId, fillId]
-        );
-        if (existing.length === 0) {
-          await pool.query(
-            'INSERT INTO progres_nodes (usuari_id, node_id, estat) VALUES (?, ?, ?)',
-            [usuariId, fillId, 'disponible']
-          );
-          nodesDesbloquejats.push(fillId);
-        } else if (existing[0].estat === 'bloquejat') {
-          await pool.query(
-            'UPDATE progres_nodes SET estat = ? WHERE usuari_id = ? AND node_id = ?',
-            ['disponible', usuariId, fillId]
-          );
-          nodesDesbloquejats.push(fillId);
-        }
-      }
     } else {
       await pool.query(
         `INSERT INTO progres_nodes (usuari_id, node_id, estat, intents)
@@ -280,9 +352,11 @@ async function finalitzar(req, res) {
       xp_guanyat,
       node_completat:      superat,
       nodes_desbloquejats: nodesDesbloquejats,
-      rang_nou:            nouRang !== usuari.rang   ? nouRang  : null,
+      rang_nou:            nouRang !== usuari.rang    ? nouRang   : null,
       nivell_nou:          nouNivell !== usuari.nivell ? nouNivell : null,
       nova_racha:          novaRacha,
+      propera_revisio:     proximaRevisio,
+      sr_missatge:         srMissatge,
     });
   } catch (err) {
     console.error('Error finalitzant sessió:', err);

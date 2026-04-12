@@ -23,6 +23,20 @@ async function migrateNodes(pool) {
   try {
     await conn.beginTransaction();
 
+    // 0) Crear taula revisio_programada si no existeix
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS revisio_programada (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        usuari_id       INT NOT NULL,
+        node_id         VARCHAR(100) NOT NULL,
+        propera_revisio DATE NOT NULL,
+        interval_dies   INT DEFAULT 3,
+        num_revisions   INT DEFAULT 0,
+        UNIQUE KEY uq_usuari_node (usuari_id, node_id),
+        FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE CASCADE
+      )
+    `);
+
     // 1) Eliminar progres amb node_ids obsolets
     const placeholders = VALID_IDS.map(() => '?').join(',');
     const [del] = await conn.execute(

@@ -338,6 +338,17 @@
   font-size: var(--font-size-game-xs);
 }
 
+.srMissatge {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-neon-orange);
+  text-align: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-neon-orange);
+  border-radius: 4px;
+  background: rgba(255, 160, 0, 0.05);
+}
+
 .finalBtns {
   display: flex;
   gap: var(--spacing-md);

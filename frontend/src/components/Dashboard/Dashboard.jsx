@@ -11,7 +11,7 @@ import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
   const { usuari, logout } = useAuth();
-  const { progres, skillTree, loading } = useProgress();
+  const { progres, skillTree, revisions, loading } = useProgress();
   const navigate = useNavigate();
   const [timerEnabled, setTimerEnabled] = useState(
     localStorage.getItem('timerEnabled') !== 'false'
@@ -64,6 +64,27 @@ export default function Dashboard() {
               <StatsRadar nodes={skillTree} />
             )}
           </div>
+
+          {/* Revisions pendents */}
+          {revisions.length > 0 && (
+            <div className={`panel-rpg ${styles.revisionsPanel} animate-panel-in`} style={{ animationDelay: '0.12s' }}>
+              <div className={styles.panelTitle} style={{ color: 'var(--color-neon-orange)' }}>
+                ⏰ REPÀS PENDENT — {revisions.length} {revisions.length === 1 ? 'NODE' : 'NODES'}
+              </div>
+              <div className={styles.revisionsList}>
+                {revisions.slice(0, 4).map(r => (
+                  <button
+                    key={r.node_id}
+                    className={styles.revisionItem}
+                    onClick={() => navigate(`/battle/${r.node_id}`)}
+                  >
+                    <span className={styles.revisionTitol}>{r.titol}</span>
+                    <span className={styles.revisionBadge}>REPASSAR</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* CTA */}
           <button

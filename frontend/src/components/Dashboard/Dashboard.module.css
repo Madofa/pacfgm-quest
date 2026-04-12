@@ -103,6 +103,42 @@
   letter-spacing: 2px;
 }
 
+.revisionsPanel {
+  padding: var(--spacing-md);
+}
+.revisionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--spacing-sm);
+}
+.revisionItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--color-neon-orange);
+  color: var(--color-text-primary);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+.revisionItem:hover { background: rgba(255,160,0,0.08); }
+.revisionTitol {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  text-align: left;
+}
+.revisionBadge {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-orange);
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
 .toggleBtn {
   font-family: var(--font-game);
   font-size: var(--font-size-game-xs);
