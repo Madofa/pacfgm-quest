@@ -36,7 +36,11 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+      },
     }),
   });
 
@@ -54,7 +58,15 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
   if (!text) throw new Error(`Resposta buida. finishReason: ${json.candidates?.[0]?.finishReason}`);
 
   const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
-  const data = JSON.parse(jsonStr);
+  let data;
+  try {
+    data = JSON.parse(jsonStr);
+  } catch {
+    // Intentar extreure el primer objecte JSON vàlid del text
+    const match = jsonStr.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No s\'ha trobat cap JSON vàlid a la resposta de Gemini');
+    data = JSON.parse(match[0]);
+  }
 
   if (!data.pregunta || !Array.isArray(data.opcions) || data.opcions.length !== 4
       || !data.correcta || !data.explicacio) {
