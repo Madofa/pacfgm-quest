@@ -14,7 +14,16 @@ echo "→ Git pull..."
 cd "$REPO"
 git pull origin main
 
-# 2. Copia frontend
+# 2. Copia backend (excloent node_modules i .env)
+echo "→ Copiant backend..."
+APP="/home/r307889/quest.sinilos.com"
+for dir in controllers services routes data middleware utils db scripts; do
+  [ -d "$REPO/backend/$dir" ] && cp -r "$REPO/backend/$dir" "$APP/"
+done
+cp "$REPO/backend/server.js" "$APP/server.js"
+cp "$REPO/backend/package.json" "$APP/package.json"
+
+# 3. Copia frontend
 echo "→ Copiant frontend..."
 cp -r "$REPO/frontend/dist/." "$PUBLIC/"
 
