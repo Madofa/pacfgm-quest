@@ -18,7 +18,10 @@ git pull origin main
 echo "→ Copiant backend..."
 APP="/home/r307889/quest.sinilos.com"
 for dir in controllers services routes data middleware utils db scripts; do
-  [ -d "$REPO/backend/$dir" ] && cp -r "$REPO/backend/$dir" "$APP/"
+  if [ -d "$REPO/backend/$dir" ]; then
+    mkdir -p "$APP/$dir"
+    cp -r "$REPO/backend/$dir/." "$APP/$dir/"
+  fi
 done
 cp "$REPO/backend/server.js" "$APP/server.js"
 cp "$REPO/backend/package.json" "$APP/package.json"
