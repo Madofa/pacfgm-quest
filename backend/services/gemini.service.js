@@ -32,7 +32,7 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
     }),
   });
 
@@ -43,13 +43,14 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
 
   const json = await response.json();
   // gemini-2.5-flash és un model "thinking" — pot tenir múltiples parts
-  // Agafem la primera part amb text que no sigui pensament intern
   const parts = json.candidates?.[0]?.content?.parts || [];
+  console.log('[gemini] parts count:', parts.length, '| finish_reason:', json.candidates?.[0]?.finishReason);
   const text = parts
     .filter(p => p.text && !p.thought)
     .map(p => p.text)
     .join('').trim();
-  if (!text) throw new Error(`Resposta buida de Gemini. Parts: ${JSON.stringify(parts)}`);
+  console.log('[gemini] text preview:', text.slice(0, 200));
+  if (!text) throw new Error(`Resposta buida. finishReason: ${json.candidates?.[0]?.finishReason}`);
 
   const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
   const data = JSON.parse(jsonStr);
