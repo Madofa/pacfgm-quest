@@ -139,6 +139,17 @@
   margin-left: 8px;
 }
 
+.version {
+  position: fixed;
+  bottom: 6px;
+  right: 10px;
+  font-family: var(--font-game);
+  font-size: 6px;
+  color: var(--color-text-disabled);
+  opacity: 0.4;
+  letter-spacing: 1px;
+}
+
 .toggleBtn {
   font-family: var(--font-game);
   font-size: var(--font-size-game-xs);

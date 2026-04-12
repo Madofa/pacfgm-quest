@@ -132,6 +132,7 @@ export default function Dashboard() {
           </div>
         </aside>
       </main>
+      <div className={styles.version}>v{__APP_VERSION__}</div>
     </div>
   );
 }
