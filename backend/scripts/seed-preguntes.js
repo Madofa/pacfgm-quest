@@ -185,6 +185,43 @@ Respon ÚNICAMENT amb un array JSON vàlid, sense cap text fora del JSON:
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+async function ensureTables(pool) {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS preguntes_bank (
+      id                INT AUTO_INCREMENT PRIMARY KEY,
+      node_id           VARCHAR(100) NOT NULL,
+      pregunta_text     TEXT NOT NULL,
+      opcions           JSON NOT NULL,
+      resposta_correcta CHAR(1) NOT NULL,
+      explicacio        TEXT,
+      creat_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_bank_node (node_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS sr_pregunta (
+      id                     INT AUTO_INCREMENT PRIMARY KEY,
+      usuari_id              INT NOT NULL,
+      pregunta_id            INT NOT NULL,
+      propera_revisio        DATE NOT NULL,
+      interval_dies          INT DEFAULT 1,
+      num_revisions          INT DEFAULT 0,
+      consecutives_correctes INT DEFAULT 0,
+      UNIQUE KEY uq_usuari_pregunta (usuari_id, pregunta_id),
+      FOREIGN KEY (usuari_id)   REFERENCES usuaris(id) ON DELETE CASCADE,
+      FOREIGN KEY (pregunta_id) REFERENCES preguntes_bank(id) ON DELETE CASCADE
+    )
+  `);
+  // Columnes addicionals a preguntes_log
+  for (const col of [
+    'ALTER TABLE preguntes_log ADD COLUMN pregunta_bank_id INT NULL',
+    'ALTER TABLE preguntes_log ADD COLUMN explicacio TEXT NULL',
+  ]) {
+    try { await pool.query(col); } catch (e) { if (e.errno !== 1060) throw e; }
+  }
+  console.log('✓ Taules verificades/creades');
+}
+
 async function main() {
   const targetNode = process.argv[2];
 
@@ -195,6 +232,8 @@ async function main() {
     database: process.env.DB_NAME,
     port:     parseInt(process.env.DB_PORT || '3306'),
   });
+
+  await ensureTables(pool);
 
   const nodes = targetNode
     ? (NODES[targetNode] ? [NODES[targetNode]] : [])
