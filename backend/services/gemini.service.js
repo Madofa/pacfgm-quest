@@ -42,14 +42,14 @@ Respon ÚNICAMENT en format JSON vàlid, sense cap text fora del JSON:
   }
 
   const json = await response.json();
-  // gemini-2.5-flash és un model "thinking" — pot tenir múltiples parts
+  // Log complet per debugar
+  console.error('[gemini] raw:', JSON.stringify(json).slice(0, 500));
   const parts = json.candidates?.[0]?.content?.parts || [];
-  console.log('[gemini] parts count:', parts.length, '| finish_reason:', json.candidates?.[0]?.finishReason);
   const text = parts
     .filter(p => p.text && !p.thought)
     .map(p => p.text)
     .join('').trim();
-  console.log('[gemini] text preview:', text.slice(0, 200));
+  console.error('[gemini] text:', text.slice(0, 300));
   if (!text) throw new Error(`Resposta buida. finishReason: ${json.candidates?.[0]?.finishReason}`);
 
   const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
