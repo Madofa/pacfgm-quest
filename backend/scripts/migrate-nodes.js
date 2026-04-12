@@ -24,6 +24,16 @@ async function migrateNodes(pool) {
   try {
     await conn.beginTransaction();
 
+    // ── Taula tokens recuperació contrasenya ──────────────────────────────────
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        usuari_id  INT NOT NULL PRIMARY KEY,
+        token      VARCHAR(64) NOT NULL,
+        expira_at  DATETIME NOT NULL,
+        FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE CASCADE
+      )
+    `);
+
     // ── Taules noves ─────────────────────────────────────────────────────────
 
     // Banc de preguntes generades per Gemini (persistents i reutilitzables)

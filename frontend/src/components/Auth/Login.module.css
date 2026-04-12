@@ -40,6 +40,41 @@
   margin-top: var(--spacing-md);
 }
 
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  letter-spacing: 2px;
+  padding: var(--spacing-md);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.tab:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-panel-2);
+}
+
+.tabActive {
+  color: var(--color-neon-green);
+  background: var(--color-bg-panel-2);
+  border-bottom: 2px solid var(--color-neon-green);
+}
+
 .form {
   padding: var(--spacing-xl);
   display: flex;
@@ -118,4 +153,56 @@
   font-family: var(--font-game);
   font-size: var(--font-size-game-sm);
   color: var(--color-text-disabled);
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.linkBtn:hover {
+  color: var(--color-text-primary);
+}
+
+.forgotDesc {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.successBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+  padding: var(--spacing-md) 0;
+}
+
+.successIcon {
+  font-size: 40px;
+  color: var(--color-neon-green);
+  text-shadow: 0 0 12px var(--color-neon-green);
+}
+
+.successBox p {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.successHint {
+  color: var(--color-text-secondary) !important;
+  font-size: var(--font-size-body-xs) !important;
 }

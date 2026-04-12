@@ -1,7 +1,9 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../db/connection');
 const { ROOT_NODES } = require('../data/skillTree');
+const { enviarRecuperacioContrasenya, enviarBenvinguda } = require('../services/email.service');
 
 const SALT_ROUNDS = 10;
 
@@ -54,6 +56,9 @@ async function register(req, res) {
       );
     }
 
+    // Email de benvinguda (no bloqueja el registre si falla)
+    try { await enviarBenvinguda(email, nom, alias); } catch (_) {}
+
     return res.status(201).json({ token: signToken(usuari), usuari: formatUsuari(usuari) });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -103,4 +108,56 @@ async function me(req, res) {
   }
 }
 
-module.exports = { register, login, me };
+async function forgotPassword(req, res) {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Cal indicar un email' });
+
+  try {
+    const [rows] = await pool.query('SELECT id, nom FROM usuaris WHERE email = ?', [email]);
+    // Sempre resposta 200 per no revelar si l'email existeix
+    if (rows.length === 0) return res.json({ ok: true });
+
+    const usuari = rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expira = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await pool.query(
+      `INSERT INTO password_reset_tokens (usuari_id, token, expira_at)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE token = VALUES(token), expira_at = VALUES(expira_at)`,
+      [usuari.id, token, expira]
+    );
+
+    await enviarRecuperacioContrasenya(email, usuari.nom, token);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error enviant el correu' });
+  }
+}
+
+async function resetPassword(req, res) {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Falten dades' });
+  if (password.length < 6) return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 6 caràcters' });
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT usuari_id FROM password_reset_tokens WHERE token = ? AND expira_at > NOW()',
+      [token]
+    );
+    if (rows.length === 0) return res.status(400).json({ error: 'Enllaç invàlid o caducat' });
+
+    const usuariId = rows[0].usuari_id;
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
+    await pool.query('UPDATE usuaris SET password_hash = ? WHERE id = ?', [hash, usuariId]);
+    await pool.query('DELETE FROM password_reset_tokens WHERE usuari_id = ?', [usuariId]);
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { register, login, me, forgotPassword, resetPassword };
