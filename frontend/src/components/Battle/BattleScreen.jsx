@@ -126,7 +126,7 @@ export default function BattleScreen() {
   if (fase === 'final' && resultatFinal) {
     const superat = resultatFinal.superat;
     return (
-      <div className={`${styles.page} ${superat ? styles.pageVictoria : styles.pageDerrota}`}>
+      <div className={`${styles.page} ${styles.pageFinal} ${superat ? styles.pageVictoria : styles.pageDerrota}`}>
         <div className={styles.finalCard}>
           <div className={styles.finalIcon}>{superat ? '⭐' : '💀'}</div>
           <div className={styles.finalTitle} style={{ color: superat ? 'var(--color-neon-green)' : 'var(--color-neon-red)' }}>

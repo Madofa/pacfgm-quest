@@ -6,6 +6,10 @@
 
 .pageVictoria { animation: victory-flash 0.8s ease-in-out; }
 .pageDerrota  { animation: defeat-shake 0.5s ease-in-out; }
+.pageFinal {
+  align-items: center;
+  justify-content: center;
+}
 
 @keyframes victory-flash {
   0%, 100% { background-color: transparent; }
