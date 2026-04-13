@@ -13,10 +13,23 @@ export default function SkillTree() {
   const navigate = useNavigate();
   const [materiaActiva, setMateriaActiva] = useState('mates');
   const [srDots, setSrDots] = useState({});
+  const [errorsPerNode, setErrorsPerNode] = useState(new Set());
+  const [confirmNode, setConfirmNode] = useState(null); // node que espera confirmació
 
   useEffect(() => {
     api.progres.srDots().then(setSrDots).catch(() => {});
+    api.progres.errorsRecents()
+      .then(grups => setErrorsPerNode(new Set(grups.map(g => g.node_id))))
+      .catch(() => {});
   }, []);
+
+  function handleNodeClick(nodeId) {
+    if (errorsPerNode.has(nodeId)) {
+      setConfirmNode(nodeId);
+    } else {
+      navigate(`/battle/${nodeId}`);
+    }
+  }
 
   // Agrupar nodes per materia
   const nodesByMateria = {};
@@ -94,7 +107,12 @@ export default function SkillTree() {
             <div className={styles.chain}>
               {nodesActius.map((node, i) => (
                 <div key={node.node_id} className={styles.nodeWrapper}>
-                  <SkillNode node={node} color={cfg.color} srDots={srDots[node.node_id] || []} />
+                  <SkillNode
+                    node={node}
+                    color={cfg.color}
+                    srDots={srDots[node.node_id] || []}
+                    onBattle={handleNodeClick}
+                  />
                   {i < nodesActius.length - 1 && (
                     <div
                       className={`${styles.connector} ${
@@ -124,6 +142,34 @@ export default function SkillTree() {
           ))}
         </div>
       </main>
+
+      {/* Modal avís errors pendents */}
+      {confirmNode && (
+        <>
+          <div className={styles.modalOverlay} onClick={() => setConfirmNode(null)} />
+          <div className={styles.modal}>
+            <div className={styles.modalIcon}>⚠</div>
+            <p className={styles.modalText}>
+              Tens errors pendents de repassar en aquest tema.
+              Repassar ara t'ajudarà a consolidar millor.
+            </p>
+            <div className={styles.modalBtns}>
+              <button
+                className={styles.modalBtnPrimary}
+                onClick={() => { setConfirmNode(null); navigate('/repas'); }}
+              >
+                REPASSAR PRIMER
+              </button>
+              <button
+                className={styles.modalBtnSecondary}
+                onClick={() => { setConfirmNode(null); navigate(`/battle/${confirmNode}`); }}
+              >
+                CONTINUAR ENTRENANT
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

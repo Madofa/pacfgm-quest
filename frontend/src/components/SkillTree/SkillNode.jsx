@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { ESTAT_CONFIG } from '../../data/skillTree';
 import styles from './SkillNode.module.css';
 
@@ -34,13 +33,12 @@ function SrDots({ dots = [], showEmpty = false }) {
   );
 }
 
-export default function SkillNode({ node, color, srDots = [] }) {
-  const navigate = useNavigate();
+export default function SkillNode({ node, color, srDots = [], onBattle }) {
   const cfg = ESTAT_CONFIG[node.estat] || ESTAT_CONFIG.bloquejat;
   const clickable = node.estat === 'disponible' || node.estat === 'completat' || node.estat === 'dominat';
 
   function handleClick() {
-    if (clickable) navigate(`/battle/${node.node_id}`);
+    if (clickable && onBattle) onBattle(node.node_id);
   }
 
   return (
