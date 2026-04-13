@@ -3,3 +3,6 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/r307889/pacfgm-quest/backend/
     - /bin/cp -rf $TRAVIS_BUILD_DIR/backend/. $DEPLOYPATH
+    - /bin/cp -rf $TRAVIS_BUILD_DIR/frontend/dist/. /home/r307889/quest.sinilos.com/ || true
+    - /bin/cp -r $DEPLOYPATH/node_modules $TRAVIS_BUILD_DIR/backend/ || true
+    - mkdir -p $TRAVIS_BUILD_DIR/backend/tmp && touch $TRAVIS_BUILD_DIR/backend/tmp/restart.txt
