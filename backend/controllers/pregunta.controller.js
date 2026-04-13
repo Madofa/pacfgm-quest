@@ -614,7 +614,7 @@ Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
       }),
     });
 
