@@ -33,7 +33,7 @@
 }
 
 .value {
-  font-size: 52px;
+  font-size: 36px;
   line-height: 1;
   letter-spacing: 2px;
 }
@@ -42,23 +42,27 @@
   font-size: var(--font-size-game-sm);
   color: var(--color-text-disabled);
   letter-spacing: 3px;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .dateBtn {
   background: none;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-disabled);
+  border: 2px solid var(--color-neon-red);
+  color: var(--color-neon-red);
   font-family: var(--font-game);
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 1px;
-  padding: 4px 8px;
+  padding: 8px 14px;
   cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  width: 100%;
+  text-shadow: 0 0 6px var(--color-neon-red);
+  box-shadow: 0 0 8px rgba(255, 56, 96, 0.3);
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 .dateBtn:hover {
   border-color: var(--color-neon-orange);
   color: var(--color-neon-orange);
+  box-shadow: 0 0 12px rgba(255, 107, 0, 0.5);
 }
 
 .editWrap {
