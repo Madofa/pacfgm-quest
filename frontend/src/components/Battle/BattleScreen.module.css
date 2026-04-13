@@ -457,6 +457,13 @@
   letter-spacing: 2px;
 }
 
+.uploadHint {
+  font-size: 10px;
+  color: var(--color-text-disabled);
+  font-style: italic;
+  margin-top: -4px;
+}
+
 .uploadZone {
   border: 1px dashed var(--color-border);
   border-radius: 2px;

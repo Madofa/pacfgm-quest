@@ -349,7 +349,12 @@ async function resposta(req, res) {
     );
 
     // Actualitzar SR per a aquesta pregunta individual
-    if (preg.pregunta_bank_id) {
+    // Per a mates/ciències/tecnologia: si correcte, l'SR s'actualitzarà quan l'alumne
+    // pugi la imatge del desenvolupament (es valora el procediment, no la resposta test).
+    // Si incorrecte, baixa igualment (ha fallat sense necessitat de veure el procediment).
+    const materia = sessions[0].node_id?.split('-')[0];
+    const esCalcul = ['mates', 'ciencies', 'tecnologia'].includes(materia);
+    if (preg.pregunta_bank_id && (!esCalcul || !esCorrecte)) {
       await actualitzarSR(usuariId, preg.pregunta_bank_id, esCorrecte);
     }
 
@@ -680,14 +685,36 @@ async function analitzarImatge(req, res) {
       nodeId: node_id || '',
     });
 
-    // Guardar el text al log si tenim sessio_id i índex
+    // Guardar el text al log i actualitzar SR basant-se en el procediment
     if (sessio_id && pregunta_idx !== undefined) {
+      const idx = parseInt(pregunta_idx, 10);
       const textGuardar = JSON.stringify(analisi);
+
+      // Guardar anàlisi al log
       await pool.query(
         `UPDATE preguntes_log SET desenvolupament_text = ?
-         WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ${parseInt(pregunta_idx, 10)}`,
+         WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ${idx}`,
         [textGuardar, sessio_id]
-      ).catch(() => {}); // No és crític si falla
+      ).catch(() => {});
+
+      // Actualitzar SR basant-se en correcte_procediment (no en la resposta test)
+      // Només per a mates/ciències/tecnologia
+      const materia = node_id?.split('-')[0];
+      if (['mates', 'ciencies', 'tecnologia'].includes(materia)) {
+        try {
+          const [logRows] = await pool.query(
+            `SELECT pregunta_bank_id FROM preguntes_log
+             WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ?`,
+            [sessio_id, idx]
+          );
+          const bankId = logRows[0]?.pregunta_bank_id;
+          if (bankId && req.usuari?.id) {
+            await actualitzarSR(req.usuari.id, bankId, !!analisi.correcte_procediment);
+          }
+        } catch (e) {
+          console.warn('[analitzar-imatge] SR update:', e.message);
+        }
+      }
     }
 
     return res.json(analisi);

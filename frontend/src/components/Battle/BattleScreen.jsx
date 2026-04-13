@@ -65,6 +65,7 @@ function UploadDesenvolupament({ sessioId, numeroPregunta, preguntaText, respost
   return (
     <div className={styles.uploadWrap} style={{ '--upload-color': color }}>
       <div className={styles.uploadLabel}>📐 PUJA EL TEU DESENVOLUPAMENT</div>
+      <div className={styles.uploadHint}>Cal pujar el teu treball per actualitzar la memòria d'aquesta pregunta</div>
 
       {estat === 'idle' && (
         <div
