@@ -19,13 +19,13 @@ const RANG_COLORS = {
   mestre:   'var(--color-neon-orange)',
 };
 
-// drop-shadow color per rank (hex, perquè CSS vars no funcionen dins filter)
-const RANG_SHADOW = {
-  novici:   null,
-  aprenent: '#4fc3f7',
-  guerrer:  '#39ff14',
-  campió:   '#ffd700',
-  mestre:   '#ff6600',
+// Filtre CSS complet per rang — canvia color + brillantor + ombra
+const RANG_FILTER = {
+  novici:   'grayscale(70%) brightness(0.85)',
+  aprenent: 'hue-rotate(170deg) saturate(1.4) brightness(1.1) drop-shadow(0 0 5px #4fc3f7) drop-shadow(0 0 14px #4fc3f788)',
+  guerrer:  'hue-rotate(90deg) saturate(1.6) brightness(1.1) drop-shadow(0 0 5px #39ff14) drop-shadow(0 0 14px #39ff1488)',
+  campió:   'sepia(100%) saturate(4) hue-rotate(10deg) brightness(1.15) drop-shadow(0 0 6px #ffd700) drop-shadow(0 0 18px #ffd70088)',
+  mestre:   'hue-rotate(310deg) saturate(2) brightness(1.2) drop-shadow(0 0 6px #ff6600) drop-shadow(0 0 20px #ff660099)',
 };
 
 const IDLE_FRAMES = [
@@ -95,9 +95,7 @@ function AdventurerSprite({ rang, isHovered }) {
         width:  `${50 * SCALE}px`,
         height: `${37 * SCALE}px`,
         imageRendering: 'pixelated',
-        filter: RANG_SHADOW[rang]
-          ? `drop-shadow(0 0 4px ${RANG_SHADOW[rang]}) drop-shadow(0 0 12px ${RANG_SHADOW[rang]}88)`
-          : 'none',
+        filter: RANG_FILTER[rang] || 'none',
       }}
       draggable={false}
     />
@@ -153,6 +151,7 @@ export default function CharacterPanel({ usuari }) {
     <div className={styles.wrapper}>
       <div
         className={styles.spriteArea}
+        data-rang={rang}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{ cursor: 'pointer' }}
