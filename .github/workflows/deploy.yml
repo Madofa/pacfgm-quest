@@ -8,7 +8,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Copy dist + restart via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERED_HOST }}
@@ -18,8 +32,18 @@ jobs:
           script: |
             cd ~/repositories/pacfgm-quest
             git pull origin main
-            cp -rf ~/repositories/pacfgm-quest/frontend/dist/. ~/quest.sinilos.com/ || true
             cp -r ~/pacfgm-quest/backend/node_modules ~/repositories/pacfgm-quest/backend/ || true
             mkdir -p ~/repositories/pacfgm-quest/backend/tmp
             touch ~/repositories/pacfgm-quest/backend/tmp/restart.txt
             echo "Deploy completat: $(git log --oneline -1)"
+
+      - name: Upload dist via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERED_HOST }}
+          username: ${{ secrets.SERED_USER }}
+          key: ${{ secrets.SERED_SSH_KEY }}
+          port: 1020
+          source: "frontend/dist/*"
+          target: "/home/r307889/quest.sinilos.com/"
+          strip_components: 2
