@@ -208,10 +208,19 @@ export default function Dashboard() {
             <span className={styles.statLabel}>GRUP</span>
             {grups === null ? (
               <span className={styles.statSub}>...</span>
-            ) : grups.length > 0 ? (
+            ) : grups.length > 0 && !grups[0].pendent ? (
               <span className={styles.statSub} style={{ color: 'var(--color-neon-green)' }}>
                 {grups[0].nom}
               </span>
+            ) : grups.length > 0 && grups[0].pendent ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span className={styles.statSub} style={{ color: 'var(--color-neon-orange)', fontSize: 10 }}>
+                  ⏳ {grups[0].nom}
+                </span>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: 9, color: 'var(--color-text-disabled)', lineHeight: 1.3 }}>
+                  Pendent d'aprovació pel tutor
+                </span>
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <input

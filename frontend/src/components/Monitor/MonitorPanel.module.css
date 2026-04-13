@@ -411,6 +411,112 @@
   border-radius: 2px;
 }
 
+/* ── Peticions pendents ──────────────────────────────────────────────────────── */
+.peticions {
+  background: rgba(255, 107, 53, 0.06);
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.peticionsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.peticionsTitol {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-orange);
+  letter-spacing: 2px;
+}
+
+.peticionsCount {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-neon-orange);
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid var(--color-neon-orange);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.peticioRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.1);
+  flex-wrap: wrap;
+}
+.peticioRow:last-child { border-bottom: none; }
+
+.peticioAlias {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-primary);
+  letter-spacing: 1px;
+  min-width: 100px;
+}
+
+.peticioNom {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+  flex: 1;
+}
+
+.peticioGrup {
+  font-family: var(--font-game);
+  font-size: 9px;
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
+}
+
+.peticioAccions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-left: auto;
+}
+
+.btnAprovar {
+  font-family: var(--font-game);
+  font-size: 9px;
+  color: var(--color-bg-deep);
+  background: var(--color-neon-green);
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+}
+.btnAprovar:hover { opacity: 0.85; }
+
+.btnRebutjar {
+  font-family: var(--font-game);
+  font-size: 9px;
+  color: var(--color-neon-red);
+  background: transparent;
+  border: 1px solid var(--color-neon-red);
+  padding: 5px 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.btnRebutjar:hover { background: rgba(255, 56, 96, 0.1); }
+
 /* Botó informe */
 .informeBtn {
   background: transparent;

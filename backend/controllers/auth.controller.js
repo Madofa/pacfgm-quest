@@ -22,6 +22,7 @@ function formatUsuari(row) {
     alias:        row.alias,
     email:        row.email,
     rol:          row.rol,
+    subtipus:     row.subtipus || null,
     rang:         row.rang,
     nivell:       row.nivell,
     xp_total:     row.xp_total,
@@ -31,17 +32,22 @@ function formatUsuari(row) {
 }
 
 async function register(req, res) {
-  const { nom, alias, email, password, rol = 'alumne' } = req.body;
+  const { nom, alias, email, password, rol: rolRaw, subtipus: subtipusRaw } = req.body;
 
   if (!nom || !alias || !email || !password) {
     return res.status(400).json({ error: 'Falten camps obligatoris: nom, alias, email, password' });
   }
 
+  // Únicament s'accepten rols vàlids; qualsevol altra cosa és 'alumne'
+  const SUBTIPUS_MONITOR = ['pare', 'professor', 'equip'];
+  const rol      = (rolRaw === 'monitor') ? 'monitor' : 'alumne';
+  const subtipus = (rol === 'monitor' && SUBTIPUS_MONITOR.includes(subtipusRaw)) ? subtipusRaw : null;
+
   try {
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const [result] = await pool.query(
-      'INSERT INTO usuaris (nom, alias, email, password_hash, rol) VALUES (?, ?, ?, ?, ?)',
-      [nom, alias, email, password_hash, rol]
+      'INSERT INTO usuaris (nom, alias, email, password_hash, rol, subtipus) VALUES (?, ?, ?, ?, ?, ?)',
+      [nom, alias, email, password_hash, rol, subtipus]
     );
 
     const [rows] = await pool.query('SELECT * FROM usuaris WHERE id = ?', [result.insertId]);

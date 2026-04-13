@@ -76,6 +76,22 @@ async function migrateNodes(pool) {
       )
     `);
 
+    // subtipus_monitor: diferenciar pare / professor / equip
+    try {
+      await conn.execute(`ALTER TABLE usuaris ADD COLUMN subtipus VARCHAR(20) NULL`);
+      console.log('[migrate] Columna subtipus afegida a usuaris');
+    } catch (e) { if (e.errno !== 1060) throw e; }
+
+    // estat a grups_membres: 'pendent' fins que el monitor aprovi, 'actiu' un cop dins
+    try {
+      await conn.execute(
+        `ALTER TABLE grups_membres ADD COLUMN estat ENUM('pendent','actiu') NOT NULL DEFAULT 'actiu'`
+      );
+      // Els membres existents queden com a actius
+      await conn.execute(`UPDATE grups_membres SET estat = 'actiu' WHERE estat != 'actiu'`);
+      console.log('[migrate] Columna estat afegida a grups_membres');
+    } catch (e) { if (e.errno !== 1060) throw e; }
+
     // ── Reports de bugs / feedback ────────────────────────────────────────────
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS feedback (

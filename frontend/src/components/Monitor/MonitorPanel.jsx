@@ -304,14 +304,39 @@ function GrupHeader({ grups }) {
 
 // ── Component principal ───────────────────────────────────────────────────────
 
+// ── Secció peticions pendents ─────────────────────────────────────────────────
+function PeticionsPendents({ peticions, onAprovar, onRebutjar }) {
+  if (peticions.length === 0) return null;
+  return (
+    <div className={styles.peticions}>
+      <div className={styles.peticionsHead}>
+        <span className={styles.peticionsTitol}>⏳ SOL·LICITUDS D'ACCÉS</span>
+        <span className={styles.peticionsCount}>{peticions.length}</span>
+      </div>
+      {peticions.map(p => (
+        <div key={p.id} className={styles.peticioRow}>
+          <span className={styles.peticioAlias}>{p.alias}</span>
+          <span className={styles.peticioNom}>{p.nom}</span>
+          <span className={styles.peticioGrup}>{p.grup_nom}</span>
+          <div className={styles.peticioAccions}>
+            <button className={styles.btnAprovar} onClick={() => onAprovar(p.id)}>✓ ACCEPTAR</button>
+            <button className={styles.btnRebutjar} onClick={() => onRebutjar(p.id)}>✕ REBUTJAR</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function MonitorPanel() {
   const { usuari, logout } = useAuth();
   const navigate = useNavigate();
-  const [grups, setGrups]           = useState(null); // null = loading
+  const [grups, setGrups]           = useState(null);
   const [alumnes, setAlumnes]       = useState([]);
   const [loadingAlumnes, setLA]     = useState(false);
   const [sort, setSort]             = useState('xp_setmana');
-  const [alumneInforme, setAlumneInforme] = useState(null); // alumne per mostrar informe
+  const [peticions, setPeticions]   = useState([]);
+  const [alumneInforme, setAlumneInforme] = useState(null);
 
   const obrirInforme  = useCallback((a) => setAlumneInforme(a), []);
   const tancarInforme = useCallback(() => setAlumneInforme(null), []);
@@ -324,7 +349,21 @@ export default function MonitorPanel() {
     if (!grups || grups.length === 0) return;
     setLA(true);
     api.grup.progres().then(setAlumnes).catch(() => {}).finally(() => setLA(false));
+    // Carregar peticions pendents
+    api.grup.peticions().then(setPeticions).catch(() => {});
   }, [grups]);
+
+  async function aprovar(alumneId) {
+    await api.grup.aprovar(alumneId).catch(() => {});
+    setPeticions(ps => ps.filter(p => p.id !== alumneId));
+    // Refrescar llista d'alumnes
+    api.grup.progres().then(setAlumnes).catch(() => {});
+  }
+
+  async function rebutjar(alumneId) {
+    await api.grup.rebutjar(alumneId).catch(() => {});
+    setPeticions(ps => ps.filter(p => p.id !== alumneId));
+  }
 
   function onGrupCreat(grup) {
     setGrups([{ ...grup, num_alumnes: 0, num_monitors: 1 }]);
@@ -359,6 +398,12 @@ export default function MonitorPanel() {
         ) : (
           <>
             <GrupHeader grups={grups} />
+
+            <PeticionsPendents
+              peticions={peticions}
+              onAprovar={aprovar}
+              onRebutjar={rebutjar}
+            />
 
             <div className={styles.summary}>
               <div className={styles.summaryItem}>

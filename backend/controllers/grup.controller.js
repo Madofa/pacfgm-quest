@@ -55,18 +55,25 @@ async function unirGrup(req, res) {
     if (grups.length === 0) return res.status(404).json({ error: 'Codi de grup incorrecte' });
 
     const grup = grups[0];
-    const rolGrup = req.usuari.rol === 'monitor' ? 'monitor' : 'alumne';
+    const esMonitor = req.usuari.rol === 'monitor';
+    const rolGrup   = esMonitor ? 'monitor' : 'alumne';
 
-    // Comprovar si ja és membre
+    // Comprovar si ja és membre (actiu o pendent)
     const [existing] = await pool.query(
-      'SELECT * FROM grups_membres WHERE grup_id = ? AND usuari_id = ?',
+      'SELECT estat FROM grups_membres WHERE grup_id = ? AND usuari_id = ?',
       [grup.id, req.usuari.id]
     );
     if (existing.length > 0) {
-      return res.json({ ok: true, grup: { id: grup.id, nom: grup.nom, codi: grup.codi }, ja_membre: true });
+      const estat = existing[0].estat;
+      return res.json({
+        ok: true,
+        grup: { id: grup.id, nom: grup.nom, codi: grup.codi },
+        ja_membre: true,
+        pendent: estat === 'pendent',
+      });
     }
 
-    // Si és alumne i ja pertany a un altre grup, sortir d'aquell primer
+    // Si és alumne i ja pertany a un altre grup (actiu), sortir d'aquell primer
     if (rolGrup === 'alumne') {
       await pool.query(
         "DELETE FROM grups_membres WHERE usuari_id = ? AND rol_grup = 'alumne'",
@@ -74,12 +81,18 @@ async function unirGrup(req, res) {
       );
     }
 
+    // Monitors entren directament com a actius; alumnes queden pendents d'aprovació
+    const estatNou = esMonitor ? 'actiu' : 'pendent';
     await pool.query(
-      'INSERT INTO grups_membres (grup_id, usuari_id, rol_grup) VALUES (?, ?, ?)',
-      [grup.id, req.usuari.id, rolGrup]
+      'INSERT INTO grups_membres (grup_id, usuari_id, rol_grup, estat) VALUES (?, ?, ?, ?)',
+      [grup.id, req.usuari.id, rolGrup, estatNou]
     );
 
-    return res.json({ ok: true, grup: { id: grup.id, nom: grup.nom, codi: grup.codi } });
+    return res.json({
+      ok: true,
+      grup: { id: grup.id, nom: grup.nom, codi: grup.codi },
+      pendent: !esMonitor,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Error intern' });
@@ -92,15 +105,17 @@ async function elsMemsGrups(req, res) {
   try {
     const [rows] = await pool.query(
       `SELECT g.id, g.nom, g.codi,
-              COUNT(DISTINCT CASE WHEN gm2.rol_grup = 'alumne'  THEN gm2.usuari_id END) AS num_alumnes,
-              COUNT(DISTINCT CASE WHEN gm2.rol_grup = 'monitor' THEN gm2.usuari_id END) AS num_monitors
+              gm.estat AS estat_membre,
+              COUNT(DISTINCT CASE WHEN gm2.rol_grup = 'alumne'  AND gm2.estat = 'actiu' THEN gm2.usuari_id END) AS num_alumnes,
+              COUNT(DISTINCT CASE WHEN gm2.rol_grup = 'monitor' AND gm2.estat = 'actiu' THEN gm2.usuari_id END) AS num_monitors
        FROM grups g
        JOIN grups_membres gm  ON gm.grup_id  = g.id AND gm.usuari_id = ?
        LEFT JOIN grups_membres gm2 ON gm2.grup_id = g.id
-       GROUP BY g.id`,
+       GROUP BY g.id, gm.estat`,
       [req.usuari.id]
     );
-    return res.json(rows);
+    // Afegim flag 'pendent' per facilitar la UI
+    return res.json(rows.map(r => ({ ...r, pendent: r.estat_membre === 'pendent' })));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Error intern' });
@@ -146,6 +161,7 @@ async function progresGrup(req, res) {
        JOIN usuaris u ON u.id = gm_alumne.usuari_id
        LEFT JOIN progres_nodes pn ON pn.usuari_id = u.id
        WHERE gm_monitor.usuari_id = ? AND gm_monitor.rol_grup = 'monitor'
+         AND gm_alumne.estat = 'actiu'
          AND u.actiu = TRUE
        GROUP BY u.id
        ORDER BY u.xp_setmana DESC`,
@@ -171,6 +187,87 @@ async function progresGrup(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+// ── PETICIONS PENDENTS (alumnes esperant aprovació) ───────────────────────────
+
+async function peticionsPendents(req, res) {
+  if (req.usuari.rol !== 'monitor') return res.status(403).json({ error: 'Accés restringit' });
+  try {
+    const [rows] = await pool.query(
+      `SELECT u.id, u.alias, u.nom, u.rang, u.nivell, gm.unit_at, gm.grup_id, g.nom AS grup_nom
+       FROM grups_membres gm
+       JOIN usuaris u ON u.id = gm.usuari_id
+       JOIN grups g ON g.id = gm.grup_id
+       JOIN grups_membres gm_mon ON gm_mon.grup_id = g.id AND gm_mon.usuari_id = ? AND gm_mon.rol_grup = 'monitor'
+       WHERE gm.estat = 'pendent' AND gm.rol_grup = 'alumne'
+       ORDER BY gm.unit_at ASC`,
+      [req.usuari.id]
+    );
+    return res.json(rows);
+  } catch (err) {
+    console.error(err); return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+// ── APROVAR MEMBRE ────────────────────────────────────────────────────────────
+
+async function aprovarMembre(req, res) {
+  if (req.usuari.rol !== 'monitor') return res.status(403).json({ error: 'Accés restringit' });
+  const alumneId = parseInt(req.params.alumne_id, 10);
+
+  try {
+    // Verificar que el monitor gestiona el grup d'aquest alumne
+    const [rows] = await pool.query(
+      `UPDATE grups_membres gm
+       JOIN grups_membres gm_mon ON gm_mon.grup_id = gm.grup_id AND gm_mon.usuari_id = ? AND gm_mon.rol_grup = 'monitor'
+       SET gm.estat = 'actiu'
+       WHERE gm.usuari_id = ? AND gm.estat = 'pendent'`,
+      [req.usuari.id, alumneId]
+    );
+    if (rows.affectedRows === 0) return res.status(404).json({ error: 'Petició no trobada' });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+// ── REBUTJAR MEMBRE ───────────────────────────────────────────────────────────
+
+async function rebutjarMembre(req, res) {
+  if (req.usuari.rol !== 'monitor') return res.status(403).json({ error: 'Accés restringit' });
+  const alumneId = parseInt(req.params.alumne_id, 10);
+
+  try {
+    await pool.query(
+      `DELETE gm FROM grups_membres gm
+       JOIN grups_membres gm_mon ON gm_mon.grup_id = gm.grup_id AND gm_mon.usuari_id = ? AND gm_mon.rol_grup = 'monitor'
+       WHERE gm.usuari_id = ? AND gm.estat = 'pendent'`,
+      [req.usuari.id, alumneId]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+// ── ELIMINAR MEMBRE (monitor treu un alumne actiu) ────────────────────────────
+
+async function eliminarMembre(req, res) {
+  if (req.usuari.rol !== 'monitor') return res.status(403).json({ error: 'Accés restringit' });
+  const alumneId = parseInt(req.params.alumne_id, 10);
+
+  try {
+    await pool.query(
+      `DELETE gm FROM grups_membres gm
+       JOIN grups_membres gm_mon ON gm_mon.grup_id = gm.grup_id AND gm_mon.usuari_id = ? AND gm_mon.rol_grup = 'monitor'
+       WHERE gm.usuari_id = ? AND gm.rol_grup = 'alumne'`,
+      [req.usuari.id, alumneId]
+    );
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ error: 'Error intern' });
   }
 }
 
@@ -247,4 +344,8 @@ async function informeAlumne(req, res) {
   }
 }
 
-module.exports = { leaderboard, progresGrup, crearGrup, unirGrup, elsMemsGrups, informeAlumne };
+module.exports = {
+  leaderboard, progresGrup, crearGrup, unirGrup, elsMemsGrups,
+  peticionsPendents, aprovarMembre, rebutjarMembre, eliminarMembre,
+  informeAlumne,
+};

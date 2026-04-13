@@ -24,7 +24,7 @@ async function request(path, options = {}) {
 export const api = {
   auth: {
     login:          (email, password) => request('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-    register:       (nom, alias, email, password) => request('/api/auth/register', { method: 'POST', body: JSON.stringify({ nom, alias, email, password }) }),
+    register:       (nom, alias, email, password, rol, subtipus) => request('/api/auth/register', { method: 'POST', body: JSON.stringify({ nom, alias, email, password, rol, subtipus }) }),
     me:             () => request('/api/auth/me'),
     perfil:         (alias) => request('/api/auth/perfil', { method: 'PATCH', body: JSON.stringify({ alias }) }),
     forgotPassword: (email) => request('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
@@ -52,6 +52,10 @@ export const api = {
     meus:        () => request('/api/grup/meus'),
     crear:       (nom) => request('/api/grup/crear', { method: 'POST', body: JSON.stringify({ nom }) }),
     unir:        (codi) => request('/api/grup/unir', { method: 'POST', body: JSON.stringify({ codi }) }),
+    peticions:   () => request('/api/grup/peticions'),
+    aprovar:     (alumneId) => request(`/api/grup/peticions/${alumneId}/aprovar`, { method: 'PATCH' }),
+    rebutjar:    (alumneId) => request(`/api/grup/peticions/${alumneId}`, { method: 'DELETE' }),
+    eliminar:    (alumneId) => request(`/api/grup/membres/${alumneId}`, { method: 'DELETE' }),
     informe:     (alumneId) => request(`/api/grup/informe/${alumneId}`),
   },
   feedback: {

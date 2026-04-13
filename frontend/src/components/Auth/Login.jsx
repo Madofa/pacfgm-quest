@@ -52,8 +52,64 @@ function LoginForm({ onForgot }) {
   );
 }
 
+// ── Selector de rol ───────────────────────────────────────────────────────────
+const ROLS = [
+  {
+    rol: 'alumne', subtipus: null,
+    icon: '⚔',
+    titol: 'ALUMNE',
+    desc: 'Estic preparant la PACFGM',
+    color: 'var(--color-neon-green)',
+  },
+  {
+    rol: 'monitor', subtipus: 'pare',
+    icon: '👨‍👩‍👧',
+    titol: 'PARE / MARE',
+    desc: 'Acompanyo el meu fill/a en la preparació',
+    color: 'var(--color-gold)',
+  },
+  {
+    rol: 'monitor', subtipus: 'professor',
+    icon: '👨‍🏫',
+    titol: 'PROFESSOR/A',
+    desc: 'Faig seguiment dels meus alumnes',
+    color: 'var(--color-neon-orange)',
+  },
+  {
+    rol: 'monitor', subtipus: 'equip',
+    icon: '🏫',
+    titol: 'EQUIP / ACADÈMIA',
+    desc: 'Grup de professors o centre educatiu',
+    color: 'var(--color-neon-blue, #4fc3f7)',
+  },
+];
+
+function RolSelector({ onSeleccionar }) {
+  return (
+    <div className={styles.rolSelector}>
+      <p className={styles.rolPregunta}>Qui ets?</p>
+      <div className={styles.rolGrid}>
+        {ROLS.map(r => (
+          <button
+            key={r.subtipus || 'alumne'}
+            type="button"
+            className={styles.rolCard}
+            style={{ '--rol-color': r.color }}
+            onClick={() => onSeleccionar(r)}
+          >
+            <span className={styles.rolIcon}>{r.icon}</span>
+            <span className={styles.rolTitol}>{r.titol}</span>
+            <span className={styles.rolDesc}>{r.desc}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Formulari registre ────────────────────────────────────────────────────────
 function RegisterForm() {
+  const [rolSelec, setRolSelec] = useState(null); // objecte de ROLS o null
   const [nom, setNom]           = useState('');
   const [alias, setAlias]       = useState('');
   const [email, setEmail]       = useState('');
@@ -67,7 +123,7 @@ function RegisterForm() {
     setError('');
     setLoading(true);
     try {
-      await api.auth.register(nom, alias, email, password);
+      await api.auth.register(nom, alias, email, password, rolSelec?.rol, rolSelec?.subtipus);
       setPendent(true);
     } catch (err) {
       setError(err.error || 'Error en el registre');
@@ -88,20 +144,45 @@ function RegisterForm() {
     );
   }
 
+  // Pas 1: triar rol
+  if (!rolSelec) {
+    return <RolSelector onSeleccionar={setRolSelec} />;
+  }
+
+  // Pas 2: formulari
+  const esMonitor = rolSelec.rol === 'monitor';
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
+      {/* Indicador de rol seleccionat */}
+      <div className={styles.rolActiu} style={{ '--rol-color': rolSelec.color }}>
+        <span>{rolSelec.icon} {rolSelec.titol}</span>
+        <button type="button" className={styles.rolCanviar} onClick={() => setRolSelec(null)}>
+          Canviar
+        </button>
+      </div>
+
       <div className={styles.field}>
         <label className={styles.label}>NOM COMPLET</label>
         <input type="text" className={styles.input}
           value={nom} onChange={e => setNom(e.target.value)}
-          placeholder="Maria García" required autoFocus />
+          placeholder={esMonitor ? 'Ana Martínez' : 'Maria García'} required autoFocus />
       </div>
-      <div className={styles.field}>
-        <label className={styles.label}>ÀLIES (NOM DE JOC)</label>
-        <input type="text" className={styles.input}
-          value={alias} onChange={e => setAlias(e.target.value)}
-          placeholder="DragonSlayer42" required />
-      </div>
+      {!esMonitor && (
+        <div className={styles.field}>
+          <label className={styles.label}>ÀLIES (NOM DE JOC)</label>
+          <input type="text" className={styles.input}
+            value={alias} onChange={e => setAlias(e.target.value)}
+            placeholder="DragonSlayer42" required />
+        </div>
+      )}
+      {esMonitor && (
+        <div className={styles.field}>
+          <label className={styles.label}>NOM DEL GRUP / REFERÈNCIA</label>
+          <input type="text" className={styles.input}
+            value={alias} onChange={e => setAlias(e.target.value)}
+            placeholder="Ex: Família Martínez / IES Miró" required />
+        </div>
+      )}
       <div className={styles.field}>
         <label className={styles.label}>EMAIL</label>
         <input type="email" className={styles.input}
@@ -115,7 +196,8 @@ function RegisterForm() {
           placeholder="Mínim 6 caràcters" required minLength={6} />
       </div>
       {error && <div className={styles.error}>{error}</div>}
-      <button className={styles.submitBtn} type="submit" disabled={loading}>
+      <button className={styles.submitBtn} type="submit" disabled={loading}
+        style={esMonitor ? { background: rolSelec.color, color: 'var(--color-bg-deep)', border: 'none' } : {}}>
         {loading ? 'CREANT COMPTE...' : '▶ CREAR COMPTE'}
       </button>
     </form>
