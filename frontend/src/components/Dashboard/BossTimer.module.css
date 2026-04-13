@@ -5,47 +5,44 @@
   gap: var(--spacing-sm);
 }
 
-.bossIcon {
-  font-size: 48px;
-  line-height: 1;
-  filter: drop-shadow(0 0 8px var(--color-neon-orange));
-}
-
 .countdown {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-family: var(--font-game);
-  color: var(--color-neon-orange);
-  text-shadow: 0 0 10px var(--color-neon-orange);
-  padding: var(--spacing-md) var(--spacing-lg);
-}
-
-.block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 0;
+  font-family: var(--font-game);
+  color: var(--color-neon-orange);
+  text-shadow: 0 0 10px var(--color-neon-orange);
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.rowSep {
+  width: 60%;
+  height: 1px;
+  background: rgba(255, 107, 0, 0.2);
+  margin: 2px auto;
 }
 
 .value {
-  font-size: 36px;
+  font-size: 52px;
   line-height: 1;
   letter-spacing: 2px;
 }
 
 .unit {
-  font-size: var(--font-size-game-xs);
+  font-size: var(--font-size-game-sm);
   color: var(--color-text-disabled);
-  letter-spacing: 1px;
-}
-
-.sep {
-  font-family: var(--font-game);
-  font-size: 20px;
-  color: var(--color-text-disabled);
-  align-self: flex-start;
-  padding-top: 4px;
+  letter-spacing: 3px;
+  padding-bottom: 6px;
 }
 
 .dateBtn {

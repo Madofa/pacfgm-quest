@@ -306,8 +306,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: 40px 24px;
+  gap: var(--spacing-lg);
+  padding: 32px 16px 28px;
   border: 1px solid var(--color-neon-orange);
   box-shadow: 0 0 16px rgba(255, 107, 0, 0.2), inset 0 0 24px rgba(255, 107, 0, 0.05);
   background: rgba(255, 107, 0, 0.04);
@@ -317,11 +317,9 @@
 
 .bossBlockLabel {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-xs);
+  font-size: var(--font-size-game-sm);
   color: var(--color-neon-orange);
-  letter-spacing: 1px;
-  opacity: 0.8;
-  white-space: nowrap;
+  letter-spacing: 3px;
   text-align: center;
   width: 100%;
 }

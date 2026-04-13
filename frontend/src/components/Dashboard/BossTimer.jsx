@@ -53,17 +53,15 @@ export default function BossTimer() {
 
   return (
     <div className={`${styles.wrapper} ${time.urgent ? styles.urgent : ''}`}>
-      <div className={styles.bossIcon}>{time.urgent ? '🔥' : '⚔'}</div>
-
       <div className={styles.countdown}>
-        <div className={styles.block}>
+        <div className={styles.row}>
           <span className={styles.value}>{time.dies}</span>
-          <span className={styles.unit}>dies</span>
+          <span className={styles.unit}>DIES</span>
         </div>
-        <span className={styles.sep}>:</span>
-        <div className={styles.block}>
+        <div className={styles.rowSep} />
+        <div className={styles.row}>
           <span className={styles.value}>{String(time.hores).padStart(2,'0')}</span>
-          <span className={styles.unit}>hores</span>
+          <span className={styles.unit}>HORES</span>
         </div>
       </div>
 
