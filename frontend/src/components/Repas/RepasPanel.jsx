@@ -11,6 +11,14 @@ function getOpcioText(opcio) {
   return typeof opcio === 'string' ? opcio.replace(/^[A-D]\.\s*/, '') : String(opcio || '');
 }
 
+function stripMd(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/`(.*?)`/g, '$1');
+}
+
 // ── Drawer lateral amb explicació detallada ──────────────────────────────────
 function ExplicacioDrawer({ error, nodeId, onTancar }) {
   const [explicacio, setExplicacio] = useState('');
@@ -82,7 +90,7 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
               <span>Buscant la millor explicació...</span>
             </div>
           ) : (
-            <div className={styles.drawerExplicacio}>{explicacio}</div>
+            <div className={styles.drawerExplicacio}>{stripMd(explicacio)}</div>
           )}
         </div>
       </div>

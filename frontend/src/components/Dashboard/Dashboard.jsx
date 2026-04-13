@@ -117,6 +117,12 @@ export default function Dashboard() {
     api.progres.memoria().then(setMemoria).catch(() => {});
   }, []);
 
+  // Errors a repassar (badge nav)
+  const [errorsCount, setErrorsCount] = useState(0);
+  useEffect(() => {
+    api.progres.errorsCount().then(d => setErrorsCount(d.count || 0)).catch(() => {});
+  }, []);
+
   // Grup de l'alumne
   const [grups, setGrups]           = useState(null);
   const [codiGrup, setCodiGrup]     = useState('');
@@ -148,9 +154,9 @@ export default function Dashboard() {
           <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
           <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RÀNQUING</button>
           <button className={styles.navBtn} onClick={() => navigate('/repas')} style={{ position: 'relative' }}>
-            REPÀS
-            {revisionsVisibles.length > 0 && (
-              <span className={styles.navBadge}>{revisionsVisibles.length}</span>
+            REPAS
+            {errorsCount > 0 && (
+              <span className={styles.navBadge}>{errorsCount}</span>
             )}
           </button>
           <button className={styles.navBtn} onClick={() => navigate('/ajuda')}>GUIA</button>

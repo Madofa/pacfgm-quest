@@ -37,6 +37,7 @@ export const api = {
     revisions:     () => request('/api/progres/revisions'),
     srDots:        () => request('/api/progres/sr-dots'),
     errorsRecents: () => request('/api/progres/errors-recents'),
+    errorsCount:   () => request('/api/progres/errors-count'),
     retencio:      () => request('/api/progres/retencio'),
     memoria:          () => request('/api/progres/memoria'),
     ultimesMillores:  () => request('/api/progres/ultimes-millores'),
