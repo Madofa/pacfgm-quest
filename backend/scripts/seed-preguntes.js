@@ -18,8 +18,8 @@ const { NODES } = require('../data/skillTree');
 
 const MODEL = 'gemini-2.5-flash';
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-const QUESTIONS_PER_NODE = 15; // Preguntes a generar per node
-const MIN_EXISTING = 8;        // No regenera si ja en té prou
+const QUESTIONS_PER_NODE = 30; // Preguntes a generar per node
+const MIN_EXISTING = 25;       // No regenera si ja en té prou
 
 // ── Contextos reals d'exàmens PACFGM 2024 per matèria ────────────────────────
 
@@ -139,6 +139,13 @@ Cada pregunta ha de:
 - L'explicació ha de ser breu i didàctica (1-2 línies màxim)
 - Estar en català (excepte per al node angles-* que ha de ser en anglès)
 
+IMPORTANT — Varietat de tipus de pregunta. Distribueix les ${n} preguntes entre aquests tipus:
+- Conceptual: definició o concepte teòric
+- Aplicació pràctica: situació real o quotidiana
+- Càlcul o resolució: l'alumne fa un pas de càlcul i tria el resultat
+- Identificació d'errors: afirmació que pot ser certa o falsa
+- Comparació: distingir entre dos conceptes similars
+
 Respon ÚNICAMENT amb un array JSON vàlid, sense cap text fora del JSON:
 [
   {
@@ -154,7 +161,7 @@ Respon ÚNICAMENT amb un array JSON vàlid, sense cap text fora del JSON:
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
+      generationConfig: { temperature: 0.9, maxOutputTokens: 8192, responseMimeType: 'application/json' },
     }),
   });
 
