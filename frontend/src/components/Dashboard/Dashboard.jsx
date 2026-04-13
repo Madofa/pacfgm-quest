@@ -6,7 +6,7 @@ import CharacterPanel from './CharacterPanel';
 import XPBar from './XPBar';
 import BossTimer from './BossTimer';
 import StreakCounter from './StreakCounter';
-import StatsRadar from './StatsRadar';
+import StatsPanel, { MODES } from './StatsPanel';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
@@ -16,11 +16,21 @@ export default function Dashboard() {
   const [timerEnabled, setTimerEnabled] = useState(
     localStorage.getItem('timerEnabled') !== 'false'
   );
+  const [statsMode, setStatsMode] = useState(
+    localStorage.getItem('statsMode') || 'donut'
+  );
 
   function toggleTimer() {
     const nou = !timerEnabled;
     setTimerEnabled(nou);
     localStorage.setItem('timerEnabled', String(nou));
+  }
+
+  function cycleStatsMode() {
+    const idx = MODES.findIndex(m => m.key === statsMode);
+    const nou = MODES[(idx + 1) % MODES.length].key;
+    setStatsMode(nou);
+    localStorage.setItem('statsMode', nou);
   }
 
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
@@ -61,7 +71,7 @@ export default function Dashboard() {
             {loading ? (
               <div className={styles.loading}>Carregant...</div>
             ) : (
-              <StatsRadar nodes={skillTree} />
+              <StatsPanel nodes={skillTree} mode={statsMode} />
             )}
           </div>
 
@@ -128,6 +138,9 @@ export default function Dashboard() {
             <span className={styles.statLabel}>AJUSTOS</span>
             <button className={`${styles.toggleBtn} ${timerEnabled ? styles.toggleOn : styles.toggleOff}`} onClick={toggleTimer}>
               ⏱ TEMPS {timerEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button className={`${styles.toggleBtn} ${styles.toggleOn}`} onClick={cycleStatsMode} style={{ marginTop: 4 }}>
+              {MODES.find(m => m.key === statsMode)?.label}
             </button>
           </div>
         </aside>
