@@ -598,8 +598,6 @@ async function explicar(req, res) {
 
   const idiomaResposta = materia === 'castella'
     ? 'Responde en castellano. No repitas la pregunta.'
-    : materia === 'angles'
-    ? 'Explain in English. Do not repeat the question.'
     : 'Respon en català. No repeteixis la pregunta.';
 
   const prompt = `Ets un professor de PACFGM (proves d'accés a cicles formatius de grau mitjà de Catalunya).
