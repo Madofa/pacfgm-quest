@@ -1,0 +1,25 @@
+name: Deploy a quest.sinilos.com
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERED_HOST }}
+          username: ${{ secrets.SERED_USER }}
+          password: ${{ secrets.SERED_PASS }}
+          port: 22
+          script: |
+            cd ~/repositories/pacfgm-quest
+            git pull origin main
+            cp -rf ~/repositories/pacfgm-quest/frontend/dist/. ~/quest.sinilos.com/ || true
+            cp -r ~/pacfgm-quest/backend/node_modules ~/repositories/pacfgm-quest/backend/ || true
+            mkdir -p ~/repositories/pacfgm-quest/backend/tmp
+            touch ~/repositories/pacfgm-quest/backend/tmp/restart.txt
+            echo "Deploy completat: $(git log --oneline -1)"
