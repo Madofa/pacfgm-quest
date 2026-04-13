@@ -630,7 +630,7 @@ ${idiomaResposta}`;
         signal: controller.signal,
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 600 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 8192 },
         }),
       });
     } finally {

@@ -541,9 +541,6 @@
   min-height: 0;
   overflow-y: auto;
   padding: var(--spacing-xl);
-  /* Fade al final per indicar que hi ha més contingut */
-  mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 48px), transparent 100%);
 }
 
 .drawerCarregant {
