@@ -33,6 +33,7 @@ export const api = {
     meu:        () => request('/api/progres/meu'),
     skillTree:  () => request('/api/progres/skill-tree'),
     revisions:  () => request('/api/progres/revisions'),
+    srDots:     () => request('/api/progres/sr-dots'),
   },
   pregunta: {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),

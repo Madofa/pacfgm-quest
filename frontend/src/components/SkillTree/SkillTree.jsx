@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useProgress } from '../../hooks/useProgress';
 import { MATERIES, getMateriaConfig } from '../../data/skillTree';
+import { api } from '../../services/api';
 import SkillNode from './SkillNode';
 import styles from './SkillTree.module.css';
 
@@ -11,6 +12,11 @@ export default function SkillTree() {
   const { skillTree, loading } = useProgress();
   const navigate = useNavigate();
   const [materiaActiva, setMateriaActiva] = useState('mates');
+  const [srDots, setSrDots] = useState({});
+
+  useEffect(() => {
+    api.progres.srDots().then(setSrDots).catch(() => {});
+  }, []);
 
   // Agrupar nodes per materia
   const nodesByMateria = {};
@@ -88,7 +94,7 @@ export default function SkillTree() {
             <div className={styles.chain}>
               {nodesActius.map((node, i) => (
                 <div key={node.node_id} className={styles.nodeWrapper}>
-                  <SkillNode node={node} color={cfg.color} />
+                  <SkillNode node={node} color={cfg.color} srDots={srDots[node.node_id] || []} />
                   {i < nodesActius.length - 1 && (
                     <div
                       className={`${styles.connector} ${

@@ -89,4 +89,30 @@ async function revisionsAvui(req, res) {
   }
 }
 
-module.exports = { meu, skillTree, revisionsAvui };
+async function srDots(req, res) {
+  const usuariId = req.usuari.id;
+  try {
+    // Per cada node: llista de consecutives_correctes de les preguntes vistes
+    const [rows] = await pool.query(
+      `SELECT pb.node_id, sr.consecutives_correctes
+       FROM sr_pregunta sr
+       JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
+       WHERE sr.usuari_id = ?`,
+      [usuariId]
+    );
+
+    // Agrupar per node
+    const dots = {};
+    for (const row of rows) {
+      if (!dots[row.node_id]) dots[row.node_id] = [];
+      dots[row.node_id].push(Math.min(row.consecutives_correctes, 4));
+    }
+
+    return res.json(dots);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui, srDots };

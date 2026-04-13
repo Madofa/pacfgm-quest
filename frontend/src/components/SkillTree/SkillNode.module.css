@@ -57,3 +57,40 @@
   font-size: var(--font-size-game-xs);
   color: var(--node-color);
 }
+
+.srWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.srDots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: center;
+  max-width: 120px;
+}
+
+.srDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.srDot:hover {
+  transform: scale(1.4);
+}
+
+.srDotUnseen {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--color-bg-panel-2);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
