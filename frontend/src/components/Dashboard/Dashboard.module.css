@@ -247,6 +247,65 @@
   text-align: center;
 }
 
+/* Bloc MILLORA DE MEMÒRIA */
+.milloraWrap { display: flex; flex-direction: column; gap: var(--spacing-md); }
+
+.milloraLlista { display: flex; flex-direction: column; gap: 5px; }
+
+.milloraRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  background: var(--color-bg-panel-2);
+  border: 1px solid;
+  border-radius: 2px;
+}
+
+.milloraPregunta {
+  flex: 1;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.milloraArrow {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+
+.millloraPip {
+  width: 12px; height: 12px; border-radius: 1px; flex-shrink: 0;
+}
+
+.milloraDies {
+  font-family: var(--font-game);
+  font-size: 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+.milloraResum {
+  display: flex; gap: 8px;
+}
+
+.milloraPill {
+  flex: 1; padding: 8px 6px; text-align: center;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel-2);
+  display: flex; flex-direction: column; gap: 3px;
+}
+
+.milloraPillNum {
+  font-family: var(--font-game); font-size: 16px; line-height: 1;
+}
+
+.milloraPillLabel {
+  font-size: 8px; color: var(--color-text-disabled);
+}
+
 /* Bloc BossTimer destacat */
 .bossBlock {
   display: flex;

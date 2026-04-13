@@ -263,4 +263,54 @@ async function memoriaStats(req, res) {
   }
 }
 
-module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents, retencioSR, memoriaStats };
+// Millores SR de l'última sessió (per al bloc MILLORA DE MEMÒRIA del dashboard)
+async function ultimesMillores(req, res) {
+  const usuariId = req.usuari.id;
+  try {
+    // Última sessió de l'usuari
+    const [[ultima]] = await pool.query(
+      `SELECT id FROM sessions_estudi WHERE usuari_id = ? ORDER BY id DESC LIMIT 1`,
+      [usuariId]
+    );
+    if (!ultima) return res.json({ millores: [], sessio: null });
+
+    const sessioId = ultima.id;
+
+    // Preguntes de l'última sessió amb nivell SR actual
+    const [rows] = await pool.query(
+      `SELECT
+         pl.pregunta_text,
+         pl.correcte,
+         sp.consecutives_correctes AS nivell_sr,
+         sp.propera_revisio,
+         pl.pregunta_bank_id
+       FROM preguntes_log pl
+       LEFT JOIN sr_pregunta sp ON sp.pregunta_id = pl.pregunta_bank_id AND sp.usuari_id = ?
+       WHERE pl.sessio_id = ? AND pl.pregunta_bank_id IS NOT NULL
+       ORDER BY pl.id ASC`,
+      [usuariId, sessioId]
+    );
+
+    // Informació de la sessió
+    const [[sessio]] = await pool.query(
+      `SELECT preguntes_correctes, xp_guanyat, node_id
+       FROM sessions_estudi WHERE id = ?`,
+      [sessioId]
+    );
+
+    const SR_INTERVALS = [1, 3, 7, 14, 30];
+    const millores = rows.map(r => ({
+      pregunta: r.pregunta_text?.substring(0, 60) || '—',
+      correcte: r.correcte,
+      nivell_sr: r.nivell_sr ?? 0,
+      dies_fins: r.nivell_sr != null ? SR_INTERVALS[Math.min(r.nivell_sr, 4)] : 1,
+    }));
+
+    return res.json({ millores, sessio });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents, retencioSR, memoriaStats, ultimesMillores };

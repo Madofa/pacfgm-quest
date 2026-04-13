@@ -38,7 +38,8 @@ export const api = {
     srDots:        () => request('/api/progres/sr-dots'),
     errorsRecents: () => request('/api/progres/errors-recents'),
     retencio:      () => request('/api/progres/retencio'),
-    memoria:       () => request('/api/progres/memoria'),
+    memoria:          () => request('/api/progres/memoria'),
+    ultimesMillores:  () => request('/api/progres/ultimes-millores'),
   },
   pregunta: {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),
