@@ -49,6 +49,12 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
       .finally(() => setCarregant(false));
   }, [error.pregunta_text]);
 
+  // Bloquejar scroll del fons mentre el drawer és obert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   // Tancar amb Escape
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onTancar(); }
