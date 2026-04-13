@@ -38,6 +38,14 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <FeedbackWidget />
+        <div style={{
+          position: 'fixed', bottom: 6, right: 10,
+          fontFamily: 'var(--font-game)', fontSize: '9px',
+          color: 'var(--color-text-disabled)', opacity: 0.5,
+          letterSpacing: '1px', pointerEvents: 'none', zIndex: 9999,
+        }}>
+          v{__APP_VERSION__}
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );
