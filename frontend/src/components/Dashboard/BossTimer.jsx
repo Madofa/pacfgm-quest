@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import styles from './BossTimer.module.css';
 
-// Data de l'examen PACFGM 2026 (convocatòria oficial)
-const EXAM_DATE = new Date('2026-05-13T16:00:00');
+const DEFAULT_DATE = '2026-05-13';
+const STORAGE_KEY  = 'examDate';
 
-function getTimeLeft() {
-  const now  = new Date();
-  const diff = EXAM_DATE - now;
+function getTimeLeft(dateStr) {
+  const target = new Date(`${dateStr}T09:00:00`);
+  const now    = new Date();
+  const diff   = target - now;
   if (diff <= 0) return { dies: 0, hores: 0, minuts: 0, urgent: false, passat: true };
 
   const dies   = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -16,25 +17,44 @@ function getTimeLeft() {
 }
 
 export default function BossTimer() {
-  const [time, setTime] = useState(getTimeLeft);
+  const [examDate, setExamDate] = useState(
+    () => localStorage.getItem(STORAGE_KEY) || DEFAULT_DATE
+  );
+  const [editing, setEditing] = useState(false);
+  const [draft,   setDraft]   = useState(examDate);
+  const [time,    setTime]    = useState(() => getTimeLeft(examDate));
 
   useEffect(() => {
-    const id = setInterval(() => setTime(getTimeLeft()), 60000);
+    setTime(getTimeLeft(examDate));
+    const id = setInterval(() => setTime(getTimeLeft(examDate)), 60000);
     return () => clearInterval(id);
-  }, []);
+  }, [examDate]);
+
+  function saveDate() {
+    if (draft) {
+      localStorage.setItem(STORAGE_KEY, draft);
+      setExamDate(draft);
+    }
+    setEditing(false);
+  }
+
+  const dateLabel = new Date(`${examDate}T12:00:00`).toLocaleDateString('ca-ES', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  });
 
   if (time.passat) {
     return (
       <div className={styles.wrapper}>
-        <span className={styles.label}>JEFE FINAL</span>
-        <span className={styles.done}>COMPLETAT</span>
+        <div className={styles.bossIcon}>💀</div>
+        <span className={styles.done}>EXAMEN PASSAT</span>
       </div>
     );
   }
 
   return (
     <div className={`${styles.wrapper} ${time.urgent ? styles.urgent : ''}`}>
-      <span className={styles.label}>JEFE FINAL</span>
+      <div className={styles.bossIcon}>{time.urgent ? '🔥' : '⚔'}</div>
+
       <div className={styles.countdown}>
         <div className={styles.block}>
           <span className={styles.value}>{time.dies}</span>
@@ -46,7 +66,24 @@ export default function BossTimer() {
           <span className={styles.unit}>hores</span>
         </div>
       </div>
-      <span className={styles.date}>13 maig 2026</span>
+
+      {editing ? (
+        <div className={styles.editWrap}>
+          <input
+            type="date"
+            className={styles.dateInput}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveDate()}
+            autoFocus
+          />
+          <button className={styles.saveBtn} onClick={saveDate}>OK</button>
+        </div>
+      ) : (
+        <button className={styles.dateBtn} onClick={() => { setDraft(examDate); setEditing(true); }}>
+          {dateLabel} ✎
+        </button>
+      )}
     </div>
   );
 }

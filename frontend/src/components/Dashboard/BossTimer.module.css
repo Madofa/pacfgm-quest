@@ -2,35 +2,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
 }
 
-.label {
-  font-family: var(--font-game);
-  font-size: var(--font-size-game-xs);
-  color: var(--color-neon-orange);
-  letter-spacing: 2px;
+.bossIcon {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px var(--color-neon-orange));
 }
 
 .countdown {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
   font-family: var(--font-game);
   color: var(--color-neon-orange);
-  text-shadow: 0 0 8px var(--color-neon-orange);
+  text-shadow: 0 0 10px var(--color-neon-orange);
 }
 
 .block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .value {
-  font-size: var(--font-size-game-lg);
+  font-size: 28px;
   line-height: 1;
+  letter-spacing: 2px;
 }
 
 .unit {
@@ -41,17 +41,52 @@
 
 .sep {
   font-family: var(--font-game);
-  font-size: var(--font-size-game-md);
+  font-size: 20px;
   color: var(--color-text-disabled);
   align-self: flex-start;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
-.date {
-  font-family: var(--font-game);
-  font-size: var(--font-size-game-xs);
+.dateBtn {
+  background: none;
+  border: 1px solid var(--color-border);
   color: var(--color-text-disabled);
+  font-family: var(--font-game);
+  font-size: 8px;
   letter-spacing: 1px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.dateBtn:hover {
+  border-color: var(--color-neon-orange);
+  color: var(--color-neon-orange);
+}
+
+.editWrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dateInput {
+  font-family: var(--font-body);
+  font-size: 11px;
+  background: var(--color-bg-panel-2);
+  border: 1px solid var(--color-neon-orange);
+  color: var(--color-text-primary);
+  padding: 3px 6px;
+  outline: none;
+}
+
+.saveBtn {
+  font-family: var(--font-game);
+  font-size: 8px;
+  background: var(--color-neon-orange);
+  color: var(--color-bg-deep);
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 .done {
@@ -66,11 +101,11 @@
 .urgent .countdown {
   animation: boss-pulse 1.5s ease-in-out infinite;
 }
-.urgent .label {
+.urgent .bossIcon {
   animation: boss-pulse 1.5s ease-in-out infinite;
 }
 
 @keyframes boss-pulse {
-  0%, 100% { color: var(--color-neon-orange); text-shadow: 0 0 8px var(--color-neon-orange); }
-  50%       { color: var(--color-neon-red);   text-shadow: 0 0 16px var(--color-neon-red); }
+  0%, 100% { color: var(--color-neon-orange); text-shadow: 0 0 10px var(--color-neon-orange); filter: drop-shadow(0 0 8px var(--color-neon-orange)); }
+  50%       { color: var(--color-neon-red);   text-shadow: 0 0 20px var(--color-neon-red);    filter: drop-shadow(0 0 16px var(--color-neon-red)); }
 }
