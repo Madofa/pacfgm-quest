@@ -178,7 +178,6 @@ function CardsView({ data }) {
 
 // ── Component principal ───────────────────────────────────────────────────────
 const MODES = [
-  { key: 'donut', label: '◉ DONUTS' },
   { key: 'bars',  label: '▬ BARRES' },
   { key: 'hex',   label: '⬡ HEX' },
   { key: 'cards', label: '▤ TARJETES' },

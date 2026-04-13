@@ -75,9 +75,12 @@ export default function Dashboard() {
   const [timerEnabled, setTimerEnabled] = useState(
     localStorage.getItem('timerEnabled') !== 'false'
   );
-  const [statsMode, setStatsMode] = useState(
-    localStorage.getItem('statsMode') || 'bars'
-  );
+  const [statsMode, setStatsMode] = useState(() => {
+    const saved = localStorage.getItem('statsMode');
+    // 'donut' ja no existeix — migrar a 'bars'
+    if (!saved || saved === 'donut') return 'bars';
+    return saved;
+  });
 
   function toggleTimer() {
     const nou = !timerEnabled;
@@ -210,8 +213,8 @@ export default function Dashboard() {
 
           <div className={styles.divider} />
 
-          <div className={styles.statBlock}>
-            <span className={styles.statLabel}>EXAMEN</span>
+          <div className={styles.bossBlock}>
+            <span className={styles.bossBlockLabel}>⚔ JEFE FINAL</span>
             <BossTimer />
           </div>
 

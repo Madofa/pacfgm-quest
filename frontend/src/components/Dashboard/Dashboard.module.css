@@ -247,6 +247,26 @@
   text-align: center;
 }
 
+/* Bloc BossTimer destacat */
+.bossBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-md);
+  border: 1px solid var(--color-neon-orange);
+  box-shadow: 0 0 16px rgba(255, 107, 0, 0.2), inset 0 0 24px rgba(255, 107, 0, 0.05);
+  background: rgba(255, 107, 0, 0.04);
+}
+
+.bossBlockLabel {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-orange);
+  letter-spacing: 3px;
+  opacity: 0.8;
+}
+
 .version {
   position: fixed;
   bottom: 6px;

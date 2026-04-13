@@ -7,17 +7,13 @@ const SR_COLORS = ['#ff3860', '#ff9100', '#ffdd57', '#69f0ae', '#00ff9f'];
 const SR_LABELS = ['Pendent', 'Aprenent', 'Consolidant', 'Quasi', 'Dominada'];
 const MAX_DOTS = 15;
 
-function SrDots({ dots = [], totalBank = 15 }) {
-  if (dots.length === 0) return null;
-
-  // Ordenar de menys a més consolidat
+function SrDots({ dots = [], showEmpty = false }) {
   const sorted = [...dots].sort((a, b) => b - a);
-  const unseen = Math.max(0, totalBank - sorted.length);
   const shown  = sorted.slice(0, MAX_DOTS);
   const unseenShown = Math.max(0, MAX_DOTS - shown.length);
 
-  const dominades = dots.filter(d => d >= 4).length;
-  const pct = Math.round((dominades / Math.max(dots.length, 1)) * 100);
+  // Nodes completats sense cap pregunta SR: mostrar grisos placeholder
+  if (shown.length === 0 && !showEmpty) return null;
 
   return (
     <div className={styles.srWrap}>
@@ -65,7 +61,7 @@ export default function SkillNode({ node, color, srDots = [] }) {
       {node.millor_puntuacio > 0 && (
         <span className={styles.score}>{node.millor_puntuacio}%</span>
       )}
-      <SrDots dots={srDots} />
+      <SrDots dots={srDots} showEmpty={node.estat === 'completat' || node.estat === 'dominat'} />
     </button>
   );
 }
