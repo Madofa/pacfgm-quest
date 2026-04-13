@@ -28,7 +28,7 @@ const SECCIONS = [
     contingut: [
       {
         subtitol: 'Com guanyes XP',
-        text: 'Cada sessió completada dona XP base + bonus:\n\n• Base: 50 XP per completar la sessió\n• Per encert: +10 XP per cada resposta correcta (màx +50 XP)\n• Bonus velocitat: +10 XP si respons de mitjana en menys de 20 segons (només s\'aplica si el cronòmetre està activat; no aplica a preguntes de càlcul de mates)\n• Bonus ratxa: ×1,10 si portes 3+ dies seguits, ×1,25 si portes 7+ dies',
+        text: 'Cada sessió completada dona XP base + bonus:\n\n• Base: 50 XP per completar la sessió\n• Per encert: +10 XP per cada resposta correcta (màx +50 XP)\n• Bonus velocitat: +10 XP si respons de mitjana en menys de 20 segons (només s\'aplica si el cronòmetre està activat; no aplica a Matemàtiques, Ciències ni Tecnologia — cal temps per calcular)\n• Bonus ratxa: ×1,10 si portes 3+ dies seguits, ×1,25 si portes 7+ dies',
       },
       {
         subtitol: 'Rangs',
@@ -79,6 +79,25 @@ const SECCIONS = [
       {
         subtitol: 'Com pugen els atributs',
         text: 'Practica preguntes de la matèria. Cada cop que encerites, aquella pregunta passa a un nivell de memòria més alt i tarda més temps a tornar (3, 7, 14 o 30 dies). Com més preguntes tens en nivells alts, més alt es manté el % de l\'atribut sol, sense haver de repassar constantment.\n\nSi practiques cada dia mantens la ratxa activa, que dona bonus de XP i fa que no et desfasi.',
+      },
+    ],
+  },
+  {
+    id: 'desenvolupament',
+    icon: '📐',
+    titol: 'Puja el teu desenvolupament',
+    contingut: [
+      {
+        subtitol: 'Per a que serveix?',
+        text: 'A les matèries de Matemàtiques, Ciències i Tecnologia, després de veure la resposta correcta apareix una zona per pujar una foto del teu treball manual (càlculs, esquemes, anotacions).\n\nLa IA analitza el que has escrit i et dona feedback específic: si has arribat al resultat correcte, si el procediment era bo, on t\'has equivocat i com millorar.',
+      },
+      {
+        subtitol: 'Com funciona l\'anàlisi',
+        text: 'La IA mira dues coses per separat:\n\n✓ RESULTAT — Has obtingut la xifra/resposta correcta?\n✓ PROCEDIMENT — El camí que has fet per arribar-hi era correcte?\n\nPots tenir el resultat bé per casualitat però el procediment malament — i al revés, tenir el procediment perfecte però un error de càlcul al final. L\'anàlisi t\'ajuda a saber exactament on falla.',
+      },
+      {
+        subtitol: 'On es guarda',
+        text: 'El feedback de l\'anàlisi es guarda associat a la pregunta. Si aquella pregunta apareix més endavant al panell de "REPÀS D\'ERRORS", podràs veure de nou l\'anàlisi del teu desenvolupament juntament amb la resposta correcta.\n\nLa foto en si no es guarda — només el resultat de l\'anàlisi.',
       },
     ],
   },
