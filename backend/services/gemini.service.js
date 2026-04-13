@@ -20,7 +20,7 @@ function tipusAleatori(pregsAnteriors) {
 }
 
 async function generarPregunta(nodeId, temari, idioma = 'catala', pregsAnteriors = []) {
-  const idiomaText = idioma === 'castella' ? 'en castellano' : 'en català';
+  const idiomaText = idioma === 'castella' ? 'en castellano' : idioma === 'angles' ? 'in English' : 'en català';
   const tipus = tipusAleatori(pregsAnteriors);
 
   const evitarBlock = pregsAnteriors.length > 0

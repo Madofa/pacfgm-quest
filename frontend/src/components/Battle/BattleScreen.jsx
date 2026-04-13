@@ -184,7 +184,8 @@ export default function BattleScreen() {
     setFeedback(null);
     setError('');
     try {
-      const data = await api.pregunta.generar(nodeId, 'catala');
+      const idiomaNode = materia === 'castella' ? 'castella' : materia === 'angles' ? 'angles' : 'catala';
+      const data = await api.pregunta.generar(nodeId, idiomaNode);
       setSessioId(data.sessio_id);
       setPregunta(data);
       setNumeroPregunta(data.numero_pregunta);

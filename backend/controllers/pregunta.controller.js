@@ -582,9 +582,17 @@ async function explicar(req, res) {
   }
 
   const node = NODES[node_id] || {};
+  const materia = node_id ? node_id.split('-')[0] : '';
   const opcionsTxt = Array.isArray(opcions)
     ? opcions.map((o, i) => `${['A','B','C','D'][i]}. ${o.replace(/^[A-D]\.\s*/,'')}`).join('\n')
     : '';
+
+  // Idioma de la resposta segons la matèria
+  const idiomaResposta = materia === 'castella'
+    ? 'Responde en castellano, de forma cercana y motivadora. No repitas la pregunta.'
+    : materia === 'angles'
+    ? 'Respon en català. La pregunta és d\'anglès, però explica en català perquè l\'alumne ho entengui bé. No repeteixis la pregunta.'
+    : 'Respon en català, de forma propera i animadora. No repeteixis la pregunta.';
 
   const prompt = `Ets un professor expert en PACFGM (proves d'accés als cicles formatius de grau mitjà de Catalunya).
 Un alumne ha fallat aquesta pregunta i necessita una explicació pedagògica i detallada.
@@ -600,7 +608,7 @@ Explica en 3-5 frases clares per a un alumne de nivell ESO:
 2. Per qué les altres opcions són incorrectes (si és rellevant)
 3. Un consell o truc per recordar-ho
 
-Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
+${idiomaResposta}`;
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
