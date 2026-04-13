@@ -32,9 +32,10 @@ jobs:
           script: |
             cd ~/repositories/pacfgm-quest
             git pull origin main
-            cp -r ~/pacfgm-quest/backend/node_modules ~/repositories/pacfgm-quest/backend/ || true
-            mkdir -p ~/repositories/pacfgm-quest/backend/tmp
-            touch ~/repositories/pacfgm-quest/backend/tmp/restart.txt
+            rsync -a --exclude=node_modules --exclude=.env --exclude=tmp --exclude='*.log' \
+              ~/repositories/pacfgm-quest/backend/. ~/quest.sinilos.com/
+            mkdir -p ~/quest.sinilos.com/tmp
+            touch ~/quest.sinilos.com/tmp/restart.txt
             echo "Deploy completat: $(git log --oneline -1)"
 
       - name: Upload dist via SCP

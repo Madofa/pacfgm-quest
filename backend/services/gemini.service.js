@@ -38,6 +38,8 @@ Tipus de pregunta que has de generar: ${tipus}
 
 Genera UNA sola pregunta de tipus test amb 4 opcions. La pregunta ha de ser clara, breu i adequada al nivell. Les opcions han de tenir una sola resposta clarament correcta. L'explicació ha de ser breu i didàctica (màxim 2 línies).
 
+IMPORTANT: Usa SEMPRE text pla sense LaTeX, sense Markdown, sense backticks i sense símbols com \cdot, ^2, \frac, etc. Per a matemàtiques usa caràcters Unicode directes: × · ÷ √ ² ³ ¼ ½ ¾ i parèntesis normals. Exemple correcte: "20 - 5 · (6 - 2)²". MAI escriguis cometes simples ni backticks al voltant d'expressions.
+
 Respon en format JSON:
 {
   "pregunta": "text de la pregunta",
