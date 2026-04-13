@@ -44,13 +44,23 @@
   width: 100%;
 }
 
-.loading, .empty {
+.loading {
   font-family: var(--font-game);
   font-size: var(--font-size-game-sm);
   color: var(--color-text-disabled);
   text-align: center;
   padding: var(--spacing-xl);
   line-height: 2.5;
+}
+
+.empty {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-md);
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: 80px var(--spacing-xl);
+  line-height: 2.2;
+  letter-spacing: 1px;
 }
 
 /* Table */
