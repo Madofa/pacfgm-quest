@@ -14,10 +14,11 @@
 .countdown {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   font-family: var(--font-game);
   color: var(--color-neon-orange);
   text-shadow: 0 0 10px var(--color-neon-orange);
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .block {

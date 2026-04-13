@@ -196,7 +196,7 @@ function AlumneCard({ a, onInforme }) {
 
 // ── Panell sense grup ─────────────────────────────────────────────────────────
 
-function SenseGrup({ onGrupCreat }) {
+function SenseGrup({ onGrupCreat, esPare }) {
   const [nomGrup, setNomGrup]   = useState('');
   const [codi, setCodi]         = useState('');
   const [error, setError]       = useState('');
@@ -228,22 +228,26 @@ function SenseGrup({ onGrupCreat }) {
       <h2 className={styles.senseGrupTitle}>Encara no tens cap grup</h2>
 
       <div className={styles.grupForms}>
-        <div className={styles.grupForm}>
-          <div className={styles.grupFormTitle}>CREAR NOU GRUP</div>
-          <input
-            className={styles.grupInput}
-            placeholder="Nom del grup (ex: CFGM 2024-A)"
-            value={nomGrup}
-            onChange={e => setNomGrup(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && crear()}
-            maxLength={60}
-          />
-          <button className={styles.grupBtn} onClick={crear} disabled={loading}>
-            {loading ? '...' : 'CREAR GRUP'}
-          </button>
-        </div>
+        {!esPare && (
+          <>
+            <div className={styles.grupForm}>
+              <div className={styles.grupFormTitle}>CREAR NOU GRUP</div>
+              <input
+                className={styles.grupInput}
+                placeholder="Nom del grup (ex: CFGM 2024-A)"
+                value={nomGrup}
+                onChange={e => setNomGrup(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && crear()}
+                maxLength={60}
+              />
+              <button className={styles.grupBtn} onClick={crear} disabled={loading}>
+                {loading ? '...' : 'CREAR GRUP'}
+              </button>
+            </div>
 
-        <div className={styles.grupDivider}>o</div>
+            <div className={styles.grupDivider}>o</div>
+          </>
+        )}
 
         <div className={styles.grupForm}>
           <div className={styles.grupFormTitle}>UNIR-ME A UN GRUP EXISTENT</div>
@@ -394,7 +398,7 @@ export default function MonitorPanel() {
         {grups === null ? (
           <div className={styles.loading}>Carregant...</div>
         ) : grups.length === 0 ? (
-          <SenseGrup onGrupCreat={onGrupCreat} />
+          <SenseGrup onGrupCreat={onGrupCreat} esPare={usuari?.subtipus === 'pare'} />
         ) : (
           <>
             <GrupHeader grups={grups} />

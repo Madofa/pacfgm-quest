@@ -133,10 +133,12 @@ async function errorsRecents(req, res) {
          se.creat_at AS sessio_data
        FROM preguntes_log pl
        JOIN sessions_estudi se ON se.id = pl.sessio_id
+       LEFT JOIN sr_pregunta sr ON sr.pregunta_id = pl.pregunta_bank_id AND sr.usuari_id = se.usuari_id
        WHERE se.usuari_id = ?
          AND pl.correcte = FALSE
          AND pl.resposta_alumne IS NOT NULL
          AND se.creat_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+         AND (pl.pregunta_bank_id IS NULL OR sr.id IS NULL OR sr.consecutives_correctes = 0)
        ORDER BY se.creat_at DESC
        LIMIT 50`,
       [usuariId]

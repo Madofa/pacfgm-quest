@@ -2,7 +2,7 @@
 // Este fichero solo define labels y colores para la UI
 
 export const MATERIES = [
-  { key: 'mates',      label: 'Matemáticas',  icon: '⚔',  color: 'var(--color-mates)',      abbr: 'FOR' },
+  { key: 'mates',      label: 'Matemàtiques', icon: '⚔',  color: 'var(--color-mates)',      abbr: 'MAT' },
   { key: 'ciencies',   label: 'Ciencias',      icon: '🧪', color: 'var(--color-ciencies)',   abbr: 'INT' },
   { key: 'tecnologia', label: 'Tecnología',    icon: '⚙',  color: 'var(--color-tecnologia)', abbr: 'TEC' },
   { key: 'catala',     label: 'Català',        icon: '📖', color: 'var(--color-catala)',     abbr: 'CAT' },

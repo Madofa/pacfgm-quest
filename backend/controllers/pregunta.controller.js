@@ -295,7 +295,7 @@ async function generar(req, res) {
   } catch (err) {
     console.error('Error generant pregunta:', err);
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'Error generant la pregunta', detall: err?.message || String(err) });
+      return res.status(500).json({ error: 'Error generant la pregunta' });
     }
   }
 }
@@ -614,7 +614,11 @@ Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     });
 

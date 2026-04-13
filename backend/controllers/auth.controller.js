@@ -9,7 +9,7 @@ const SALT_ROUNDS = 10;
 
 function signToken(usuari) {
   return jwt.sign(
-    { id: usuari.id, email: usuari.email, rol: usuari.rol, alias: usuari.alias },
+    { id: usuari.id, email: usuari.email, rol: usuari.rol, alias: usuari.alias, subtipus: usuari.subtipus || null },
     process.env.JWT_SECRET,
     { expiresIn: '30d' }
   );

@@ -20,44 +20,74 @@ async function enviarRecuperacioContrasenya(email, nom, token) {
   await transport.sendMail({
     from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
     to:      email,
-    subject: 'Recuperació de contrasenya — PACFGM Quest',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
-        <h2 style="color:#ffd700;font-family:monospace;letter-spacing:2px;">PACFGM QUEST</h2>
-        <p>Hola <strong>${nom}</strong>,</p>
-        <p>Has sol·licitat recuperar la contrasenya. Fes clic al botó per crear-ne una de nova:</p>
-        <div style="text-align:center;margin:32px 0;">
-          <a href="${link}"
-             style="background:#ffd700;color:#1a1a2e;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">
-            CANVIAR CONTRASENYA
-          </a>
-        </div>
-        <p style="color:#888;font-size:12px;">Aquest enllaç caduca en 1 hora. Si no has fet aquesta sol·licitud, ignora aquest correu.</p>
-      </div>
-    `,
+    subject: 'Recuperacio de contrasenya - PACFGM Quest',
+    text: `Hola ${nom},\n\nHas sol·licitat recuperar la contrasenya de PACFGM Quest.\n\nFes clic a aquest enllaç per crear-ne una de nova:\n${link}\n\nAquest enllaç caduca en 1 hora. Si no has fet aquesta sol·licitud, ignora aquest correu.\n\nPACFGM Quest`,
+    html: `<!DOCTYPE html>
+<html lang="ca">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d1117;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:8px;padding:32px;font-family:Arial,sans-serif;color:#e0e0e0;max-width:480px;">
+        <tr><td style="padding-bottom:24px;">
+          <h2 style="margin:0;color:#ffd700;font-family:monospace;letter-spacing:2px;font-size:18px;">PACFGM QUEST</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <p style="margin:0;">Hola <strong>${nom}</strong>,</p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;">Has sol·licitat recuperar la contrasenya. Fes clic al botó per crear-ne una de nova:</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <a href="${link}" style="display:inline-block;background:#ffd700;color:#1a1a2e;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">CANVIAR CONTRASENYA</a>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;color:#888;font-size:12px;">Aquest enllaç caduca en 1 hora. Si no has fet aquesta sol·licitud, ignora aquest correu.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 
 async function enviarBenvinguda(email, nom, alias) {
+  const appUrl = process.env.APP_URL || 'https://quest.sinilos.com';
+
   const transport = getTransport();
   await transport.sendMail({
     from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
     to:      email,
-    subject: 'Benvingut/da a PACFGM Quest!',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
-        <h2 style="color:#ffd700;font-family:monospace;letter-spacing:2px;">PACFGM QUEST</h2>
-        <p>Hola <strong>${nom}</strong>!</p>
-        <p>El teu compte s'ha creat correctament. El teu alias és: <strong style="color:#39ff14;">${alias}</strong></p>
-        <p>Pots accedir a l'aplicació i començar a estudiar:</p>
-        <div style="text-align:center;margin:32px 0;">
-          <a href="${process.env.APP_URL || 'https://quest.sinilos.com'}"
-             style="background:#ffd700;color:#1a1a2e;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">
-            ACCEDIR
-          </a>
-        </div>
-      </div>
-    `,
+    subject: 'Benvingut a PACFGM Quest!',
+    text: `Hola ${nom}!\n\nEl teu compte s'ha creat correctament. El teu alias és: ${alias}\n\nPots accedir a l'aplicació i començar a estudiar:\n${appUrl}\n\nBona sort!\n\nPACFGM Quest`,
+    html: `<!DOCTYPE html>
+<html lang="ca">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d1117;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:8px;padding:32px;font-family:Arial,sans-serif;color:#e0e0e0;max-width:480px;">
+        <tr><td style="padding-bottom:24px;">
+          <h2 style="margin:0;color:#ffd700;font-family:monospace;letter-spacing:2px;font-size:18px;">PACFGM QUEST</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <p style="margin:0;">Hola <strong>${nom}</strong>!</p>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <p style="margin:0;">El teu compte s'ha creat correctament. El teu alias és: <strong style="color:#39ff14;">${alias}</strong></p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;">Pots accedir a l'aplicació i començar a estudiar:</p>
+        </td></tr>
+        <tr><td align="center">
+          <a href="${appUrl}" style="display:inline-block;background:#ffd700;color:#1a1a2e;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">ACCEDIR</a>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 
@@ -69,42 +99,73 @@ async function enviarVerificacioEmail(email, nom, token) {
   await transport.sendMail({
     from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
     to:      email,
-    subject: 'Verifica el teu compte — PACFGM Quest',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
-        <h2 style="color:#39ff14;font-family:monospace;letter-spacing:2px;">PACFGM QUEST</h2>
-        <p>Hola <strong>${nom}</strong>!</p>
-        <p>Gràcies per registrar-te. Per activar el teu compte, fes clic al botó:</p>
-        <div style="text-align:center;margin:32px 0;">
-          <a href="${link}"
-             style="background:#39ff14;color:#080c14;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">
-            VERIFICAR COMPTE
-          </a>
-        </div>
-        <p style="color:#888;font-size:12px;">Aquest enllaç caduca en 24 hores. Si no t'has registrat, ignora aquest correu.</p>
-      </div>
-    `,
+    subject: 'Verifica el teu compte - PACFGM Quest',
+    text: `Hola ${nom}!\n\nGracies per registrar-te a PACFGM Quest. Per activar el teu compte, visita aquest enllaç:\n${link}\n\nAquest enllaç caduca en 24 hores. Si no t'has registrat, ignora aquest correu.\n\nPACFGM Quest`,
+    html: `<!DOCTYPE html>
+<html lang="ca">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d1117;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:8px;padding:32px;font-family:Arial,sans-serif;color:#e0e0e0;max-width:480px;">
+        <tr><td style="padding-bottom:24px;">
+          <h2 style="margin:0;color:#39ff14;font-family:monospace;letter-spacing:2px;font-size:18px;">PACFGM QUEST</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <p style="margin:0;">Hola <strong>${nom}</strong>!</p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;">Gracies per registrar-te. Per activar el teu compte, fes clic al botó:</p>
+        </td></tr>
+        <tr><td align="center" style="padding-bottom:24px;">
+          <a href="${link}" style="display:inline-block;background:#39ff14;color:#080c14;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">VERIFICAR COMPTE</a>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;color:#888;font-size:12px;">Aquest enllaç caduca en 24 hores. Si no t'has registrat, ignora aquest correu.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 
 async function enviarFeedback({ alias, tipus, descripcio, url_page }) {
   const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
   const transport = getTransport();
-  const tipusLabel = { bug: '🐛 BUG', suggeriment: '💡 SUGGERIMENT', pregunta: '❓ PREGUNTA' }[tipus] || tipus;
+  const tipusLabel = { bug: 'BUG', suggeriment: 'SUGGERIMENT', pregunta: 'PREGUNTA' }[tipus] || tipus;
+  const tipusEmoji = { bug: '🐛', suggeriment: '💡', pregunta: '❓' }[tipus] || '';
+
   await transport.sendMail({
     from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
     to:      adminEmail,
     subject: `[PACFGM Quest] ${tipusLabel} de ${alias}`,
-    html: `
-      <div style="font-family:sans-serif;max-width:540px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
-        <h2 style="color:#ffd700;font-family:monospace;letter-spacing:2px;">PACFGM QUEST — ${tipusLabel}</h2>
-        <p><strong>Usuari:</strong> ${alias}</p>
-        ${url_page ? `<p><strong>Pàgina:</strong> ${url_page}</p>` : ''}
-        <div style="background:#0d1117;border-left:4px solid #ffd700;padding:16px;margin:16px 0;border-radius:4px;">
-          <p style="margin:0;white-space:pre-wrap;">${descripcio}</p>
-        </div>
-      </div>
-    `,
+    text: `${tipusLabel} de ${alias}\n\n${url_page ? `Pagina: ${url_page}\n\n` : ''}${descripcio}\n\nPACFGM Quest`,
+    html: `<!DOCTYPE html>
+<html lang="ca">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d1117;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="540" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:8px;padding:32px;font-family:Arial,sans-serif;color:#e0e0e0;max-width:540px;">
+        <tr><td style="padding-bottom:24px;">
+          <h2 style="margin:0;color:#ffd700;font-family:monospace;letter-spacing:2px;font-size:18px;">PACFGM QUEST &mdash; ${tipusEmoji} ${tipusLabel}</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:8px;">
+          <p style="margin:0;"><strong>Usuari:</strong> ${alias}</p>
+        </td></tr>
+        ${url_page ? `<tr><td style="padding-bottom:8px;"><p style="margin:0;"><strong>Pagina:</strong> ${url_page}</p></td></tr>` : ''}
+        <tr><td>
+          <div style="background:#0d1117;border-left:4px solid #ffd700;padding:16px;border-radius:4px;">
+            <p style="margin:0;white-space:pre-wrap;">${descripcio}</p>
+          </div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
   });
 }
 

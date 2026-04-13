@@ -10,63 +10,6 @@ import StreakCounter from './StreakCounter';
 import StatsPanel, { MODES } from './StatsPanel';
 import styles from './Dashboard.module.css';
 
-const SR_COLORS = ['#ff3860', '#ff9100', '#ffdd57', '#69f0ae', '#00ff9f'];
-const SR_INTERVALS = [1, 3, 7, 14, 30];
-const SR_LABELS = ['demà', '+3d', '+7d', '+14d', '★ 30d'];
-
-function MilloresSR({ dades }) {
-  if (!dades) return null;
-  const { millores, sessio } = dades;
-  if (!millores || millores.length === 0) return null;
-
-  const dominades = millores.filter(m => m.correcte && m.nivell_sr >= 4).length;
-  const pujades   = millores.filter(m => m.correcte && m.nivell_sr < 4).length;
-  const fallades  = millores.filter(m => !m.correcte).length;
-
-  return (
-    <div className={styles.milloraWrap}>
-      <div className={styles.panelTitle} style={{ color: 'var(--color-neon-green)' }}>
-        ⚡ MILLORA DE MEMÒRIA — ÚLTIMA SESSIÓ
-      </div>
-
-      <div className={styles.milloraLlista}>
-        {millores.map((m, i) => (
-          <div key={i} className={styles.milloraRow} style={{ borderColor: m.correcte ? `${SR_COLORS[m.nivell_sr]}44` : '#ff386033' }}>
-            <span className={styles.milloraPregunta}>{m.pregunta}</span>
-            <div className={styles.milloraArrow}>
-              <span className={styles.millloraPip} style={{ background: SR_COLORS[m.correcte ? Math.max(0, m.nivell_sr - 1) : 0] }} />
-              <span style={{ color: 'var(--color-text-disabled)', fontSize: 10 }}>{m.correcte ? '→' : '↓'}</span>
-              <span className={styles.millloraPip} style={{ background: SR_COLORS[m.nivell_sr] }} />
-            </div>
-            <span className={styles.milloraDies} style={{ color: m.correcte ? SR_COLORS[m.nivell_sr] : '#ff3860' }}>
-              {m.correcte ? SR_LABELS[m.nivell_sr] : 'demà'}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.milloraResum}>
-        {dominades > 0 && (
-          <div className={styles.milloraPill}>
-            <span className={styles.milloraPillNum} style={{ color: '#00ff9f' }}>{dominades}</span>
-            <span className={styles.milloraPillLabel}>nova dominada</span>
-          </div>
-        )}
-        <div className={styles.milloraPill}>
-          <span className={styles.milloraPillNum} style={{ color: '#ffdd57' }}>{pujades}</span>
-          <span className={styles.milloraPillLabel}>han pujat</span>
-        </div>
-        {fallades > 0 && (
-          <div className={styles.milloraPill}>
-            <span className={styles.milloraPillNum} style={{ color: '#ff3860' }}>{fallades}</span>
-            <span className={styles.milloraPillLabel}>per repassar</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 const SR_NIVELLS = [
   { key: 'dominades',   label: 'Dominades',    color: '#00ff9f' },
   { key: 'quasi',       label: 'Quasi (14d)',   color: '#69f0ae' },
@@ -163,12 +106,6 @@ export default function Dashboard() {
     api.progres.memoria().then(setMemoria).catch(() => {});
   }, []);
 
-  // Millores SR última sessió
-  const [milloresSR, setMilloresSR] = useState(null);
-  useEffect(() => {
-    api.progres.ultimesMillores().then(setMilloresSR).catch(() => {});
-  }, []);
-
   // Grup de l'alumne
   const [grups, setGrups]           = useState(null);
   const [codiGrup, setCodiGrup]     = useState('');
@@ -200,7 +137,7 @@ export default function Dashboard() {
           <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
           <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RÀNQUING</button>
           <button className={styles.navBtn} onClick={() => navigate('/repas')}>REPÀS</button>
-          <button className={styles.navBtn} onClick={() => navigate('/ajuda')}>?</button>
+          <button className={styles.navBtn} onClick={() => navigate('/ajuda')}>GUIA</button>
           <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SORTIR</button>
         </nav>
       </header>
@@ -255,13 +192,6 @@ export default function Dashboard() {
                   </button>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Millores SR última sessió */}
-          {milloresSR?.millores?.length > 0 && (
-            <div className={`panel-rpg animate-panel-in`} style={{ animationDelay: '0.14s', padding: 'var(--spacing-xl)' }}>
-              <MilloresSR dades={milloresSR} />
             </div>
           )}
 

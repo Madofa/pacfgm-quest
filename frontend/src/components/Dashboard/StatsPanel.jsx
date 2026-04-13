@@ -4,13 +4,13 @@
 import styles from './StatsPanel.module.css';
 
 const MATERIES = [
-  { key: 'mates',      label: 'Matemàtiques', icon: '🔢', color: 'var(--color-mates)' },
-  { key: 'catala',     label: 'Català',        icon: '📖', color: 'var(--color-catala)' },
-  { key: 'castella',   label: 'Castellà',      icon: '📝', color: 'var(--color-castella)' },
-  { key: 'angles',     label: 'Anglès',        icon: '🇬🇧', color: 'var(--color-angles)' },
-  { key: 'ciencies',   label: 'Ciències',      icon: '🔬', color: 'var(--color-ciencies)' },
-  { key: 'tecnologia', label: 'Tecnologia',    icon: '⚙️', color: 'var(--color-tecnologia)' },
-  { key: 'social',     label: 'Socials',       icon: '🌍', color: 'var(--color-social)' },
+  { key: 'mates',      label: 'Matemàtiques', short: 'Mates',    icon: '🔢', color: 'var(--color-mates)' },
+  { key: 'catala',     label: 'Català',        short: 'Català',   icon: '📖', color: 'var(--color-catala)' },
+  { key: 'castella',   label: 'Castellà',      short: 'Castellà', icon: '📝', color: 'var(--color-castella)' },
+  { key: 'angles',     label: 'Anglès',        short: 'Anglès',   icon: '🇬🇧', color: 'var(--color-angles)' },
+  { key: 'ciencies',   label: 'Ciències',      short: 'Ciències', icon: '🔬', color: 'var(--color-ciencies)' },
+  { key: 'tecnologia', label: 'Tecnologia',    short: 'Tecno.',   icon: '⚙️', color: 'var(--color-tecnologia)' },
+  { key: 'social',     label: 'Socials',       short: 'Socials',  icon: '🌍', color: 'var(--color-social)' },
 ];
 
 // pct = 70% retencio SR (decau amb el temps) + 30% nodes completats (assoliment estàtic)
@@ -105,7 +105,7 @@ function HexView({ data }) {
               <span className={styles.hexPct} style={{ color: m.color }}>{m.pct}%</span>
             </div>
           </div>
-          <span className={styles.hexName} style={{ color: m.color }}>{m.label.split(' ')[0]}</span>
+          <span className={styles.hexName} style={{ color: m.color }}>{m.short}</span>
         </div>
       ))}
     </div>

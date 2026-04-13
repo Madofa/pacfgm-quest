@@ -22,6 +22,9 @@ async function crearGrup(req, res) {
   if (req.usuari.rol !== 'monitor') {
     return res.status(403).json({ error: 'Només els monitors poden crear grups' });
   }
+  if (req.usuari.subtipus === 'pare') {
+    return res.status(403).json({ error: 'Els pares no poden crear grups. Uneix-te al grup del teu fill/a.' });
+  }
   const { nom } = req.body;
   if (!nom || nom.trim().length < 2) {
     return res.status(400).json({ error: 'Cal indicar un nom per al grup (mínim 2 caràcters)' });
