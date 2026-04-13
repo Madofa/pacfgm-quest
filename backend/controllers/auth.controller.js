@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../db/connection');
 const { ROOT_NODES } = require('../data/skillTree');
-const { enviarRecuperacioContrasenya, enviarBenvinguda } = require('../services/email.service');
+const { enviarRecuperacioContrasenya, enviarBenvinguda, enviarVerificacioEmail } = require('../services/email.service');
 
 const SALT_ROUNDS = 10;
 
@@ -56,10 +56,17 @@ async function register(req, res) {
       );
     }
 
-    // Email de benvinguda (no bloqueja el registre si falla)
-    try { await enviarBenvinguda(email, nom, alias); } catch (_) {}
+    // Generar token de verificació i enviar correu
+    const verifToken = crypto.randomBytes(32).toString('hex');
+    const verifExpira = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    await pool.query(
+      `INSERT INTO email_verification_tokens (usuari_id, token, expira_at) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE token = VALUES(token), expira_at = VALUES(expira_at)`,
+      [usuari.id, verifToken, verifExpira]
+    );
+    try { await enviarVerificacioEmail(email, nom, verifToken); } catch (_) {}
 
-    return res.status(201).json({ token: signToken(usuari), usuari: formatUsuari(usuari) });
+    return res.status(201).json({ pendent_verificacio: true });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'Email o alias ja existeix' });
@@ -86,6 +93,10 @@ async function login(req, res) {
     const valid = await bcrypt.compare(password, usuari.password_hash);
     if (!valid) {
       return res.status(401).json({ error: 'Credencials incorrectes' });
+    }
+
+    if (!usuari.email_verificat) {
+      return res.status(403).json({ error: 'Email no verificat. Revisa el teu correu i fes clic a l\'enllaç d\'activació.' });
     }
 
     return res.json({ token: signToken(usuari), usuari: formatUsuari(usuari) });
@@ -160,6 +171,30 @@ async function resetPassword(req, res) {
   }
 }
 
+async function verificarEmail(req, res) {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Token no proporcionat' });
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT usuari_id FROM email_verification_tokens WHERE token = ? AND expira_at > NOW()',
+      [token]
+    );
+    if (rows.length === 0) return res.status(400).json({ error: 'Enllaç invàlid o caducat' });
+
+    const usuariId = rows[0].usuari_id;
+    await pool.query('UPDATE usuaris SET email_verificat = 1 WHERE id = ?', [usuariId]);
+    await pool.query('DELETE FROM email_verification_tokens WHERE usuari_id = ?', [usuariId]);
+
+    const [usuaris] = await pool.query('SELECT * FROM usuaris WHERE id = ?', [usuariId]);
+    const usuari = usuaris[0];
+    return res.json({ token: signToken(usuari), usuari: formatUsuari(usuari) });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
 async function actualitzarPerfil(req, res) {
   const { alias } = req.body;
   if (!alias || alias.trim().length < 2) {
@@ -183,4 +218,4 @@ async function actualitzarPerfil(req, res) {
   }
 }
 
-module.exports = { register, login, me, forgotPassword, resetPassword, actualitzarPerfil };
+module.exports = { register, login, me, forgotPassword, resetPassword, verificarEmail, actualitzarPerfil };

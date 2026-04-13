@@ -34,6 +34,23 @@ async function migrateNodes(pool) {
       )
     `);
 
+    // ── Verificació d'email ───────────────────────────────────────────────────
+    // Columna email_verificat (usuaris existents queden com a verificats)
+    try {
+      await conn.execute(`ALTER TABLE usuaris ADD COLUMN email_verificat TINYINT(1) NOT NULL DEFAULT 0`);
+      await conn.execute(`UPDATE usuaris SET email_verificat = 1`);
+      console.log('[migrate] Columna email_verificat afegida');
+    } catch (e) { if (e.code !== 'ER_DUP_FIELDNAME') throw e; }
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        usuari_id  INT NOT NULL PRIMARY KEY,
+        token      VARCHAR(64) NOT NULL,
+        expira_at  DATETIME NOT NULL,
+        FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE CASCADE
+      )
+    `);
+
     // ── Grups (classe/curs) ───────────────────────────────────────────────────
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS grups (

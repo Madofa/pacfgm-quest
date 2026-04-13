@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth.jsx';
 import { api } from '../../services/api';
 import styles from './Login.module.css';
 
@@ -59,10 +59,8 @@ function RegisterForm() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
-  const [ok, setOk]             = useState(false);
+  const [pendent, setPendent]   = useState(false);
   const [loading, setLoading]   = useState(false);
-  const { login } = useAuth();
-  const navigate  = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -70,14 +68,24 @@ function RegisterForm() {
     setLoading(true);
     try {
       await api.auth.register(nom, alias, email, password);
-      // Auto-login després del registre
-      await login(email, password);
-      navigate('/');
+      setPendent(true);
     } catch (err) {
       setError(err.error || 'Error en el registre');
     } finally {
       setLoading(false);
     }
+  }
+
+  if (pendent) {
+    return (
+      <div className={styles.form}>
+        <div className={styles.successBox}>
+          <div className={styles.successIcon}>✉</div>
+          <p>Hem enviat un correu de verificació a <strong>{email}</strong>.</p>
+          <p className={styles.successHint}>Fes clic a l'enllaç del correu per activar el compte. Revisa també el correu no desitjat.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -181,7 +189,9 @@ export default function Login() {
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={`${styles.logo} text-neon-green text-game`}>PACFGM</div>
-          <div className={`${styles.subtitle} text-game`}>QUEST</div>
+          <div className={`${styles.subtitle} text-game`}>
+            QUEST <span className={styles.beta}>BETA</span>
+          </div>
           <p className={styles.tagline}>Entrena. Puja de nivell. Aprova.</p>
         </div>
 

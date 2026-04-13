@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './hooks/useAuth.jsx';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Login from './components/Auth/Login';
 import ResetPassword from './components/Auth/ResetPassword';
+import VerificacioEmail from './components/Auth/VerificacioEmail';
 import Dashboard from './components/Dashboard/Dashboard';
 import SkillTree from './components/SkillTree/SkillTree';
 import BattleScreen from './components/Battle/BattleScreen';
@@ -23,8 +24,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login"          element={<Login />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login"           element={<Login />} />
+          <Route path="/reset-password"  element={<ResetPassword />} />
+          <Route path="/verificar-email" element={<VerificacioEmail />} />
           <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
           <Route path="/skill-tree" element={<ProtectedRoute><SkillTree /></ProtectedRoute>} />
           <Route path="/battle/:nodeId" element={<ProtectedRoute><BattleScreen /></ProtectedRoute>} />

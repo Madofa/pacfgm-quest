@@ -29,6 +29,7 @@ export const api = {
     perfil:         (alias) => request('/api/auth/perfil', { method: 'PATCH', body: JSON.stringify({ alias }) }),
     forgotPassword: (email) => request('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
     resetPassword:  (token, password) => request('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+    verificarEmail: (token) => request(`/api/auth/verificar-email?token=${encodeURIComponent(token)}`),
   },
   progres: {
     meu:           () => request('/api/progres/meu'),

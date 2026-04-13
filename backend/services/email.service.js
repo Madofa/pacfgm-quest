@@ -61,6 +61,32 @@ async function enviarBenvinguda(email, nom, alias) {
   });
 }
 
+async function enviarVerificacioEmail(email, nom, token) {
+  const baseUrl = process.env.APP_URL || 'https://quest.sinilos.com';
+  const link = `${baseUrl}/verificar-email?token=${token}`;
+
+  const transport = getTransport();
+  await transport.sendMail({
+    from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
+    to:      email,
+    subject: 'Verifica el teu compte — PACFGM Quest',
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
+        <h2 style="color:#39ff14;font-family:monospace;letter-spacing:2px;">PACFGM QUEST</h2>
+        <p>Hola <strong>${nom}</strong>!</p>
+        <p>Gràcies per registrar-te. Per activar el teu compte, fes clic al botó:</p>
+        <div style="text-align:center;margin:32px 0;">
+          <a href="${link}"
+             style="background:#39ff14;color:#080c14;padding:14px 32px;border-radius:4px;text-decoration:none;font-weight:bold;font-family:monospace;letter-spacing:1px;">
+            VERIFICAR COMPTE
+          </a>
+        </div>
+        <p style="color:#888;font-size:12px;">Aquest enllaç caduca en 24 hores. Si no t'has registrat, ignora aquest correu.</p>
+      </div>
+    `,
+  });
+}
+
 async function enviarFeedback({ alias, tipus, descripcio, url_page }) {
   const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
   const transport = getTransport();
@@ -82,4 +108,4 @@ async function enviarFeedback({ alias, tipus, descripcio, url_page }) {
   });
 }
 
-module.exports = { enviarRecuperacioContrasenya, enviarBenvinguda, enviarFeedback };
+module.exports = { enviarRecuperacioContrasenya, enviarBenvinguda, enviarFeedback, enviarVerificacioEmail };

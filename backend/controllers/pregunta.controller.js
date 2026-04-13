@@ -93,8 +93,16 @@ async function generarIInserirUnaQ(sessioId, slot, nodeId, node, idioma, textsUs
     return qRow;
   } catch (err) {
     console.warn(`[generar] Gemini slot ${slot}: ${err.message} — usant banc`);
+    // Excloure preguntes ja vistes en aquesta sessió
+    const [usedIds] = await pool.query(
+      'SELECT pregunta_bank_id FROM preguntes_log WHERE sessio_id = ? AND pregunta_bank_id IS NOT NULL',
+      [sessioId]
+    );
+    const excludeIds = usedIds.map(r => r.pregunta_bank_id);
+    const placeholders = excludeIds.length > 0 ? `AND id NOT IN (${excludeIds.map(() => '?').join(',')})` : '';
     const [bf] = await pool.query(
-      'SELECT * FROM preguntes_bank WHERE node_id = ? ORDER BY RAND() LIMIT 1', [nodeId]
+      `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
+      [nodeId, ...excludeIds]
     );
     if (bf.length > 0) {
       await inserirQaLog(sessioId, slot, bf[0]);
@@ -133,8 +141,15 @@ async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsU
     }
 
     if (!qRow) {
+      const [usedIds] = await pool.query(
+        'SELECT pregunta_bank_id FROM preguntes_log WHERE sessio_id = ? AND pregunta_bank_id IS NOT NULL',
+        [sessioId]
+      );
+      const excludeIds = usedIds.map(r => r.pregunta_bank_id);
+      const placeholders = excludeIds.length > 0 ? `AND id NOT IN (${excludeIds.map(() => '?').join(',')})` : '';
       const [bf] = await pool.query(
-        'SELECT * FROM preguntes_bank WHERE node_id = ? ORDER BY RAND() LIMIT 1', [nodeId]
+        `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
+        [nodeId, ...excludeIds]
       );
       if (bf.length > 0) qRow = bf[0];
     }
@@ -237,6 +252,19 @@ async function generar(req, res) {
       await inserirQaLog(sessioId, slotActual++, q);
       textsUsats.push(q.pregunta_text);
     }
+
+    // Afegir historial recent per evitar repeticions (últimes 20 preguntes d'aquest node)
+    const [historialRows] = await pool.query(
+      `SELECT DISTINCT pl.pregunta_text
+       FROM preguntes_log pl
+       JOIN sessions_estudi se ON se.id = pl.sessio_id
+       WHERE se.usuari_id = ? AND se.node_id = ? AND se.id != ?
+       ORDER BY pl.id DESC LIMIT 20`,
+      [usuariId, node_id, sessioId]
+    );
+    historialRows.forEach(r => {
+      if (!textsUsats.includes(r.pregunta_text)) textsUsats.push(r.pregunta_text);
+    });
 
     // 3. Slot 1 de Gemini (si no n'hi ha de SR per slot 1)
     let slot1Q = dueRows.length > 0 ? dueRows[0] : null;
