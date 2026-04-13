@@ -124,42 +124,44 @@ async function generar(req, res) {
         [usuariId, node_id, avui]
       );
 
-      // 2. Generar preguntes noves per als llocs restants
+      // 2. Generar preguntes noves per als llocs restants — en paral·lel
       const newCount = 5 - dueRows.length;
       const textsUsats = dueRows.map(q => q.pregunta_text);
       const newBankRows = [];
 
-      for (let i = 0; i < newCount; i++) {
-        try {
-          const q = await generarPregunta(
-            node_id, node.temari, idioma,
-            [...textsUsats, ...newBankRows.map(r => r.pregunta_text)]
-          );
-          const [ins] = await pool.query(
-            `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
-             VALUES (?, ?, ?, ?, ?)`,
-            [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
-          );
-          newBankRows.push({
-            id:                ins.insertId,
-            pregunta_text:     q.pregunta,
-            opcions:           JSON.stringify(q.opcions),
-            resposta_correcta: q.correcta,
-            explicacio:        q.explicacio,
-          });
-          textsUsats.push(q.pregunta);
-        } catch (geminiErr) {
-          // Gemini ha fallat — usar pregunta aleatòria del banc si n'hi ha
-          console.warn(`[generar] Gemini error (slot ${i+1}): ${geminiErr.message}`);
-          const usedIds = [...dueRows.map(q => q.id), ...newBankRows.map(q => q.id)];
-          const placeholders = usedIds.length > 0 ? `AND id NOT IN (${usedIds.map(() => '?').join(',')})` : '';
-          const [bankFallback] = await pool.query(
-            `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
-            [node_id, ...usedIds]
-          );
-          if (bankFallback.length > 0) {
-            newBankRows.push(bankFallback[0]);
-            textsUsats.push(bankFallback[0].pregunta_text);
+      if (newCount > 0) {
+        // Llançar totes les crides Gemini simultàniament
+        const geminiPromises = Array.from({ length: newCount }, (_, i) =>
+          generarPregunta(node_id, node.temari, idioma, textsUsats)
+            .catch(err => { console.warn(`[generar] Gemini slot ${i+1} error: ${err.message}`); return null; })
+        );
+        const geminiResults = await Promise.all(geminiPromises);
+
+        for (let i = 0; i < geminiResults.length; i++) {
+          const q = geminiResults[i];
+          if (q) {
+            // Gemini ok — inserir al banc
+            const [ins] = await pool.query(
+              `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
+               VALUES (?, ?, ?, ?, ?)`,
+              [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+            );
+            newBankRows.push({
+              id:                ins.insertId,
+              pregunta_text:     q.pregunta,
+              opcions:           JSON.stringify(q.opcions),
+              resposta_correcta: q.correcta,
+              explicacio:        q.explicacio,
+            });
+          } else {
+            // Fallback al banc existent
+            const usedIds = [...dueRows.map(r => r.id), ...newBankRows.map(r => r.id)];
+            const placeholders = usedIds.length > 0 ? `AND id NOT IN (${usedIds.map(() => '?').join(',')})` : '';
+            const [bankFallback] = await pool.query(
+              `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
+              [node_id, ...usedIds]
+            );
+            if (bankFallback.length > 0) newBankRows.push(bankFallback[0]);
           }
         }
       }

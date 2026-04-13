@@ -56,7 +56,7 @@ Respon en format JSON:
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.9,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 1024,
         responseMimeType: 'application/json',
       },
     }),
