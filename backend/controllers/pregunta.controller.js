@@ -432,17 +432,32 @@ async function finalitzar(req, res) {
       );
     }
 
-    // Resum SR de la sessió: quantes preguntes queden pendents per a demà
-    const [srResum] = await pool.query(
+    // Resum SR detallat per pregunta
+    const [srDetall] = await pool.query(
       `SELECT
-         SUM(sr.consecutives_correctes >= 4) AS dominades,
-         SUM(sr.consecutives_correctes  = 0)  AS pendents_dema,
-         MIN(sr.propera_revisio)              AS propera_revisio
+         pl.pregunta_text,
+         pl.correcte,
+         sr.consecutives_correctes,
+         sr.interval_dies,
+         sr.propera_revisio
        FROM preguntes_log pl
-       JOIN sr_pregunta sr ON sr.pregunta_id = pl.pregunta_bank_id AND sr.usuari_id = ?
-       WHERE pl.sessio_id = ?`,
+       LEFT JOIN sr_pregunta sr ON sr.pregunta_id = pl.pregunta_bank_id AND sr.usuari_id = ?
+       WHERE pl.sessio_id = ?
+       ORDER BY pl.numero_pregunta ASC`,
       [usuariId, sessio_id]
     );
+
+    const srPreguntes = srDetall.map(r => ({
+      text:       r.pregunta_text,
+      correcte:   !!r.correcte,
+      sr_level:   Math.min(r.consecutives_correctes ?? 0, 4),
+      interval:   r.interval_dies ?? 1,
+      propera:    r.propera_revisio,
+    }));
+
+    const dominades     = srPreguntes.filter(p => p.sr_level >= 4).length;
+    const pendents_dema = srPreguntes.filter(p => p.sr_level === 0).length;
+    const propera_revisio = srDetall.find(r => r.propera_revisio)?.propera_revisio || null;
 
     return res.json({
       puntuacio,
@@ -454,10 +469,11 @@ async function finalitzar(req, res) {
       nivell_nou:          nouNivell !== usuari.nivell ? nouNivell : null,
       nova_racha:          novaRacha,
       sr_resum: {
-        dominades:      parseInt(srResum[0]?.dominades)     || 0,
-        pendents_dema:  parseInt(srResum[0]?.pendents_dema) || 0,
-        propera_revisio: srResum[0]?.propera_revisio || null,
+        dominades,
+        pendents_dema,
+        propera_revisio,
       },
+      sr_preguntes: srPreguntes,
     });
   } catch (err) {
     console.error('Error finalitzant sessió:', err);

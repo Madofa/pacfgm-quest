@@ -7,6 +7,10 @@ import styles from './BattleScreen.module.css';
 const OPCIONS = ['A', 'B', 'C', 'D'];
 const TEMPS_LIMIT = 30; // segons
 
+const SR_COLORS  = ['#ff3860', '#ff9100', '#ffdd57', '#69f0ae', '#00ff9f'];
+const SR_LABELS  = ['Pendent', 'Aprenent', 'Consolidant', 'Quasi', 'Dominada'];
+const SR_DIES_LABEL = [1, 3, 7, 14, 30];
+
 function getTimerEnabled() {
   return localStorage.getItem('timerEnabled') !== 'false';
 }
@@ -171,8 +175,28 @@ export default function BattleScreen() {
               </div>
             )}
           </div>
-          {resultatFinal.sr_missatge && (
-            <div className={styles.srMissatge}>{resultatFinal.sr_missatge}</div>
+          {/* Resum SR per pregunta */}
+          {resultatFinal.sr_preguntes?.length > 0 && (
+            <div className={styles.srResum}>
+              <div className={styles.srResumTitle}>MEMÒRIA</div>
+              {resultatFinal.sr_preguntes.map((p, i) => (
+                <div key={i} className={styles.srRow}>
+                  <span className={`${styles.srCheck} ${p.correcte ? styles.srOk : styles.srKo}`}>
+                    {p.correcte ? '✓' : '✗'}
+                  </span>
+                  <span className={styles.srText}>{p.text.length > 55 ? p.text.slice(0, 55) + '…' : p.text}</span>
+                  <span
+                    className={styles.srDot}
+                    style={{
+                      background: SR_COLORS[p.sr_level],
+                      boxShadow: p.sr_level >= 3 ? `0 0 5px ${SR_COLORS[p.sr_level]}` : 'none',
+                    }}
+                    title={SR_LABELS[p.sr_level]}
+                  />
+                  <span className={styles.srInterval}>{p.interval}d</span>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className={styles.finalBtns}>
