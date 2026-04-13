@@ -10,42 +10,60 @@ import StreakCounter from './StreakCounter';
 import StatsPanel, { MODES } from './StatsPanel';
 import styles from './Dashboard.module.css';
 
-const MATERIES_SR = [
-  { key: 'mates',      icon: '🔢', label: 'Mat',  color: 'var(--color-mates)'      },
-  { key: 'catala',     icon: '📖', label: 'Cat',  color: 'var(--color-catala)'     },
-  { key: 'castella',   icon: '📝', label: 'Cas',  color: 'var(--color-castella)'   },
-  { key: 'angles',     icon: '🇬🇧', label: 'Ang',  color: 'var(--color-angles)'     },
-  { key: 'ciencies',   icon: '🔬', label: 'Cie',  color: 'var(--color-ciencies)'   },
-  { key: 'tecnologia', icon: '⚙️', label: 'Tec',  color: 'var(--color-tecnologia)' },
-  { key: 'social',     icon: '🌍', label: 'Soc',  color: 'var(--color-social)'     },
+const SR_NIVELLS = [
+  { key: 'dominades',   label: 'Dominades',    color: '#00ff9f' },
+  { key: 'quasi',       label: 'Quasi (14d)',   color: '#69f0ae' },
+  { key: 'consolidant', label: 'Consolidant',   color: '#ffdd57' },
+  { key: 'aprenent',    label: 'Aprenent',      color: '#ff9100' },
+  { key: 'pendents',    label: 'Pendents',      color: '#ff3860' },
 ];
 
-function RetencioBarres({ retencio = {} }) {
+function MemoriaBlock({ memoria }) {
+  if (!memoria) return <div className={styles.memoriaLoading}>...</div>;
+
+  const max = Math.max(memoria.dominades, memoria.quasi, memoria.consolidant, memoria.aprenent, memoria.pendents, 1);
+
   return (
-    <div className={styles.retencioWrap}>
-      {MATERIES_SR.map(m => {
-        const r = retencio[m.key];
-        const pct = r?.pct ?? 0;
-        const teData = r?.total > 0;
-        return (
-          <div key={m.key} className={styles.retencioRow} title={`${m.label}: ${pct}% retencio${r ? ` (${r.fresques}/${r.total} preg.)` : ' — sense dades'}`}>
-            <span className={styles.retencioIcon}>{m.icon}</span>
-            <div className={styles.retencioTrack}>
+    <div className={styles.memoriaWrap}>
+      {/* Resum top */}
+      <div className={styles.memoriaStats}>
+        <div className={styles.memStat}>
+          <span className={styles.memIcon} style={{ color: '#00ff9f' }}>■</span>
+          <span className={styles.memNum} style={{ color: '#00ff9f' }}>{memoria.dominades}</span>
+          <span className={styles.memLabel}>dominades</span>
+        </div>
+        <div className={styles.memStat}>
+          <span className={styles.memIcon} style={{ color: '#ffdd57' }}>■</span>
+          <span className={styles.memNum} style={{ color: '#ffdd57' }}>{memoria.consolidant}</span>
+          <span className={styles.memLabel}>consolidant</span>
+        </div>
+        <div className={styles.memStat}>
+          <span className={styles.memIcon} style={{ color: '#ff3860' }}>■</span>
+          <span className={styles.memNum} style={{ color: '#ff3860' }}>{memoria.pendents}</span>
+          <span className={styles.memLabel}>repàs pendent</span>
+        </div>
+      </div>
+
+      {/* Barres per nivell */}
+      <div className={styles.memoriaBarres}>
+        {SR_NIVELLS.map(n => (
+          <div key={n.key} className={styles.memoriaBarRow}>
+            <span className={styles.memoriaBarLabel} style={{ color: n.color }}>{n.label}</span>
+            <div className={styles.memoriaBarTrack}>
               <div
-                className={styles.retencioFill}
-                style={{
-                  width: `${pct}%`,
-                  background: teData ? m.color : 'var(--color-border)',
-                  boxShadow: teData && pct > 0 ? `0 0 4px ${m.color}80` : 'none',
-                }}
+                className={styles.memoriaBarFill}
+                style={{ width: `${Math.round((memoria[n.key] / max) * 100)}%`, background: n.color, boxShadow: `0 0 4px ${n.color}80` }}
               />
             </div>
-            <span className={styles.retencioPct} style={{ color: teData ? m.color : 'var(--color-text-disabled)' }}>
-              {pct}%
-            </span>
+            <span className={styles.memoriaBarVal} style={{ color: n.color }}>{memoria[n.key]}</span>
           </div>
-        );
-      })}
+        ))}
+      </div>
+
+      {/* Total */}
+      <div className={styles.memoriaTotal}>
+        {memoria.vistes} vistes · {memoria.total_banc} al banc
+      </div>
     </div>
   );
 }
@@ -58,7 +76,7 @@ export default function Dashboard() {
     localStorage.getItem('timerEnabled') !== 'false'
   );
   const [statsMode, setStatsMode] = useState(
-    localStorage.getItem('statsMode') || 'donut'
+    localStorage.getItem('statsMode') || 'bars'
   );
 
   function toggleTimer() {
@@ -76,6 +94,12 @@ export default function Dashboard() {
 
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
   const totalNodes = skillTree.length;
+
+  // Memòria SR
+  const [memoria, setMemoria] = useState(null);
+  useEffect(() => {
+    api.progres.memoria().then(setMemoria).catch(() => {});
+  }, []);
 
   // Grup de l'alumne
   const [grups, setGrups]           = useState(null);
@@ -119,8 +143,8 @@ export default function Dashboard() {
           <CharacterPanel usuari={usuari} />
           <div className={styles.divider} />
           <div className={styles.statBlock}>
-            <span className={styles.statLabel}>RETENCIO</span>
-            <RetencioBarres retencio={retencio} />
+            <span className={styles.statLabel}>MEMÒRIA</span>
+            <MemoriaBlock memoria={memoria} />
           </div>
         </aside>
 

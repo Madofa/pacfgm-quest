@@ -126,13 +126,36 @@ async function elsMemsGrups(req, res) {
 
 async function leaderboard(req, res) {
   try {
+    const usuariId = req.usuari.id;
+    const rol      = req.usuari.rol;
+
+    // Monitors no participen al rànquing
+    if (rol === 'monitor') {
+      return res.json([]);
+    }
+
+    // Buscar el grup de l'alumne (el primer grup actiu)
+    const [grups] = await pool.query(
+      `SELECT grup_id FROM grups_membres WHERE usuari_id = ? AND rol_grup = 'alumne' AND estat = 'actiu' LIMIT 1`,
+      [usuariId]
+    );
+
+    // Si no té grup, rànquing buit
+    if (grups.length === 0) {
+      return res.json([]);
+    }
+
+    const grupId = grups[0].grup_id;
+
+    // Rànquing dels alumnes del grup
     const [rows] = await pool.query(
-      `SELECT alias, rang, xp_setmana, racha_dies,
-              RANK() OVER (ORDER BY xp_setmana DESC) AS posicio
-       FROM usuaris
-       WHERE actiu = TRUE
-       ORDER BY xp_setmana DESC
-       LIMIT 50`
+      `SELECT u.alias, u.rang, u.xp_setmana, u.racha_dies,
+              RANK() OVER (ORDER BY u.xp_setmana DESC) AS posicio
+       FROM grups_membres gm
+       JOIN usuaris u ON u.id = gm.usuari_id
+       WHERE gm.grup_id = ? AND gm.rol_grup = 'alumne' AND gm.estat = 'actiu' AND u.actiu = TRUE
+       ORDER BY u.xp_setmana DESC`,
+      [grupId]
     );
     return res.json(rows);
   } catch (err) {

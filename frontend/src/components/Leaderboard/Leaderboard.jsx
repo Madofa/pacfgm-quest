@@ -32,7 +32,7 @@ export default function Leaderboard() {
         {loading ? (
           <div className={styles.loading}>Carregant rànquing...</div>
         ) : rows.length === 0 ? (
-          <div className={styles.empty}>Ningú ha entrenat aquesta setmana encara.<br/>Sigues el primer!</div>
+          <div className={styles.empty}>Uneix-te a un grup per veure el rànquing.<br/>Demana el codi al teu tutor.</div>
         ) : (
           <div className={styles.table}>
             <div className={styles.tableHeader}>

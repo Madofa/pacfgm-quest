@@ -109,17 +109,22 @@ function RolSelector({ onSeleccionar }) {
 
 // ── Formulari registre ────────────────────────────────────────────────────────
 function RegisterForm() {
-  const [rolSelec, setRolSelec] = useState(null); // objecte de ROLS o null
-  const [nom, setNom]           = useState('');
-  const [alias, setAlias]       = useState('');
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [pendent, setPendent]   = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [rolSelec, setRolSelec]       = useState(null); // objecte de ROLS o null
+  const [nom, setNom]                 = useState('');
+  const [alias, setAlias]             = useState('');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [password2, setPassword2]     = useState('');
+  const [error, setError]             = useState('');
+  const [pendent, setPendent]         = useState(false);
+  const [loading, setLoading]         = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (password !== password2) {
+      setError('Les contrasenyes no coincideixen');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -194,6 +199,12 @@ function RegisterForm() {
         <input type="password" className={styles.input}
           value={password} onChange={e => setPassword(e.target.value)}
           placeholder="Mínim 6 caràcters" required minLength={6} />
+      </div>
+      <div className={styles.field}>
+        <label className={styles.label}>REPETIR CONTRASENYA</label>
+        <input type="password" className={styles.input}
+          value={password2} onChange={e => setPassword2(e.target.value)}
+          placeholder="Repeteix la contrasenya" required minLength={6} />
       </div>
       {error && <div className={styles.error}>{error}</div>}
       <button className={styles.submitBtn} type="submit" disabled={loading}

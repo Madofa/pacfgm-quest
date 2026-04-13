@@ -226,4 +226,41 @@ async function retencioSR(req, res) {
   }
 }
 
-module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents, retencioSR };
+// Estadístiques globals de memòria SR per al bloc MEMÒRIA del dashboard
+async function memoriaStats(req, res) {
+  const usuariId = req.usuari.id;
+  const avui = new Date().toISOString().split('T')[0];
+
+  try {
+    const [[stats]] = await pool.query(
+      `SELECT
+         SUM(CASE WHEN consecutives_correctes >= 4 AND propera_revisio > ? THEN 1 ELSE 0 END) AS dominades,
+         SUM(CASE WHEN consecutives_correctes = 3  AND propera_revisio > ? THEN 1 ELSE 0 END) AS quasi,
+         SUM(CASE WHEN consecutives_correctes = 2  AND propera_revisio > ? THEN 1 ELSE 0 END) AS consolidant,
+         SUM(CASE WHEN consecutives_correctes = 1  AND propera_revisio > ? THEN 1 ELSE 0 END) AS aprenent,
+         SUM(CASE WHEN propera_revisio <= ?         THEN 1 ELSE 0 END)                         AS pendents,
+         COUNT(*)                                                                               AS vistes
+       FROM sr_pregunta WHERE usuari_id = ?`,
+      [avui, avui, avui, avui, avui, usuariId]
+    );
+
+    const [[{ total_banc }]] = await pool.query(
+      `SELECT COUNT(*) AS total_banc FROM preguntes_bank`
+    );
+
+    return res.json({
+      dominades:   parseInt(stats.dominades)  || 0,
+      quasi:       parseInt(stats.quasi)       || 0,
+      consolidant: parseInt(stats.consolidant) || 0,
+      aprenent:    parseInt(stats.aprenent)    || 0,
+      pendents:    parseInt(stats.pendents)    || 0,
+      vistes:      parseInt(stats.vistes)      || 0,
+      total_banc:  parseInt(total_banc)        || 0,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents, retencioSR, memoriaStats };
