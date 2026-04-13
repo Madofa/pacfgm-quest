@@ -22,7 +22,7 @@ export default function SkillNode({ node, color }) {
       }}
       onClick={handleClick}
       disabled={!clickable}
-      title={node.estat === 'bloquejat' ? 'Completa el node anterior primer' : node.titol}
+      title={node.estat === 'bloquejat' ? 'Completa el tema anterior primer' : node.titol}
     >
       <span className={styles.estat}>{cfg.label}</span>
       <span className={styles.titol}>{node.titol}</span>

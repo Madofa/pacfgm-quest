@@ -154,7 +154,7 @@ export default function BattleScreen() {
               <div className={styles.finalStat}>
                 <span className={styles.finalStatLabel}>DESBLOQUEJAT</span>
                 <span className={styles.finalStatVal} style={{ color: 'var(--color-neon-green)' }}>
-                  {resultatFinal.nodes_desbloquejats.length} node{resultatFinal.nodes_desbloquejats.length > 1 ? 's' : ''}
+                  {resultatFinal.nodes_desbloquejats.length} tema{resultatFinal.nodes_desbloquejats.length > 1 ? 'es' : ''} nou{resultatFinal.nodes_desbloquejats.length > 1 ? 's' : ''}
                 </span>
               </div>
             )}

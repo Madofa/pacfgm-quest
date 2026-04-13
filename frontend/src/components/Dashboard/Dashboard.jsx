@@ -119,7 +119,7 @@ export default function Dashboard() {
               <span className="text-neon-green text-game">{nodesCompletats}</span>
               <span className={styles.nodeTotal}> / {totalNodes}</span>
             </span>
-            <span className={styles.statSub}>nodes completats</span>
+            <span className={styles.statSub}>temes completats</span>
           </div>
 
           <div className={styles.divider} />
