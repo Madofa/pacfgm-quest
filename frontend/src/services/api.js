@@ -37,6 +37,7 @@ export const api = {
     revisions:     () => request('/api/progres/revisions'),
     srDots:        () => request('/api/progres/sr-dots'),
     errorsRecents: () => request('/api/progres/errors-recents'),
+    retencio:      () => request('/api/progres/retencio'),
   },
   pregunta: {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),

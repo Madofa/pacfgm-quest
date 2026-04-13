@@ -12,7 +12,7 @@ import styles from './Dashboard.module.css';
 
 export default function Dashboard() {
   const { usuari, logout } = useAuth();
-  const { progres, skillTree, revisions, loading } = useProgress();
+  const { progres, skillTree, revisions, retencio, loading } = useProgress();
   const navigate = useNavigate();
   const [timerEnabled, setTimerEnabled] = useState(
     localStorage.getItem('timerEnabled') !== 'false'
@@ -95,7 +95,7 @@ export default function Dashboard() {
             {loading ? (
               <div className={styles.loading}>Carregant...</div>
             ) : (
-              <StatsPanel nodes={skillTree} mode={statsMode} />
+              <StatsPanel nodes={skillTree} retencio={retencio} mode={statsMode} />
             )}
           </div>
 

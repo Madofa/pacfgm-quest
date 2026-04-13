@@ -176,4 +176,52 @@ async function errorsRecents(req, res) {
   }
 }
 
-module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents };
+// Retencio SR per matèria — decau amb el temps si no repasses
+async function retencioSR(req, res) {
+  const usuariId = req.usuari.id;
+  const avui = new Date().toISOString().split('T')[0];
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT
+         pb.node_id,
+         COUNT(*)                                                  AS total,
+         SUM(CASE WHEN sp.propera_revisio > ? THEN 1 ELSE 0 END)  AS fresques,
+         AVG(sp.consecutives_correctes)                            AS nivell_mig
+       FROM sr_pregunta sp
+       JOIN preguntes_bank pb ON pb.id = sp.pregunta_id
+       WHERE sp.usuari_id = ?
+       GROUP BY pb.node_id`,
+      [avui, usuariId]
+    );
+
+    // Agrupa per matèria
+    const peMateria = {};
+    for (const row of rows) {
+      const materia = NODES[row.node_id]?.materia || row.node_id.split('-')[0];
+      if (!peMateria[materia]) peMateria[materia] = { total: 0, fresques: 0, nivell_mig: 0, nodes: 0 };
+      peMateria[materia].total    += parseInt(row.total);
+      peMateria[materia].fresques += parseInt(row.fresques);
+      peMateria[materia].nivell_mig += parseFloat(row.nivell_mig);
+      peMateria[materia].nodes++;
+    }
+
+    const result = {};
+    for (const [mat, d] of Object.entries(peMateria)) {
+      result[mat] = {
+        total:     d.total,
+        fresques:  d.fresques,
+        caducades: d.total - d.fresques,
+        pct:       d.total > 0 ? Math.round((d.fresques / d.total) * 100) : 0,
+        nivell_mig: d.nodes > 0 ? Math.round((d.nivell_mig / d.nodes) * 10) / 10 : 0,
+      };
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents, retencioSR };

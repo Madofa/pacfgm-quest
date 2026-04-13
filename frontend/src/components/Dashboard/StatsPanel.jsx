@@ -13,24 +13,55 @@ const MATERIES = [
   { key: 'social',     label: 'Socials',       icon: '🌍', color: 'var(--color-social)' },
 ];
 
-function calcStats(nodes = []) {
-  const stats = {};
-  MATERIES.forEach(m => { stats[m.key] = { completats: 0, total: 0 }; });
+// pct = 70% retencio SR (decau amb el temps) + 30% nodes completats (assoliment estàtic)
+// Si no hi ha SR data: el pes recau al 100% sobre nodes completats
+function calcStats(nodes = [], retencio = {}) {
+  const nodeStats = {};
+  MATERIES.forEach(m => { nodeStats[m.key] = { completats: 0, total: 0 }; });
   nodes.forEach(n => {
     const mat = n.node_id?.split('-')[0];
-    if (stats[mat]) {
-      stats[mat].total++;
-      if (n.estat === 'completat' || n.estat === 'dominat') stats[mat].completats++;
+    if (nodeStats[mat]) {
+      nodeStats[mat].total++;
+      if (n.estat === 'completat' || n.estat === 'dominat') nodeStats[mat].completats++;
     }
   });
-  return MATERIES.map(m => ({
-    ...m,
-    completats: stats[m.key].completats,
-    total:      stats[m.key].total,
-    pct:        stats[m.key].total > 0
-      ? Math.round((stats[m.key].completats / stats[m.key].total) * 100)
-      : 0,
-  }));
+
+  return MATERIES.map(m => {
+    const ns = nodeStats[m.key];
+    const nodePct = ns.total > 0 ? Math.round((ns.completats / ns.total) * 100) : 0;
+    const ret = retencio[m.key];
+
+    let pct;
+    let caducades = 0;
+    let fresques = 0;
+    let totalSR = 0;
+
+    if (ret && ret.total > 0) {
+      // Tenim dades SR — combinem
+      const srPct = ret.pct; // % de preguntes fresques
+      pct = Math.round(srPct * 0.7 + nodePct * 0.3);
+      caducades = ret.caducades;
+      fresques  = ret.fresques;
+      totalSR   = ret.total;
+    } else {
+      // Sense SR — només nodes completats (però limitat al 40% màx per animar a practicar)
+      pct = Math.round(nodePct * 0.4);
+      caducades = 0;
+      fresques  = 0;
+      totalSR   = 0;
+    }
+
+    return {
+      ...m,
+      completats: ns.completats,
+      total:      ns.total,
+      nodePct,
+      pct:        Math.min(100, Math.max(0, pct)),
+      caducades,
+      fresques,
+      totalSR,
+    };
+  });
 }
 
 // ── Opció 1: Barres horitzontals ──────────────────────────────────────────────
@@ -49,6 +80,11 @@ function BarresView({ data }) {
               style={{ width: `${m.pct}%`, background: m.color, boxShadow: `0 0 6px ${m.color}80` }}
             />
           </div>
+          {m.caducades > 0 && (
+            <div className={styles.decayHint}>
+              ⚠ {m.caducades} preg. per repassar
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -148,8 +184,8 @@ const MODES = [
   { key: 'cards', label: '▤ TARJETES' },
 ];
 
-export default function StatsPanel({ nodes = [], mode, onModeChange }) {
-  const data = calcStats(nodes);
+export default function StatsPanel({ nodes = [], retencio = {}, mode, onModeChange }) {
+  const data = calcStats(nodes, retencio);
 
   return (
     <div className={styles.wrapper}>
