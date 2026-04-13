@@ -1,6 +1,6 @@
 const pool = require('../db/connection');
 const { NODES } = require('../data/skillTree');
-const { generarPregunta } = require('../services/gemini.service');
+const { generarPregunta, analitzarDesenvolupament } = require('../services/gemini.service');
 const { calcularNivell, calcularRang, calcularXpSessio } = require('../utils/xp');
 
 // Intervals SR per pregunta individual (dies)
@@ -631,4 +631,45 @@ Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
   }
 }
 
-module.exports = { generar, resposta, finalitzar, explicar };
+// ── ANALITZAR IMATGE DE DESENVOLUPAMENT (Gemini Vision) ──────────────────────
+// Rep base64 de la imatge, analitza el desenvolupament de l'alumne,
+// guarda el resultat com a text a preguntes_log i el retorna.
+
+async function analitzarImatge(req, res) {
+  const { sessio_id, pregunta_idx, base64, mime_type, pregunta_text, resposta_correcta, node_id } = req.body;
+
+  if (!base64 || !mime_type) {
+    return res.status(400).json({ error: 'Cal enviar base64 i mime_type de la imatge' });
+  }
+  // Limitar mida (base64 de ~4MB = 3MB de raw)
+  if (base64.length > 5_500_000) {
+    return res.status(413).json({ error: 'Imatge massa gran (màxim ~4MB)' });
+  }
+
+  try {
+    const analisi = await analitzarDesenvolupament({
+      base64,
+      mimeType: mime_type,
+      preguntaText: pregunta_text || '',
+      respostaCorrecta: resposta_correcta || '',
+      nodeId: node_id || '',
+    });
+
+    // Guardar el text al log si tenim sessio_id i índex
+    if (sessio_id && pregunta_idx !== undefined) {
+      const textGuardar = JSON.stringify(analisi);
+      await pool.query(
+        `UPDATE preguntes_log SET desenvolupament_text = ?
+         WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ${parseInt(pregunta_idx, 10)}`,
+        [textGuardar, sessio_id]
+      ).catch(() => {}); // No és crític si falla
+    }
+
+    return res.json(analisi);
+  } catch (err) {
+    console.error('[analitzar-imatge]', err.message);
+    return res.status(500).json({ error: 'Error analitzant la imatge' });
+  }
+}
+
+module.exports = { generar, resposta, finalitzar, explicar, analitzarImatge };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { api } from '../../services/api';
@@ -31,7 +31,105 @@ function formatData(d) {
   return new Date(d).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' });
 }
 
-function AlumneCard({ a }) {
+// ── Drawer informe IA ──────────────────────────────────────────────────────────
+
+const INFORME_SECCIONS = [
+  { key: 'fortaleses',   icon: '💪', label: 'Fortaleses',      color: 'var(--color-neon-green)' },
+  { key: 'en_progres',   icon: '📈', label: 'En progrés',      color: 'var(--color-gold)' },
+  { key: 'febles',       icon: '⚠️',  label: 'Per millorar',    color: 'var(--color-neon-orange)' },
+  { key: 'no_explorat',  icon: '🔒', label: 'No explorat',     color: 'var(--color-text-disabled)' },
+];
+
+function InformeDrawer({ alumne, onTancar }) {
+  const [estat, setEstat] = useState('carregant'); // carregant | ok | error
+  const [data, setData]   = useState(null);
+  const [err, setErr]     = useState('');
+
+  useEffect(() => {
+    let cancel = false;
+    api.grup.informe(alumne.id)
+      .then(d => { if (!cancel) { setData(d); setEstat('ok'); } })
+      .catch(e => { if (!cancel) { setErr(e.error || 'Error'); setEstat('error'); } });
+    return () => { cancel = true; };
+  }, [alumne.id]);
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onTancar(); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onTancar]);
+
+  return (
+    <>
+      <div className={styles.drawerOverlay} onClick={onTancar} />
+      <div className={styles.drawer}>
+        <div className={styles.drawerHeader}>
+          <span className={styles.drawerTitol} style={{ color: 'var(--color-neon-green)' }}>
+            INFORME — {alumne.alias}
+          </span>
+          <button className={styles.drawerClose} onClick={onTancar}>✕</button>
+        </div>
+
+        <div className={styles.drawerCos}>
+          {estat === 'carregant' && (
+            <div className={styles.drawerCarregant}>
+              <span className={styles.drawerSpinner}>⚙</span>
+              ANALITZANT PROGRÉS...
+            </div>
+          )}
+          {estat === 'error' && (
+            <div className={styles.drawerError}>{err}</div>
+          )}
+          {estat === 'ok' && data && (
+            <div className={styles.informeWrap}>
+              {/* Valoració general */}
+              <div className={styles.informeValo}>
+                <div className={styles.informeValoLabel}>VALORACIÓ GENERAL</div>
+                <p className={styles.informeValoText}>{data.informe.valoracio_general}</p>
+              </div>
+
+              {/* Seccions */}
+              {INFORME_SECCIONS.map(s => {
+                const items = data.informe[s.key] || [];
+                if (items.length === 0) return null;
+                return (
+                  <div key={s.key} className={styles.informeSeccio}>
+                    <div className={styles.informeSeccioHead} style={{ color: s.color, borderColor: `${s.color}40` }}>
+                      <span>{s.icon}</span>
+                      <span>{s.label}</span>
+                    </div>
+                    <ul className={styles.informeLlista}>
+                      {items.map((item, i) => (
+                        <li key={i} className={styles.informeItem} style={{ borderColor: `${s.color}30` }}>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+
+              {/* Recomanació */}
+              {data.informe.recomanacio && (
+                <div className={styles.informeRec}>
+                  <div className={styles.informeRecLabel}>RECOMANACIÓ PER AQUESTA SETMANA</div>
+                  <p className={styles.informeRecText}>{data.informe.recomanacio}</p>
+                </div>
+              )}
+
+              {/* Peu */}
+              <div className={styles.informePeu}>
+                Informe generat per IA · {new Date(data.generat_at).toLocaleDateString('ca-ES')}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function AlumneCard({ a, onInforme }) {
   const actColor = activitatColor(a.ultima_sessio);
   const rangCfg  = RANG_CONFIG[a.rang] || RANG_CONFIG.novici;
   const pct      = a.nodes_totals > 0 ? Math.round((a.nodes_completats / a.nodes_totals) * 100) : 0;
@@ -40,9 +138,18 @@ function AlumneCard({ a }) {
     <div className={styles.card} style={{ '--act-color': actColor, borderColor: `${actColor}60` }}>
       <div className={styles.cardHead}>
         <span className={styles.alias}>{a.alias}</span>
-        <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
-          {rangCfg.label}
-        </span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
+            {rangCfg.label}
+          </span>
+          <button
+            className={styles.informeBtn}
+            onClick={() => onInforme(a)}
+            title="Generar informe IA"
+          >
+            📋
+          </button>
+        </div>
       </div>
       <div className={styles.progBar}>
         <div className={styles.progFill} style={{ width: `${pct}%`, background: actColor }} />
@@ -200,10 +307,14 @@ function GrupHeader({ grups }) {
 export default function MonitorPanel() {
   const { usuari, logout } = useAuth();
   const navigate = useNavigate();
-  const [grups, setGrups]         = useState(null); // null = loading
-  const [alumnes, setAlumnes]     = useState([]);
-  const [loadingAlumnes, setLA]   = useState(false);
-  const [sort, setSort]           = useState('xp_setmana');
+  const [grups, setGrups]           = useState(null); // null = loading
+  const [alumnes, setAlumnes]       = useState([]);
+  const [loadingAlumnes, setLA]     = useState(false);
+  const [sort, setSort]             = useState('xp_setmana');
+  const [alumneInforme, setAlumneInforme] = useState(null); // alumne per mostrar informe
+
+  const obrirInforme  = useCallback((a) => setAlumneInforme(a), []);
+  const tancarInforme = useCallback(() => setAlumneInforme(null), []);
 
   useEffect(() => {
     api.grup.meus().then(setGrups).catch(() => setGrups([]));
@@ -236,7 +347,7 @@ export default function MonitorPanel() {
     <div className={styles.page}>
       <header className={styles.header}>
         <div className={`${styles.logo} text-game`}>PACFGM QUEST</div>
-        <div className={styles.monitorBadge}>MONITOR: {usuari?.alias}</div>
+        <div className={styles.monitorBadge}>TUTOR: {usuari?.alias}</div>
         <button className={styles.logoutBtn} onClick={logout}>SORTIR</button>
       </header>
 
@@ -292,12 +403,16 @@ export default function MonitorPanel() {
               </div>
             ) : (
               <div className={styles.grid}>
-                {sorted.map(a => <AlumneCard key={a.id} a={a} />)}
+                {sorted.map(a => <AlumneCard key={a.id} a={a} onInforme={obrirInforme} />)}
               </div>
             )}
           </>
         )}
       </main>
+
+      {alumneInforme && (
+        <InformeDrawer alumne={alumneInforme} onTancar={tancarInforme} />
+      )}
     </div>
   );
 }

@@ -438,6 +438,178 @@
 }
 .btnSecondary:hover { color: var(--color-neon-green); border-color: var(--color-neon-green); }
 
+/* ── Upload de desenvolupament ─────────────────────────────────────────────── */
+.uploadWrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed var(--upload-color, var(--color-border));
+  border-radius: 2px;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  animation: panel-in 0.25s ease-out;
+}
+
+.uploadLabel {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--upload-color, var(--color-text-disabled));
+  letter-spacing: 2px;
+}
+
+.uploadZone {
+  border: 1px dashed var(--color-border);
+  border-radius: 2px;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.uploadZone:hover {
+  border-color: var(--upload-color, var(--color-neon-green));
+  background: rgba(255,255,255,0.03);
+}
+
+.uploadIcon { font-size: 28px; }
+
+.uploadText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-disabled);
+  text-align: center;
+}
+
+.uploadInput { display: none; }
+
+.uploadPreview {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.uploadImg {
+  max-height: 180px;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 2px;
+  object-fit: contain;
+}
+
+.uploadActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.uploadBtn {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-bg-deep);
+  background: var(--upload-color, var(--color-neon-green));
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity 0.2s;
+  border-radius: 2px;
+}
+.uploadBtn:hover { opacity: 0.85; }
+
+.uploadBtnSec {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 5px var(--spacing-md);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  border-radius: 2px;
+}
+.uploadBtnSec:hover { border-color: var(--color-text-secondary); }
+
+.uploadAnalitzant {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-disabled);
+  letter-spacing: 2px;
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  50% { opacity: 0.4; }
+}
+
+.uploadError {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-neon-red);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Resultat anàlisi */
+.analisiWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.analisiHead {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.analisiOk {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-green);
+  letter-spacing: 1px;
+}
+
+.analisiKo {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-red);
+  letter-spacing: 1px;
+}
+
+.analisiSeccio {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analisiSeccioLabel {
+  font-family: var(--font-game);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.analisiItem {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  padding-left: var(--spacing-sm);
+  border-left: 2px solid var(--color-border);
+}
+
+.analisiConsell {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  background: rgba(255, 215, 0, 0.07);
+  border-left: 3px solid var(--color-gold);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
 /* Mobile */
 @media (max-width: 600px) {
   .options { grid-template-columns: 1fr; }

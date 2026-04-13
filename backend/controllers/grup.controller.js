@@ -1,4 +1,5 @@
 const pool = require('../db/connection');
+const { generarInforme } = require('../services/gemini.service');
 
 // Genera un codi únic de 6 caràcters alfanumèrics majúscules
 function generarCodi() {
@@ -173,4 +174,77 @@ async function progresGrup(req, res) {
   }
 }
 
-module.exports = { leaderboard, progresGrup, crearGrup, unirGrup, elsMemsGrups };
+// ── INFORME IA D'UN ALUMNE (per a tutor/pare) ─────────────────────────────────
+
+async function informeAlumne(req, res) {
+  if (req.usuari.rol !== 'monitor') {
+    return res.status(403).json({ error: 'Accés restringit al tutor/monitor' });
+  }
+
+  const alumneId = parseInt(req.params.alumne_id, 10);
+  if (!alumneId) return res.status(400).json({ error: 'ID d\'alumne invàlid' });
+
+  try {
+    // Verificar que l'alumne pertany a un grup del monitor
+    const [check] = await pool.query(
+      `SELECT u.id FROM usuaris u
+       JOIN grups_membres gm_a ON gm_a.usuari_id = u.id AND gm_a.rol_grup = 'alumne'
+       JOIN grups_membres gm_m ON gm_m.grup_id = gm_a.grup_id AND gm_m.usuari_id = ? AND gm_m.rol_grup = 'monitor'
+       WHERE u.id = ? LIMIT 1`,
+      [req.usuari.id, alumneId]
+    );
+    if (check.length === 0) return res.status(403).json({ error: 'Alumne no pertany al teu grup' });
+
+    // Dades bàsiques de l'alumne
+    const [[alumne]] = await pool.query(
+      'SELECT alias, rang, nivell, xp_total, racha_dies, ultima_sessio FROM usuaris WHERE id = ?',
+      [alumneId]
+    );
+    if (!alumne) return res.status(404).json({ error: 'Alumne no trobat' });
+
+    // Sessions últims 30 dies
+    const [[{ numSessions30d }]] = await pool.query(
+      'SELECT COUNT(*) AS numSessions30d FROM sessions_estudi WHERE usuari_id = ? AND creat_at > DATE_SUB(NOW(), INTERVAL 30 DAY)',
+      [alumneId]
+    );
+
+    // Progrés per matèria
+    const [progresMat] = await pool.query(
+      `SELECT SUBSTRING_INDEX(node_id, '-', 1) AS materia,
+              COUNT(*) AS total_nodes,
+              SUM(CASE WHEN estat IN ('completat','dominat') THEN 1 ELSE 0 END) AS completats,
+              SUM(CASE WHEN estat = 'dominat' THEN 1 ELSE 0 END) AS dominats,
+              AVG(CASE WHEN estat IN ('completat','dominat') THEN millor_puntuacio ELSE NULL END) AS puntuacio_mitja
+       FROM progres_nodes WHERE usuari_id = ? GROUP BY materia`,
+      [alumneId]
+    );
+
+    // Retencio SR per matèria
+    const avui = new Date().toISOString().split('T')[0];
+    const [srRows] = await pool.query(
+      `SELECT SUBSTRING_INDEX(pb.node_id, '-', 1) AS materia,
+              COUNT(*) AS total,
+              SUM(CASE WHEN sp.propera_revisio > ? THEN 1 ELSE 0 END) AS fresques
+       FROM sr_pregunta sp
+       JOIN preguntes_bank pb ON pb.id = sp.pregunta_id
+       WHERE sp.usuari_id = ?
+       GROUP BY materia`,
+      [avui, alumneId]
+    );
+    const retencio = {};
+    for (const r of srRows) {
+      const pct = r.total > 0 ? Math.round((r.fresques / r.total) * 100) : 0;
+      retencio[r.materia] = { total: r.total, fresques: r.fresques, pct };
+    }
+
+    // Generar informe amb Gemini
+    const informe = await generarInforme({ alumne, progresMat, retencio, numSessions30d });
+
+    return res.json({ alumne, informe, generat_at: new Date().toISOString() });
+  } catch (err) {
+    console.error('[informe]', err);
+    return res.status(500).json({ error: 'Error generant l\'informe' });
+  }
+}
+
+module.exports = { leaderboard, progresGrup, crearGrup, unirGrup, elsMemsGrups, informeAlumne };

@@ -109,6 +109,31 @@ function ErrorCard({ error, nodeId, onObrirDrawer }) {
         </div>
       )}
 
+      {/* Anàlisi del desenvolupament (si existeix) */}
+      {error.desenvolupament_text && (() => {
+        let analisi = null;
+        try { analisi = JSON.parse(error.desenvolupament_text); } catch {}
+        if (!analisi) return null;
+        return (
+          <div className={styles.explicacioAmpliada} style={{ '--mat-color': cfg.color }}>
+            <span className={styles.explicacioLabel}>📐 ANÀLISI DEL TEU DESENVOLUPAMENT</span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--font-game)', fontSize: 10, color: analisi.correcte_resultat ? 'var(--color-neon-green)' : 'var(--color-neon-red)', letterSpacing: 1 }}>
+                {analisi.correcte_resultat ? '✓ Resultat OK' : '✗ Resultat erroni'}
+              </span>
+              <span style={{ fontFamily: 'var(--font-game)', fontSize: 10, color: analisi.correcte_procediment ? 'var(--color-neon-green)' : 'var(--color-neon-orange)', letterSpacing: 1 }}>
+                {analisi.correcte_procediment ? '✓ Procediment OK' : '⚠ Procediment amb errors'}
+              </span>
+            </div>
+            {analisi.consell && (
+              <div className={styles.explicacioText} style={{ fontSize: 12, borderLeft: '2px solid var(--color-gold)', paddingLeft: 8 }}>
+                💡 {analisi.consell}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Botó obrir drawer */}
       <button
         className={styles.btnExplicar}

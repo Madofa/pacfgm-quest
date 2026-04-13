@@ -127,6 +127,7 @@ async function errorsRecents(req, res) {
          pl.resposta_alumne,
          pl.explicacio,
          pl.pregunta_bank_id,
+         pl.desenvolupament_text,
          pl.sessio_id,
          se.node_id,
          se.creat_at AS sessio_data
@@ -165,6 +166,7 @@ async function errorsRecents(req, res) {
         resposta_correcta: r.resposta_correcta,
         resposta_alumne:   r.resposta_alumne,
         explicacio:        r.explicacio || '',
+        desenvolupament_text: r.desenvolupament_text || null,
         sessio_data:       r.sessio_data,
       });
     }

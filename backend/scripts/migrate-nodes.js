@@ -158,6 +158,16 @@ async function migrateNodes(pool) {
       if (err.errno !== 1060) throw err;
     }
 
+    // desenvolupament_text: anàlisi JSON del desenvolupament manual (Gemini Vision)
+    try {
+      await conn.execute(
+        'ALTER TABLE preguntes_log ADD COLUMN desenvolupament_text TEXT NULL'
+      );
+      console.log('[migrate] Columna desenvolupament_text afegida a preguntes_log');
+    } catch (err) {
+      if (err.errno !== 1060) throw err;
+    }
+
     // ── Eliminar nodes obsolets ───────────────────────────────────────────────
 
     const placeholders = VALID_IDS.map(() => '?').join(',');

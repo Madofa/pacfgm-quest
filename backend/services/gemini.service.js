@@ -93,4 +93,149 @@ Respon en format JSON:
   return data;
 }
 
-module.exports = { generarPregunta };
+// ── INFORME DE PROGRÉS (per a tutor/pare) ────────────────────────────────────
+
+const MATERIA_NOMS = {
+  mates:      'Matemàtiques',
+  catala:     'Català',
+  castella:   'Castellà',
+  angles:     'Anglès',
+  ciencies:   'Ciències',
+  tecnologia: 'Tecnologia',
+  social:     'Social',
+};
+
+async function generarInforme({ alumne, progresMat, retencio, numSessions30d }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
+
+  // Construïm el resum de dades per a Gemini
+  const resumDades = progresMat.map(m => {
+    const nomMat = MATERIA_NOMS[m.materia] || m.materia;
+    const ret = retencio[m.materia];
+    const retPct = ret ? `${ret.pct}% retenció (${ret.fresques}/${ret.total} preg. fresques)` : 'sense dades SR';
+    return `- ${nomMat}: ${m.completats}/${m.total_nodes} temes completats (${m.dominats} dominats), puntuació mitja ${Math.round(m.puntuacio_mitja || 0)}%, ${retPct}`;
+  }).join('\n');
+
+  const prompt = `Ets un assessor pedagògic que ajuda pares i professors a entendre el progrés d'un estudiant que es prepara per a la PACFGM (Prova d'Accés als Cicles Formatius de Grau Mitjà de Catalunya).
+
+Dades de l'alumne:
+- Nom: ${alumne.alias}
+- Rang: ${alumne.rang} (Nivell ${alumne.nivell})
+- XP total: ${alumne.xp_total}
+- Ratxa actual: ${alumne.racha_dies} dies
+- Sessions últims 30 dies: ${numSessions30d}
+- Última sessió: ${alumne.ultima_sessio || 'mai'}
+
+Progrés per matèria:
+${resumDades}
+
+Genera un informe en format JSON amb exactament aquesta estructura:
+{
+  "valoracio_general": "Valoració breu de 2-3 línies del progrés global, en to positiu i motivador",
+  "fortaleses": ["àrea o comportament on l'alumne destaca", "..."],
+  "en_progres": ["àrea que s'està treballant activament amb avanços", "..."],
+  "febles": ["àrea amb mancances o poc repàs, amb consell concret", "..."],
+  "no_explorat": ["matèria o àrea no treballada encara", "..."],
+  "recomanacio": "Recomanació concreta i accionable per a la pròxima setmana (1-2 frases)"
+}
+
+Les llistes poden tenir de 0 a 4 elements. Si una categoria no té res rellevant, posa un array buit. Escriu en català, to proper i constructiu.`;
+
+  const response = await fetch(`${API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1200,
+        responseMimeType: 'application/json',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${err}`);
+  }
+
+  const json = await response.json();
+  const parts = json.candidates?.[0]?.content?.parts || [];
+  const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
+  if (!text) throw new Error('Resposta buida de Gemini');
+
+  const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    const match = jsonStr.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('JSON invàlid a la resposta de Gemini');
+  }
+}
+
+// ── ANÀLISI D'IMATGE (Gemini Vision) ─────────────────────────────────────────
+
+async function analitzarDesenvolupament({ base64, mimeType, preguntaText, respostaCorrecta, nodeId }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
+
+  const prompt = `Ets un professor de matemàtiques que revisa el treball manual d'un alumne que es prepara per a la PACFGM.
+
+Pregunta de l'examen: ${preguntaText}
+Resposta correcta: ${respostaCorrecta}
+Node/tema: ${nodeId}
+
+A la imatge pots veure el desenvolupament manual que ha fet l'alumne per arribar a la resposta.
+
+Analitza el desenvolupament i respon en format JSON:
+{
+  "correcte_resultat": true/false,
+  "correcte_procediment": true/false,
+  "errors_detectats": ["descripció de l'error 1", "..."],
+  "punts_positius": ["cosa que ha fet bé 1", "..."],
+  "consell": "consell concret per millorar (1-2 frases, en català)"
+}
+
+Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa bé.`;
+
+  const response = await fetch(`${API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { inline_data: { mime_type: mimeType, data: base64 } },
+          { text: prompt },
+        ],
+      }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 800,
+        responseMimeType: 'application/json',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini Vision API error ${response.status}: ${err}`);
+  }
+
+  const json = await response.json();
+  const parts = json.candidates?.[0]?.content?.parts || [];
+  const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
+  if (!text) throw new Error('Resposta buida de Gemini Vision');
+
+  const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    const match = jsonStr.match(/\{[\s\S]*\}/);
+    if (match) return JSON.parse(match[0]);
+    throw new Error('JSON invàlid a la resposta de Gemini Vision');
+  }
+}
+
+module.exports = { generarPregunta, generarInforme, analitzarDesenvolupament };

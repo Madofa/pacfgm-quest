@@ -1,8 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { getMateriaConfig } from '../../data/skillTree';
 import styles from './BattleScreen.module.css';
+
+// ── Upload de desenvolupament (Gemini Vision) ─────────────────────────────────
+// Visible només per a nodes de mates, sota el feedback de cada pregunta
+
+function UploadDesenvolupament({ sessioId, numeroPregunta, preguntaText, respostaCorrecta, nodeId, color }) {
+  const [estat, setEstat] = useState('idle'); // idle | preview | analitzant | resultat | error
+  const [preview, setPreview] = useState(null);
+  const [base64, setBase64] = useState(null);
+  const [mimeType, setMimeType] = useState('image/jpeg');
+  const [analisi, setAnalisi] = useState(null);
+  const inputRef = useRef(null);
+
+  function llegirFitxer(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    setMimeType(file.type);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      setPreview(dataUrl);
+      // Extreure base64 pur (sense el prefixe data:image/...;base64,)
+      setBase64(dataUrl.split(',')[1]);
+      setEstat('preview');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    llegirFitxer(file);
+  }
+
+  function onInput(e) {
+    llegirFitxer(e.target.files[0]);
+  }
+
+  async function analitzar() {
+    setEstat('analitzant');
+    try {
+      const result = await api.pregunta.analitzarImatge({
+        sessio_id:        sessioId,
+        pregunta_idx:     (numeroPregunta - 1),
+        base64,
+        mime_type:        mimeType,
+        pregunta_text:    preguntaText,
+        resposta_correcta: respostaCorrecta,
+        node_id:          nodeId,
+      });
+      setAnalisi(result);
+      setEstat('resultat');
+    } catch {
+      setEstat('error');
+    }
+  }
+
+  function reiniciar() {
+    setEstat('idle'); setPreview(null); setBase64(null); setAnalisi(null);
+  }
+
+  return (
+    <div className={styles.uploadWrap} style={{ '--upload-color': color }}>
+      <div className={styles.uploadLabel}>📐 PUJA EL TEU DESENVOLUPAMENT</div>
+
+      {estat === 'idle' && (
+        <div
+          className={styles.uploadZone}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={e => e.preventDefault()}
+          onDrop={onDrop}
+        >
+          <span className={styles.uploadIcon}>📷</span>
+          <span className={styles.uploadText}>Fes clic o arrossega la foto del teu treball</span>
+          <input ref={inputRef} type="file" accept="image/*" className={styles.uploadInput} onChange={onInput} />
+        </div>
+      )}
+
+      {(estat === 'preview' || estat === 'analitzant') && (
+        <div className={styles.uploadPreview}>
+          <img src={preview} alt="Previsualització" className={styles.uploadImg} />
+          <div className={styles.uploadActions}>
+            {estat === 'preview' ? (
+              <>
+                <button className={styles.uploadBtn} onClick={analitzar}>🔍 ANALITZAR</button>
+                <button className={styles.uploadBtnSec} onClick={reiniciar}>Canviar</button>
+              </>
+            ) : (
+              <div className={styles.uploadAnalitzant}>⚙ Analitzant...</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {estat === 'resultat' && analisi && (
+        <div className={styles.analisiWrap}>
+          <div className={styles.analisiHead}>
+            <span className={analisi.correcte_resultat ? styles.analisiOk : styles.analisiKo}>
+              {analisi.correcte_resultat ? '✓ RESULTAT CORRECTE' : '✗ RESULTAT INCORRECTE'}
+            </span>
+            <span className={analisi.correcte_procediment ? styles.analisiOk : styles.analisiKo}>
+              {analisi.correcte_procediment ? '✓ PROCEDIMENT OK' : '⚠ PROCEDIMENT AMB ERRORS'}
+            </span>
+          </div>
+          {analisi.errors_detectats?.length > 0 && (
+            <div className={styles.analisiSeccio}>
+              <div className={styles.analisiSeccioLabel} style={{ color: 'var(--color-neon-red)' }}>ERRORS</div>
+              {analisi.errors_detectats.map((e, i) => <p key={i} className={styles.analisiItem}>{e}</p>)}
+            </div>
+          )}
+          {analisi.punts_positius?.length > 0 && (
+            <div className={styles.analisiSeccio}>
+              <div className={styles.analisiSeccioLabel} style={{ color: 'var(--color-neon-green)' }}>PUNTS POSITIUS</div>
+              {analisi.punts_positius.map((p, i) => <p key={i} className={styles.analisiItem}>{p}</p>)}
+            </div>
+          )}
+          {analisi.consell && (
+            <div className={styles.analisiConsell}>💡 {analisi.consell}</div>
+          )}
+          <button className={styles.uploadBtnSec} onClick={reiniciar} style={{ marginTop: 6 }}>Nova foto</button>
+        </div>
+      )}
+
+      {estat === 'error' && (
+        <div className={styles.uploadError}>
+          Error analitzant la imatge.
+          <button className={styles.uploadBtnSec} onClick={reiniciar}>Tornar</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const OPCIONS = ['A', 'B', 'C', 'D'];
 const TEMPS_LIMIT = 30; // segons
@@ -287,20 +417,34 @@ export default function BattleScreen() {
 
         {/* Feedback */}
         {fase === 'resultat' && feedback && (
-          <div className={`${styles.feedback} ${feedback.correcte ? styles.feedbackOk : styles.feedbackKo}`}>
-            <div className={styles.feedbackIcon}>{feedback.correcte ? '✓' : '✗'}</div>
-            <div className={styles.feedbackText}>
-              <strong>{feedback.correcte ? 'Correcte!' : `Incorrecte — la resposta era ${feedback.correcta}`}</strong>
-              {feedback.explicacio && <p className={styles.feedbackExpl}>{feedback.explicacio}</p>}
+          <>
+            <div className={`${styles.feedback} ${feedback.correcte ? styles.feedbackOk : styles.feedbackKo}`}>
+              <div className={styles.feedbackIcon}>{feedback.correcte ? '✓' : '✗'}</div>
+              <div className={styles.feedbackText}>
+                <strong>{feedback.correcte ? 'Correcte!' : `Incorrecte — la resposta era ${feedback.correcta}`}</strong>
+                {feedback.explicacio && <p className={styles.feedbackExpl}>{feedback.explicacio}</p>}
+              </div>
+              <button
+                className={styles.btnNext}
+                style={{ '--cfg-color': cfg.color }}
+                onClick={seguentPregunta}
+              >
+                {feedback.progres?.respostes_fetes >= 5 ? 'VEURE RESULTAT ▶' : 'SEGÜENT ▶'}
+              </button>
             </div>
-            <button
-              className={styles.btnNext}
-              style={{ '--cfg-color': cfg.color }}
-              onClick={seguentPregunta}
-            >
-              {feedback.progres?.respostes_fetes >= 5 ? 'VEURE RESULTAT ▶' : 'SEGÜENT ▶'}
-            </button>
-          </div>
+
+            {/* Upload de desenvolupament — únicament per a mates */}
+            {materia === 'mates' && (
+              <UploadDesenvolupament
+                sessioId={sessioId}
+                numeroPregunta={numeroPregunta}
+                preguntaText={pregunta?.pregunta}
+                respostaCorrecta={pregunta?.opcions?.[['A','B','C','D'].indexOf(feedback.correcta)] || ''}
+                nodeId={nodeId}
+                color={cfg.color}
+              />
+            )}
+          </>
         )}
       </main>
     </div>

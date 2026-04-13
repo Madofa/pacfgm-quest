@@ -43,7 +43,8 @@ export const api = {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),
     resposta:   (sessio_id, resposta, temps_ms) => request('/api/pregunta/resposta', { method: 'POST', body: JSON.stringify({ sessio_id, resposta, temps_ms }) }),
     finalitzar: (sessio_id) => request('/api/pregunta/finalitzar', { method: 'POST', body: JSON.stringify({ sessio_id }) }),
-    explicar:   (pregunta_text, opcions, resposta_correcta, node_id) => request('/api/pregunta/explicar', { method: 'POST', body: JSON.stringify({ pregunta_text, opcions, resposta_correcta, node_id }) }),
+    explicar:        (pregunta_text, opcions, resposta_correcta, node_id) => request('/api/pregunta/explicar', { method: 'POST', body: JSON.stringify({ pregunta_text, opcions, resposta_correcta, node_id }) }),
+    analitzarImatge: (payload) => request('/api/pregunta/analitzar-imatge', { method: 'POST', body: JSON.stringify(payload) }),
   },
   grup: {
     leaderboard: () => request('/api/grup/leaderboard'),
@@ -51,6 +52,7 @@ export const api = {
     meus:        () => request('/api/grup/meus'),
     crear:       (nom) => request('/api/grup/crear', { method: 'POST', body: JSON.stringify({ nom }) }),
     unir:        (codi) => request('/api/grup/unir', { method: 'POST', body: JSON.stringify({ codi }) }),
+    informe:     (alumneId) => request(`/api/grup/informe/${alumneId}`),
   },
   feedback: {
     enviar: (tipus, descripcio, url_page) => request('/api/feedback', { method: 'POST', body: JSON.stringify({ tipus, descripcio, url_page }) }),
