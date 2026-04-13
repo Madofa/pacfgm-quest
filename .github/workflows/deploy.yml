@@ -32,8 +32,14 @@ jobs:
           script: |
             cd ~/repositories/pacfgm-quest
             git pull origin main
-            rsync -a --exclude=node_modules --exclude=.env --exclude=tmp --exclude='*.log' \
-              ~/repositories/pacfgm-quest/backend/. ~/quest.sinilos.com/
+            cp -rf ~/repositories/pacfgm-quest/backend/controllers/. ~/quest.sinilos.com/controllers/
+            cp -rf ~/repositories/pacfgm-quest/backend/routes/. ~/quest.sinilos.com/routes/
+            cp -rf ~/repositories/pacfgm-quest/backend/services/. ~/quest.sinilos.com/services/
+            cp -rf ~/repositories/pacfgm-quest/backend/middleware/. ~/quest.sinilos.com/middleware/
+            cp -rf ~/repositories/pacfgm-quest/backend/db/. ~/quest.sinilos.com/db/
+            cp -f  ~/repositories/pacfgm-quest/backend/server.js ~/quest.sinilos.com/server.js
+            cp -f  ~/repositories/pacfgm-quest/backend/package.json ~/quest.sinilos.com/package.json
+            rm -rf ~/quest.sinilos.com/public/assets
             mkdir -p ~/quest.sinilos.com/tmp
             touch ~/quest.sinilos.com/tmp/restart.txt
             echo "Deploy completat: $(git log --oneline -1)"

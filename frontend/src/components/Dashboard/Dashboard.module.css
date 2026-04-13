@@ -153,6 +153,104 @@
   margin-left: 8px;
 }
 
+/* Badge nav REPÀS */
+.navBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--color-neon-orange);
+  color: var(--color-bg-deep);
+  font-family: var(--font-game);
+  font-size: 9px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  line-height: 1;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--color-neon-orange); }
+  50%       { box-shadow: 0 0 10px var(--color-neon-orange); }
+}
+
+/* Barra notificació repàs pendent */
+.repasBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 10px var(--spacing-xl);
+  background: rgba(255, 107, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 107, 0, 0.3);
+  flex-wrap: wrap;
+  animation: slideDown 0.3s ease-out;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.repasBarIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.repasBarLabel {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-orange);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+.repasBarItems {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.repasBarItem {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 107, 0, 0.12);
+  border: 1px solid rgba(255, 107, 0, 0.4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.repasBarBtn {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-neon-orange);
+  background: transparent;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.repasBarBtn:hover { background: rgba(255, 107, 0, 0.2); }
+
+.repasBarDismiss {
+  background: transparent;
+  border: none;
+  border-left: 1px solid rgba(255, 107, 0, 0.3);
+  color: var(--color-text-disabled);
+  font-size: 10px;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.repasBarDismiss:hover { color: var(--color-neon-red); background: rgba(255, 56, 96, 0.1); }
+
 /* Bloc MEMÒRIA SR */
 .memoriaLoading {
   color: var(--color-text-disabled);

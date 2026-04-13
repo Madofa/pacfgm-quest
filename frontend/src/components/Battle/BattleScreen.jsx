@@ -201,10 +201,14 @@ export default function BattleScreen() {
   async function respondre(opcio) {
     if (fase !== 'pregunta' || respostaSelec) return;
     const tempsMsResposta = tempsInici ? Date.now() - tempsInici : 0;
+    // El bonus de velocitat només aplica si el cronòmetre està activat
+    // i no és una pregunta de càlcul de mates (on cal temps per resoldre)
+    const esCalcul = materia === 'mates' && pregunta?.necessita_desenvolupament;
+    const tempsMs = (timerEnabled && !esCalcul) ? tempsMsResposta : 0;
     setRespostaSelec(opcio || 'X');
 
     try {
-      const data = await api.pregunta.resposta(sessioId, opcio || 'X', tempsMsResposta);
+      const data = await api.pregunta.resposta(sessioId, opcio || 'X', tempsMs);
       setFeedback({
         correcte:   data.correcte,
         correcta:   data.resposta_correcta,
@@ -434,8 +438,8 @@ export default function BattleScreen() {
               </button>
             </div>
 
-            {/* Upload de desenvolupament — únicament per a mates */}
-            {materia === 'mates' && (
+            {/* Upload de desenvolupament — només per a preguntes de càlcul */}
+            {materia === 'mates' && pregunta?.necessita_desenvolupament && (
               <UploadDesenvolupament
                 sessioId={sessioId}
                 numeroPregunta={numeroPregunta}

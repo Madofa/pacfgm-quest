@@ -88,6 +88,7 @@ async function generarIInserirUnaQ(sessioId, slot, nodeId, node, idioma, textsUs
     const qRow = {
       id: ins.insertId, pregunta_text: q.pregunta,
       opcions: JSON.stringify(q.opcions), resposta_correcta: q.correcta, explicacio: q.explicacio,
+      necessita_desenvolupament: !!q.necessita_desenvolupament,
     };
     await inserirQaLog(sessioId, slot, qRow);
     return qRow;
@@ -203,6 +204,7 @@ async function generar(req, res) {
         return res.json({
           sessio_id: sessioId, numero_pregunta: preg.numero_pregunta,
           total_preguntes: 5, pregunta: preg.pregunta_text, opcions: parseOpcions(preg.opcions),
+          necessita_desenvolupament: false,
         });
       }
 
@@ -226,6 +228,7 @@ async function generar(req, res) {
       return res.json({
         sessio_id: sessioId, numero_pregunta: nextSlot,
         total_preguntes: 5, pregunta: qRow.pregunta_text, opcions: parseOpcions(qRow.opcions),
+        necessita_desenvolupament: !!qRow.necessita_desenvolupament,
       });
     }
 
@@ -282,6 +285,7 @@ async function generar(req, res) {
     res.json({
       sessio_id: sessioId, numero_pregunta: 1,
       total_preguntes: 5, pregunta: slot1Q.pregunta_text, opcions: parseOpcions(slot1Q.opcions),
+      necessita_desenvolupament: !!slot1Q.necessita_desenvolupament,
     });
 
     // 5. Generar slots restants en background (l'alumne respon Q1 mentre es genera)

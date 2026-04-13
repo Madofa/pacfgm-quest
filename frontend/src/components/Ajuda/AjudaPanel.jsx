@@ -9,7 +9,7 @@ const SECCIONS = [
     contingut: [
       {
         subtitol: 'Batallas (sessions d\'estudi)',
-        text: 'Cada cop que entres a un tema, fas 5 preguntes de tipus test. Les preguntes les genera la IA (Gemini) adaptades al contingut oficial del PACFGM. Tens temps limitat per respondre cada pregunta (pots desactivar el cronòmetre als ajustos).',
+        text: 'Cada cop que entres a un tema, fas 5 preguntes de tipus test. Les preguntes les genera la IA (Gemini) adaptades al contingut oficial del PACFGM. El cronòmetre és opcional: si l\'actives als ajustos, tindràs temps limitat per respondre cada pregunta.',
       },
       {
         subtitol: 'Desbloquejar temes',
@@ -28,7 +28,7 @@ const SECCIONS = [
     contingut: [
       {
         subtitol: 'Com guanyes XP',
-        text: 'Cada sessió completada dona XP base + bonus:\n\n• Base: 50 XP per completar la sessió\n• Per encert: +10 XP per cada resposta correcta (màx +50 XP)\n• Bonus velocitat: +10 XP si respons de mitjana en menys de 20 segons\n• Bonus ratxa: ×1,10 si portes 3+ dies seguits, ×1,25 si portes 7+ dies',
+        text: 'Cada sessió completada dona XP base + bonus:\n\n• Base: 50 XP per completar la sessió\n• Per encert: +10 XP per cada resposta correcta (màx +50 XP)\n• Bonus velocitat: +10 XP si respons de mitjana en menys de 20 segons (només s\'aplica si el cronòmetre està activat; no aplica a preguntes de càlcul de mates)\n• Bonus ratxa: ×1,10 si portes 3+ dies seguits, ×1,25 si portes 7+ dies',
       },
       {
         subtitol: 'Rangs',
@@ -78,7 +78,7 @@ const SECCIONS = [
       },
       {
         subtitol: 'Com pugen els atributs',
-        text: 'Fes batallas i encerites → les preguntes pugen de nivell SR → intervals de repàs més llargs → el % es manté alt durant més temps.\n\nSi practiques cada dia (ratxa activa), guanyes bonus XP i mantens els atributs alts amb menys esforç.',
+        text: 'Practica preguntes de la matèria. Cada cop que encerites, aquella pregunta passa a un nivell de memòria més alt i tarda més temps a tornar (3, 7, 14 o 30 dies). Com més preguntes tens en nivells alts, més alt es manté el % de l\'atribut sol, sense haver de repassar constantment.\n\nSi practiques cada dia mantens la ratxa activa, que dona bonus de XP i fa que no et desfasi.',
       },
     ],
   },

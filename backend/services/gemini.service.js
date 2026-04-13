@@ -45,8 +45,11 @@ Respon en format JSON:
   "pregunta": "text de la pregunta",
   "opcions": ["A. primera opció", "B. segona opció", "C. tercera opció", "D. quarta opció"],
   "correcta": "A",
-  "explicacio": "explicació breu de per qué A és correcta"
-}`;
+  "explicacio": "explicació breu de per qué A és correcta",
+  "necessita_desenvolupament": false
+}
+
+El camp "necessita_desenvolupament" ha de ser true NOMÉS si la pregunta requereix fer càlculs sobre paper per arribar a la resposta (tipus càlcul o resolució). Per a preguntes conceptuals, de definició, de comprensió o de gramàtica, ha de ser false.`;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
@@ -92,7 +95,7 @@ Respon en format JSON:
     throw new Error('Estructura JSON invàlida de Gemini');
   }
 
-  return data;
+  return { ...data, necessita_desenvolupament: !!data.necessita_desenvolupament };
 }
 
 // ── INFORME DE PROGRÉS (per a tutor/pare) ────────────────────────────────────
@@ -202,7 +205,10 @@ Analitza el desenvolupament i respon en format JSON:
 
 Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa bé.`;
 
-  const response = await fetch(`${API_URL}?key=${apiKey}`, {
+  // gemini-2.0-flash per a visió: sense thinking ni responseMimeType que provoquen errors multimodal
+  const VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+
+  const response = await fetch(`${VISION_URL}?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -215,7 +221,6 @@ Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa 
       generationConfig: {
         temperature: 0.4,
         maxOutputTokens: 800,
-        responseMimeType: 'application/json',
       },
     }),
   });

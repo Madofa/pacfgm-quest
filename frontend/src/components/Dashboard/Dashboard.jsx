@@ -21,8 +21,11 @@ const SR_NIVELLS = [
 function MemoriaBlock({ memoria }) {
   if (!memoria) return <div className={styles.memoriaLoading}>...</div>;
 
-  const total = SR_NIVELLS.reduce((s, n) => s + (memoria[n.key] || 0), 0) || 1;
-  const pctDominades = Math.round(((memoria.dominades || 0) / (memoria.total_banc || 1)) * 100);
+  const totalPracticades = SR_NIVELLS.reduce((s, n) => s + (memoria[n.key] || 0), 0);
+  const total = totalPracticades || 1;
+  const pctDominades = totalPracticades > 0
+    ? Math.round((memoria.dominades || 0) / totalPracticades * 100)
+    : 0;
 
   return (
     <div className={styles.memoriaWrap}>
@@ -57,6 +60,10 @@ function MemoriaBlock({ memoria }) {
       <div className={styles.memoriaResum}>
         <span className={styles.memoriaResumStat} style={{ color: '#00ff9f' }}>
           <span className={styles.memoriaResumNum}>{pctDominades}%</span> dominat
+        </span>
+        <span className={styles.memoriaResumDivider}>·</span>
+        <span className={styles.memoriaResumStat}>
+          <span className={styles.memoriaResumNum}>{totalPracticades}</span> practicades
         </span>
         <span className={styles.memoriaResumDivider}>·</span>
         <span className={styles.memoriaResumStat}>{memoria.total_banc} al banc</span>
@@ -97,6 +104,13 @@ export default function Dashboard() {
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
   const totalNodes = skillTree.length;
 
+  // Repàs pendent — notificació descartable per sessió
+  const [dismissedRevisions, setDismissedRevisions] = useState(new Set());
+  const revisionsVisibles = revisions.filter(r => !dismissedRevisions.has(r.node_id));
+  function dismissRevision(nodeId) {
+    setDismissedRevisions(prev => new Set([...prev, nodeId]));
+  }
+
   // Memòria SR
   const [memoria, setMemoria] = useState(null);
   useEffect(() => {
@@ -133,11 +147,41 @@ export default function Dashboard() {
         <nav className={styles.nav}>
           <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
           <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RÀNQUING</button>
-          <button className={styles.navBtn} onClick={() => navigate('/repas')}>REPÀS</button>
+          <button className={styles.navBtn} onClick={() => navigate('/repas')} style={{ position: 'relative' }}>
+            REPÀS
+            {revisionsVisibles.length > 0 && (
+              <span className={styles.navBadge}>{revisionsVisibles.length}</span>
+            )}
+          </button>
           <button className={styles.navBtn} onClick={() => navigate('/ajuda')}>GUIA</button>
           <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SORTIR</button>
         </nav>
       </header>
+
+      {/* Barra notificació repàs pendent */}
+      {revisionsVisibles.length > 0 && (
+        <div className={styles.repasBar}>
+          <span className={styles.repasBarIcon}>⏰</span>
+          <span className={styles.repasBarLabel}>REPÀS PENDENT</span>
+          <div className={styles.repasBarItems}>
+            {revisionsVisibles.map(r => (
+              <div key={r.node_id} className={styles.repasBarItem}>
+                <button
+                  className={styles.repasBarBtn}
+                  onClick={() => { dismissRevision(r.node_id); navigate(`/battle/${r.node_id}`); }}
+                >
+                  {r.titol}
+                </button>
+                <button
+                  className={styles.repasBarDismiss}
+                  onClick={() => dismissRevision(r.node_id)}
+                  title="Descartar"
+                >✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className={styles.main}>
         {/* Columna esquerra — personatge */}
@@ -170,27 +214,6 @@ export default function Dashboard() {
               <StatsPanel nodes={skillTree} retencio={retencio} mode={statsMode} />
             )}
           </div>
-
-          {/* Revisions pendents */}
-          {revisions.length > 0 && (
-            <div className={`panel-rpg ${styles.revisionsPanel} animate-panel-in`} style={{ animationDelay: '0.12s' }}>
-              <div className={styles.panelTitle} style={{ color: 'var(--color-neon-orange)' }}>
-                ⏰ REPÀS PENDENT — {revisions.length} {revisions.length === 1 ? 'NODE' : 'NODES'}
-              </div>
-              <div className={styles.revisionsList}>
-                {revisions.slice(0, 4).map(r => (
-                  <button
-                    key={r.node_id}
-                    className={styles.revisionItem}
-                    onClick={() => navigate(`/battle/${r.node_id}`)}
-                  >
-                    <span className={styles.revisionTitol}>{r.titol}</span>
-                    <span className={styles.revisionBadge}>REPASSAR</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* CTA */}
           <button
