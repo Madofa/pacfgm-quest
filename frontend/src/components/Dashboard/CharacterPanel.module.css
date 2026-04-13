@@ -26,12 +26,91 @@
   gap: var(--spacing-sm);
 }
 
+.aliasBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.aliasBtn:hover { background: rgba(255,255,255,0.05); }
+.aliasBtn:hover .editIcon { opacity: 1; }
+
 .alias {
   font-family: var(--font-game);
   font-size: var(--font-size-game-md);
   color: var(--color-text-primary);
   letter-spacing: 2px;
   text-align: center;
+}
+
+.editIcon {
+  font-size: 14px;
+  color: var(--color-text-disabled);
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.aliasEdit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.aliasInput {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-text-primary);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-neon-green);
+  padding: 5px 10px;
+  text-align: center;
+  letter-spacing: 2px;
+  width: 160px;
+  outline: none;
+  box-shadow: 0 0 8px rgba(0,255,159,0.25);
+}
+
+.aliasActions {
+  display: flex;
+  gap: 6px;
+}
+
+.aliasOk {
+  font-family: var(--font-game);
+  font-size: 14px;
+  color: var(--color-neon-green);
+  background: transparent;
+  border: 1px solid var(--color-neon-green);
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.aliasOk:hover { background: rgba(0,255,159,0.12); }
+
+.aliasCancel {
+  font-family: var(--font-game);
+  font-size: 14px;
+  color: var(--color-text-disabled);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.aliasCancel:hover { background: rgba(255,255,255,0.05); }
+
+.aliasError {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-neon-red);
 }
 
 .rang {

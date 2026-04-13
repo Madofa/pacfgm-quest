@@ -160,4 +160,27 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, login, me, forgotPassword, resetPassword };
+async function actualitzarPerfil(req, res) {
+  const { alias } = req.body;
+  if (!alias || alias.trim().length < 2) {
+    return res.status(400).json({ error: 'L\'àlies ha de tenir mínim 2 caràcters' });
+  }
+  const aliasNet = alias.trim().slice(0, 20);
+
+  try {
+    await pool.query(
+      'UPDATE usuaris SET alias = ? WHERE id = ?',
+      [aliasNet, req.usuari.id]
+    );
+    const [rows] = await pool.query('SELECT * FROM usuaris WHERE id = ?', [req.usuari.id]);
+    return res.json({ usuari: formatUsuari(rows[0]) });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Aquest àlies ja l\'utilitza un altre usuari' });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { register, login, me, forgotPassword, resetPassword, actualitzarPerfil };

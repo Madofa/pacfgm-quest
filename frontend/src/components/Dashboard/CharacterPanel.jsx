@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../hooks/useAuth.jsx';
+import { api } from '../../services/api';
 import styles from './CharacterPanel.module.css';
 
 const RANG_LABELS = {
@@ -103,9 +105,49 @@ function AdventurerSprite({ rang, isHovered }) {
 }
 
 export default function CharacterPanel({ usuari }) {
+  const { updateUsuari } = useAuth();
   const rang      = usuari?.rang || 'novici';
   const rangColor = RANG_COLORS[rang];
-  const [hovered, setHovered] = useState(false);
+  const [hovered, setHovered]     = useState(false);
+  const [editant, setEditant]     = useState(false);
+  const [nouAlias, setNouAlias]   = useState('');
+  const [error, setError]         = useState('');
+  const [guardant, setGuardant]   = useState(false);
+  const inputRef = useRef(null);
+
+  function iniciarEdicio() {
+    setNouAlias(usuari?.alias || '');
+    setError('');
+    setEditant(true);
+    setTimeout(() => inputRef.current?.select(), 50);
+  }
+
+  function cancelar() {
+    setEditant(false);
+    setError('');
+  }
+
+  async function desar() {
+    const aliasNet = nouAlias.trim();
+    if (aliasNet.length < 2) { setError('Mínim 2 caràcters'); return; }
+    if (aliasNet === usuari?.alias) { setEditant(false); return; }
+    setGuardant(true);
+    try {
+      const data = await api.auth.perfil(aliasNet);
+      updateUsuari({ alias: data.usuari.alias });
+      setEditant(false);
+      setError('');
+    } catch (err) {
+      setError(err.error || 'Error en desar');
+    } finally {
+      setGuardant(false);
+    }
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Enter') desar();
+    if (e.key === 'Escape') cancelar();
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -118,7 +160,30 @@ export default function CharacterPanel({ usuari }) {
         <AdventurerSprite rang={rang} isHovered={hovered} />
       </div>
       <div className={styles.info}>
-        <div className={styles.alias}>{usuari?.alias || '???'}</div>
+        {editant ? (
+          <div className={styles.aliasEdit}>
+            <input
+              ref={inputRef}
+              className={styles.aliasInput}
+              value={nouAlias}
+              onChange={e => setNouAlias(e.target.value)}
+              onKeyDown={onKeyDown}
+              maxLength={20}
+              autoFocus
+              disabled={guardant}
+            />
+            <div className={styles.aliasActions}>
+              <button className={styles.aliasOk} onClick={desar} disabled={guardant} title="Desar">✓</button>
+              <button className={styles.aliasCancel} onClick={cancelar} disabled={guardant} title="Cancel·lar">✗</button>
+            </div>
+            {error && <div className={styles.aliasError}>{error}</div>}
+          </div>
+        ) : (
+          <button className={styles.aliasBtn} onClick={iniciarEdicio} title="Canviar nom del personatge">
+            <span className={styles.alias}>{usuari?.alias || '???'}</span>
+            <span className={styles.editIcon}>✎</span>
+          </button>
+        )}
         <div className={styles.rang} style={{ color: rangColor, textShadow: `0 0 6px ${rangColor}` }}>
           {RANG_LABELS[rang]}
         </div>
