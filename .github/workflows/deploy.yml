@@ -45,5 +45,5 @@ jobs:
           key: ${{ secrets.SERED_SSH_KEY }}
           port: 1020
           source: "frontend/dist/*"
-          target: "/home/r307889/quest.sinilos.com/"
+          target: "/home/r307889/quest.sinilos.com/public/"
           strip_components: 2
