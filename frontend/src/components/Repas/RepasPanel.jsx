@@ -7,23 +7,31 @@ import styles from './RepasPanel.module.css';
 
 const OPCIONS_LLETRES = ['A', 'B', 'C', 'D'];
 
+function getOpcioText(opcio) {
+  return typeof opcio === 'string' ? opcio.replace(/^[A-D]\.\s*/, '') : String(opcio || '');
+}
+
 // ── Drawer lateral amb explicació detallada ──────────────────────────────────
 function ExplicacioDrawer({ error, nodeId, onTancar }) {
   const [explicacio, setExplicacio] = useState('');
   const [carregant, setCarregant]   = useState(true);
   const cfg = getMateriaConfig(nodeId?.split('-')[0] || 'mates');
 
+  // Index de la resposta correcta per obtenir el text complet
+  const idxCorrecta = OPCIONS_LLETRES.indexOf(error.resposta_correcta);
+  const textCorrecta = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
+    ? getOpcioText(error.opcions[idxCorrecta])
+    : error.resposta_correcta;
+
   useEffect(() => {
     setCarregant(true);
     api.pregunta.explicar(error.pregunta_text, error.opcions, error.resposta_correcta, nodeId)
       .then(data => {
         const text = data.explicacio_ampliada?.trim();
-        // Si Gemini retorna buit, usem l'explicació base guardada
         setExplicacio(text || error.explicacio || 'Sense explicació disponible.');
       })
       .catch((err) => {
         console.warn('[explicar]', err);
-        // Fallback: mostrem l'explicació breu que ja tenim de la pregunta
         const fallback = error.explicacio;
         setExplicacio(fallback
           ? `${fallback}\n\n(L'explicació detallada no ha pogut carregar: ${err?.error || 'error de connexió'})`
@@ -54,34 +62,19 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
           <button className={styles.drawerClose} onClick={onTancar} title="Tancar (Esc)">✕</button>
         </div>
 
-        {/* Pregunta resumida */}
+        {/* Pregunta + resposta correcta (compacte, sense opcions) */}
         <div className={styles.drawerPregunta}>
           <div className={styles.drawerPreguntaLabel}>PREGUNTA</div>
           <p className={styles.drawerPreguntaText}>{error.pregunta_text}</p>
-          <div className={styles.drawerOpcions}>
-            {error.opcions.map((opcio, i) => {
-              const lletra = OPCIONS_LLETRES[i];
-              const esCorrecta = lletra === error.resposta_correcta;
-              const esFallada  = lletra === error.resposta_alumne;
-              const text = typeof opcio === 'string' ? opcio.replace(/^[A-D]\.\s*/, '') : String(opcio);
-              return (
-                <div
-                  key={lletra}
-                  className={`${styles.drawerOpcio} ${esCorrecta ? styles.drawerOpcioCorrecta : ''} ${esFallada && !esCorrecta ? styles.drawerOpcioFallada : ''}`}
-                >
-                  <span className={styles.drawerOpcioLletra} style={esCorrecta ? { color: cfg.color } : {}}>{lletra}</span>
-                  <span className={styles.drawerOpcioText}>{text}</span>
-                  {esCorrecta && <span className={styles.drawerOpcioBadge} style={{ color: cfg.color, borderColor: cfg.color }}>✓</span>}
-                  {esFallada && !esCorrecta && <span className={styles.drawerOpcioBadgeErr}>✗</span>}
-                </div>
-              );
-            })}
+          <div className={styles.drawerRespostaCorrecta} style={{ borderColor: cfg.color }}>
+            <span className={styles.drawerRespostaLabel} style={{ color: cfg.color }}>RESPOSTA CORRECTA</span>
+            <span className={styles.drawerRespostaVal}>{error.resposta_correcta}. {textCorrecta}</span>
           </div>
         </div>
 
         <div className={styles.drawerDivider} style={{ background: cfg.color }} />
 
-        {/* Explicació */}
+        {/* Explicació — ara té molt més espai */}
         <div className={styles.drawerCos}>
           {carregant ? (
             <div className={styles.drawerCarregant}>
@@ -98,13 +91,27 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
 }
 
 // ── Targeta d'error ───────────────────────────────────────────────────────────
-function ErrorCard({ error, nodeId, onObrirDrawer }) {
+function ErrorCard({ error, nodeId, onObrirDrawer, onDismiss }) {
   const cfg = getMateriaConfig(nodeId?.split('-')[0] || 'mates');
+
+  const idxCorrecta = OPCIONS_LLETRES.indexOf(error.resposta_correcta);
+  const textCorrecta = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
+    ? getOpcioText(error.opcions[idxCorrecta])
+    : error.resposta_correcta;
 
   return (
     <div className={styles.card} style={{ '--mat-color': cfg.color }}>
-      {/* Pregunta */}
-      <p className={styles.preguntaText}>{error.pregunta_text}</p>
+      {/* Capçalera card: pregunta + botó tancar */}
+      <div className={styles.cardHeader}>
+        <p className={styles.preguntaText}>{error.pregunta_text}</p>
+        <button className={styles.cardDismiss} onClick={() => onDismiss(error.log_id)} title="Tancar">✕</button>
+      </div>
+
+      {/* Resposta correcta destacada */}
+      <div className={styles.respostaDestacada} style={{ borderColor: cfg.color, background: `color-mix(in srgb, ${cfg.color} 8%, transparent)` }}>
+        <span className={styles.respostaDestacadaLabel} style={{ color: cfg.color }}>RESPOSTA CORRECTA</span>
+        <span className={styles.respostaDestacadaVal}>{error.resposta_correcta}. {textCorrecta}</span>
+      </div>
 
       {/* Opcions */}
       <div className={styles.opcions}>
@@ -118,7 +125,7 @@ function ErrorCard({ error, nodeId, onObrirDrawer }) {
               className={`${styles.opcio} ${esCorrecta ? styles.opcioCorrecta : ''} ${esFallada && !esCorrecta ? styles.opcioFallada : ''}`}
             >
               <span className={styles.opcioLletra}>{lletra}</span>
-              <span className={styles.opcioText}>{opcio.replace(/^[A-D]\.\s*/, '')}</span>
+              <span className={styles.opcioText}>{getOpcioText(opcio)}</span>
               {esCorrecta && <span className={styles.badge}>✓ CORRECTA</span>}
               {esFallada && !esCorrecta && <span className={styles.badgeError}>✗ LA TEVA</span>}
             </div>
@@ -165,16 +172,19 @@ function ErrorCard({ error, nodeId, onObrirDrawer }) {
         style={{ '--mat-color': cfg.color }}
         onClick={() => onObrirDrawer(error, nodeId)}
       >
-        💡 EXPLICA'M MÉS
+        EXPLICA'M MES
       </button>
     </div>
   );
 }
 
 // ── Grup per node ─────────────────────────────────────────────────────────────
-function NodeGroup({ grup, onObrirDrawer }) {
+function NodeGroup({ grup, onObrirDrawer, onDismiss, dismissed }) {
   const [obert, setObert] = useState(false);
   const cfg = getMateriaConfig(grup.node_id?.split('-')[0] || 'mates');
+
+  const errorsVisibles = grup.errors.filter(e => !dismissed.has(e.log_id));
+  if (errorsVisibles.length === 0) return null;
 
   return (
     <div className={styles.nodeGroup}>
@@ -186,15 +196,15 @@ function NodeGroup({ grup, onObrirDrawer }) {
         <span className={styles.nodeIcon}>{cfg.icon}</span>
         <span className={styles.nodeTitol}>{grup.titol}</span>
         <span className={styles.nodeCount} style={{ color: cfg.color }}>
-          {grup.errors.length} error{grup.errors.length > 1 ? 's' : ''}
+          {errorsVisibles.length} error{errorsVisibles.length > 1 ? 's' : ''}
         </span>
         <span className={styles.nodeChevron}>{obert ? '▲' : '▼'}</span>
       </button>
 
       {obert && (
         <div className={styles.nodeErrors}>
-          {grup.errors.map((e, i) => (
-            <ErrorCard key={e.log_id || i} error={e} nodeId={grup.node_id} onObrirDrawer={onObrirDrawer} />
+          {errorsVisibles.map((e, i) => (
+            <ErrorCard key={e.log_id || i} error={e} nodeId={grup.node_id} onObrirDrawer={onObrirDrawer} onDismiss={onDismiss} />
           ))}
         </div>
       )}
@@ -210,12 +220,18 @@ export default function RepasPanel() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
   const [drawer, setDrawer]       = useState(null); // { error, nodeId }
+  const [dismissed, setDismissed] = useState(new Set());
+  const [revisionsPendents, setRevisionsPendents] = useState(0);
 
   useEffect(() => {
     api.progres.errorsRecents()
       .then(setGrups)
       .catch(err => setError(err.error || 'Error carregant errors'))
       .finally(() => setLoading(false));
+    // Badge de revisions SR pendents
+    api.progres.revisions()
+      .then(data => setRevisionsPendents((data.revisions || []).length))
+      .catch(() => {});
   }, []);
 
   const obrirDrawer = useCallback((error, nodeId) => {
@@ -224,13 +240,29 @@ export default function RepasPanel() {
 
   const tancarDrawer = useCallback(() => setDrawer(null), []);
 
-  const totalErrors = grups.reduce((s, g) => s + g.errors.length, 0);
+  const dismissCard = useCallback((logId) => {
+    setDismissed(prev => new Set([...prev, logId]));
+  }, []);
+
+  const totalErrors = grups.reduce((s, g) => {
+    const visibles = g.errors.filter(e => !dismissed.has(e.log_id));
+    return s + visibles.length;
+  }, 0);
+  const grupsVisibles = grups.filter(g => g.errors.some(e => !dismissed.has(e.log_id)));
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <button className={styles.backBtn} onClick={() => navigate('/')}>◄ INICI</button>
-        <div className={`${styles.title} text-game`}>REPÀS D'ERRORS</div>
+        <div className={styles.headerCenter}>
+          <div className={`${styles.title} text-game`}>REPAS D'ERRORS</div>
+          {revisionsPendents > 0 && (
+            <div className={styles.revisionsBadge}>
+              <span className={styles.revisionsBadgeNum}>{revisionsPendents}</span>
+              <span className={styles.revisionsBadgeLabel}>SR pendents</span>
+            </div>
+          )}
+        </div>
         <button className={styles.backBtn} onClick={logout}>SORTIR</button>
       </header>
 
@@ -239,7 +271,7 @@ export default function RepasPanel() {
           <div className={styles.loading}>Carregant errors recents...</div>
         ) : error ? (
           <div className={styles.errorMsg}>{error}</div>
-        ) : grups.length === 0 ? (
+        ) : grupsVisibles.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🏆</div>
             <div className={styles.emptyTitle}>Sense errors recents!</div>
@@ -252,14 +284,20 @@ export default function RepasPanel() {
           <>
             <div className={styles.resum}>
               <span className={styles.resumTotal}>
-                <span className={styles.resumNum}>{totalErrors}</span> errors en {grups.length} tema{grups.length > 1 ? 'es' : ''}
+                <span className={styles.resumNum}>{totalErrors}</span> errors en {grupsVisibles.length} tema{grupsVisibles.length > 1 ? 'es' : ''}
               </span>
               <span className={styles.resumSub}>Últims 60 dies · Click per expandir</span>
             </div>
 
             <div className={styles.grups}>
               {grups.map(g => (
-                <NodeGroup key={g.node_id} grup={g} onObrirDrawer={obrirDrawer} />
+                <NodeGroup
+                  key={g.node_id}
+                  grup={g}
+                  onObrirDrawer={obrirDrawer}
+                  onDismiss={dismissCard}
+                  dismissed={dismissed}
+                />
               ))}
             </div>
           </>

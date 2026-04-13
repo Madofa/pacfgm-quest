@@ -29,10 +29,40 @@
 }
 .backBtn:hover { color: var(--color-neon-green); border-color: var(--color-neon-green); }
 
+.headerCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 .title {
   font-size: var(--font-size-game-md);
   color: var(--color-text-secondary);
   letter-spacing: 4px;
+}
+
+.revisionsBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 145, 0, 0.15);
+  border: 1px solid #ff9100;
+  border-radius: 2px;
+  padding: 3px 10px;
+}
+
+.revisionsBadgeNum {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: #ff9100;
+}
+
+.revisionsBadgeLabel {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #ff9100;
+  opacity: 0.8;
 }
 
 .main {
@@ -140,7 +170,14 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
 .preguntaText {
+  flex: 1;
   font-family: var(--font-body);
   font-size: var(--font-size-body-md);
   font-weight: 700;
@@ -148,6 +185,53 @@
   line-height: 1.6;
   border-left: 3px solid var(--mat-color);
   padding-left: var(--spacing-md);
+  margin: 0;
+}
+
+.cardDismiss {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.cardDismiss:hover {
+  border-color: var(--color-neon-red);
+  color: var(--color-neon-red);
+}
+
+/* Resposta correcta destacada */
+.respostaDestacada {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid;
+  border-radius: 2px;
+  padding: 8px var(--spacing-md);
+}
+
+.respostaDestacadaLabel {
+  font-family: var(--font-game);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.respostaDestacadaVal {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.4;
 }
 
 /* Opcions */
@@ -346,7 +430,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
+  height: 100dvh;
   width: min(480px, 92vw);
   background: var(--color-bg-panel);
   border-left: 1px solid var(--mat-color, var(--color-border));
@@ -402,7 +486,7 @@
   padding: var(--spacing-lg) var(--spacing-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   flex-shrink: 0;
 }
 
@@ -419,88 +503,31 @@
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.5;
+  margin: 0;
 }
 
-.drawerResposta {
+.drawerRespostaCorrecta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  border: 1px solid;
+  border-radius: 2px;
+  padding: 8px var(--spacing-md);
+  background: rgba(0, 255, 159, 0.05);
 }
 
 .drawerRespostaLabel {
   font-family: var(--font-game);
   font-size: 9px;
-  color: var(--color-text-disabled);
   letter-spacing: 2px;
 }
 
 .drawerRespostaVal {
   font-family: var(--font-body);
-  font-size: var(--font-size-body-sm);
-  font-weight: 600;
+  font-size: var(--font-size-body-md);
+  font-weight: 700;
+  color: var(--color-text-primary);
   line-height: 1.4;
-}
-
-.drawerOpcions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: var(--spacing-sm);
-}
-
-.drawerOpcio {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: 6px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 2px;
-  background: var(--color-bg-deep);
-}
-
-.drawerOpcioCorrecta {
-  border-color: var(--mat-color, var(--color-neon-green)) !important;
-  background: rgba(0, 255, 159, 0.06) !important;
-}
-
-.drawerOpcioFallada {
-  border-color: var(--color-neon-red) !important;
-  background: rgba(255, 56, 96, 0.06) !important;
-}
-
-.drawerOpcioLletra {
-  font-family: var(--font-game);
-  font-size: var(--font-size-game-xs);
-  color: var(--color-text-disabled);
-  min-width: 14px;
-  flex-shrink: 0;
-}
-
-.drawerOpcioText {
-  flex: 1;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  line-height: 1.3;
-}
-
-.drawerOpcioBadge {
-  font-family: var(--font-game);
-  font-size: 9px;
-  border: 1px solid;
-  padding: 1px 5px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.drawerOpcioBadgeErr {
-  font-family: var(--font-game);
-  font-size: 9px;
-  color: var(--color-neon-red);
-  border: 1px solid var(--color-neon-red);
-  padding: 1px 5px;
-  border-radius: 2px;
-  flex-shrink: 0;
 }
 
 .drawerDivider {
@@ -553,4 +580,6 @@
   .card { padding: var(--spacing-md); }
   .opcio { padding: 6px var(--spacing-sm); }
   .drawer { width: 100vw; border-left: none; }
+  .headerCenter { gap: 4px; }
+  .title { font-size: 10px; letter-spacing: 2px; }
 }
