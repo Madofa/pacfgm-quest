@@ -34,6 +34,45 @@ async function migrateNodes(pool) {
       )
     `);
 
+    // ── Grups (classe/curs) ───────────────────────────────────────────────────
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS grups (
+        id        INT AUTO_INCREMENT PRIMARY KEY,
+        nom       VARCHAR(100) NOT NULL,
+        codi      VARCHAR(8)   NOT NULL UNIQUE,
+        creat_per INT NOT NULL,
+        creat_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (creat_per) REFERENCES usuaris(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Membres del grup (monitors i alumnes)
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS grups_membres (
+        grup_id   INT NOT NULL,
+        usuari_id INT NOT NULL,
+        rol_grup  ENUM('monitor','alumne') NOT NULL,
+        unit_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (grup_id, usuari_id),
+        FOREIGN KEY (grup_id)   REFERENCES grups(id) ON DELETE CASCADE,
+        FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE CASCADE
+      )
+    `);
+
+    // ── Reports de bugs / feedback ────────────────────────────────────────────
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        usuari_id   INT NULL,
+        tipus       ENUM('bug','suggeriment','pregunta') DEFAULT 'bug',
+        descripcio  TEXT NOT NULL,
+        url_page    VARCHAR(255),
+        estat       ENUM('nou','vist','resolt') DEFAULT 'nou',
+        creat_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE SET NULL
+      )
+    `);
+
     // ── Taules noves ─────────────────────────────────────────────────────────
 
     // Banc de preguntes generades per Gemini (persistents i reutilitzables)

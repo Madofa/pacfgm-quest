@@ -9,6 +9,7 @@ import BattleScreen from './components/Battle/BattleScreen';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import MonitorPanel from './components/Monitor/MonitorPanel';
 import RepasPanel from './components/Repas/RepasPanel';
+import FeedbackWidget from './components/Feedback/FeedbackWidget';
 
 // Redirigeix monitors al panel corresponent
 function HomeRoute() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/repas"   element={<ProtectedRoute><RepasPanel /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <FeedbackWidget />
       </BrowserRouter>
     </AuthProvider>
   );

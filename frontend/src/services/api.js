@@ -46,5 +46,11 @@ export const api = {
   grup: {
     leaderboard: () => request('/api/grup/leaderboard'),
     progres:     () => request('/api/grup/progres'),
+    meus:        () => request('/api/grup/meus'),
+    crear:       (nom) => request('/api/grup/crear', { method: 'POST', body: JSON.stringify({ nom }) }),
+    unir:        (codi) => request('/api/grup/unir', { method: 'POST', body: JSON.stringify({ codi }) }),
+  },
+  feedback: {
+    enviar: (tipus, descripcio, url_page) => request('/api/feedback', { method: 'POST', body: JSON.stringify({ tipus, descripcio, url_page }) }),
   },
 };

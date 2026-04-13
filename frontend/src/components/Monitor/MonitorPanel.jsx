@@ -38,15 +38,12 @@ function AlumneCard({ a }) {
 
   return (
     <div className={styles.card} style={{ '--act-color': actColor, borderColor: `${actColor}60` }}>
-      {/* Cap */}
       <div className={styles.cardHead}>
         <span className={styles.alias}>{a.alias}</span>
         <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
           {rangCfg.label}
         </span>
       </div>
-
-      {/* Barra de progrés */}
       <div className={styles.progBar}>
         <div className={styles.progFill} style={{ width: `${pct}%`, background: actColor }} />
       </div>
@@ -54,13 +51,9 @@ function AlumneCard({ a }) {
         <span style={{ color: actColor }}>{a.nodes_completats}</span>
         <span className={styles.progTotal}>/{a.nodes_totals} temes</span>
       </div>
-
-      {/* Stats */}
       <div className={styles.stats}>
         <div className={styles.stat}>
-          <span className={styles.statVal} style={{ color: 'var(--color-gold)' }}>
-            {(a.xp_setmana || 0).toLocaleString()}
-          </span>
+          <span className={styles.statVal} style={{ color: 'var(--color-gold)' }}>{(a.xp_setmana || 0).toLocaleString()}</span>
           <span className={styles.statLbl}>XP/set</span>
         </div>
         <div className={styles.stat}>
@@ -78,8 +71,6 @@ function AlumneCard({ a }) {
           <span className={styles.statLbl}>última</span>
         </div>
       </div>
-
-      {/* Punts febles */}
       {a.punts_febles?.length > 0 && (
         <div className={styles.puntsFebles}>
           {a.punts_febles.map(m => {
@@ -96,34 +87,149 @@ function AlumneCard({ a }) {
   );
 }
 
+// ── Panell sense grup ─────────────────────────────────────────────────────────
+
+function SenseGrup({ onGrupCreat }) {
+  const [nomGrup, setNomGrup]   = useState('');
+  const [codi, setCodi]         = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+
+  async function crear() {
+    if (nomGrup.trim().length < 2) { setError('Escriu el nom del grup'); return; }
+    setLoading(true); setError('');
+    try {
+      const data = await api.grup.crear(nomGrup.trim());
+      onGrupCreat(data.grup);
+    } catch (err) { setError(err.error || 'Error creant el grup'); }
+    finally { setLoading(false); }
+  }
+
+  async function unir() {
+    if (codi.trim().length < 4) { setError('Introdueix el codi del grup'); return; }
+    setLoading(true); setError('');
+    try {
+      const data = await api.grup.unir(codi.trim());
+      onGrupCreat(data.grup);
+    } catch (err) { setError(err.error || 'Codi incorrecte'); }
+    finally { setLoading(false); }
+  }
+
+  return (
+    <div className={styles.senseGrup}>
+      <div className={styles.senseGrupIcon}>👥</div>
+      <h2 className={styles.senseGrupTitle}>Encara no tens cap grup</h2>
+
+      <div className={styles.grupForms}>
+        <div className={styles.grupForm}>
+          <div className={styles.grupFormTitle}>CREAR NOU GRUP</div>
+          <input
+            className={styles.grupInput}
+            placeholder="Nom del grup (ex: CFGM 2024-A)"
+            value={nomGrup}
+            onChange={e => setNomGrup(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && crear()}
+            maxLength={60}
+          />
+          <button className={styles.grupBtn} onClick={crear} disabled={loading}>
+            {loading ? '...' : 'CREAR GRUP'}
+          </button>
+        </div>
+
+        <div className={styles.grupDivider}>o</div>
+
+        <div className={styles.grupForm}>
+          <div className={styles.grupFormTitle}>UNIR-ME A UN GRUP EXISTENT</div>
+          <input
+            className={styles.grupInput}
+            placeholder="Codi del grup (ex: K7MN2P)"
+            value={codi}
+            onChange={e => setCodi(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === 'Enter' && unir()}
+            maxLength={8}
+          />
+          <button className={styles.grupBtn} onClick={unir} disabled={loading}>
+            {loading ? '...' : 'UNIR-ME'}
+          </button>
+        </div>
+      </div>
+
+      {error && <div className={styles.grupError}>{error}</div>}
+    </div>
+  );
+}
+
+// ── Capçalera del grup ────────────────────────────────────────────────────────
+
+function GrupHeader({ grups }) {
+  const [copiat, setCopiat] = useState(false);
+
+  function copiarCodi(codi) {
+    navigator.clipboard.writeText(codi).then(() => {
+      setCopiat(true);
+      setTimeout(() => setCopiat(false), 2000);
+    });
+  }
+
+  return (
+    <div className={styles.grupHeaders}>
+      {grups.map(g => (
+        <div key={g.id} className={styles.grupHeader}>
+          <span className={styles.grupNom}>{g.nom}</span>
+          <div className={styles.grupCodiWrap}>
+            <span className={styles.grupCodiLabel}>CODI</span>
+            <span className={styles.grupCodi}>{g.codi}</span>
+            <button
+              className={`${styles.copiarBtn} ${copiat ? styles.copiatOk : ''}`}
+              onClick={() => copiarCodi(g.codi)}
+            >
+              {copiat ? '✓ COPIAT' : '📋 COPIAR'}
+            </button>
+          </div>
+          <span className={styles.grupStats}>
+            {g.num_alumnes} alumne{g.num_alumnes !== 1 ? 's' : ''} · {g.num_monitors} monitor{g.num_monitors !== 1 ? 's' : ''}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Component principal ───────────────────────────────────────────────────────
+
 export default function MonitorPanel() {
   const { usuari, logout } = useAuth();
   const navigate = useNavigate();
-  const [alumnes, setAlumnes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
-  const [sort, setSort]       = useState('xp_setmana');
+  const [grups, setGrups]         = useState(null); // null = loading
+  const [alumnes, setAlumnes]     = useState([]);
+  const [loadingAlumnes, setLA]   = useState(false);
+  const [sort, setSort]           = useState('xp_setmana');
 
   useEffect(() => {
-    api.grup.progres()
-      .then(setAlumnes)
-      .catch(err => setError(err.error || 'Error carregant dades'))
-      .finally(() => setLoading(false));
+    api.grup.meus().then(setGrups).catch(() => setGrups([]));
   }, []);
+
+  useEffect(() => {
+    if (!grups || grups.length === 0) return;
+    setLA(true);
+    api.grup.progres().then(setAlumnes).catch(() => {}).finally(() => setLA(false));
+  }, [grups]);
+
+  function onGrupCreat(grup) {
+    setGrups([{ ...grup, num_alumnes: 0, num_monitors: 1 }]);
+  }
 
   const sorted = [...alumnes].sort((a, b) => {
     if (sort === 'xp_setmana') return (b.xp_setmana || 0) - (a.xp_setmana || 0);
-    if (sort === 'nodes') return (b.nodes_completats || 0) - (a.nodes_completats || 0);
-    if (sort === 'ratxa') return (b.racha_dies || 0) - (a.racha_dies || 0);
-    if (sort === 'ultima') return (b.ultima_sessio || '').localeCompare(a.ultima_sessio || '');
+    if (sort === 'nodes')      return (b.nodes_completats || 0) - (a.nodes_completats || 0);
+    if (sort === 'ratxa')      return (b.racha_dies || 0) - (a.racha_dies || 0);
+    if (sort === 'ultima')     return (b.ultima_sessio || '').localeCompare(a.ultima_sessio || '');
     return 0;
   });
 
-  // Resum global
   const actius = alumnes.filter(a => {
     if (!a.ultima_sessio) return false;
-    const dies = Math.floor((Date.now() - new Date(a.ultima_sessio)) / 86400000);
-    return dies <= 1;
+    return Math.floor((Date.now() - new Date(a.ultima_sessio)) / 86400000) <= 1;
   }).length;
 
   return (
@@ -135,52 +241,61 @@ export default function MonitorPanel() {
       </header>
 
       <main className={styles.main}>
-        {/* Resum */}
-        <div className={styles.summary}>
-          <div className={styles.summaryItem}>
-            <span className={styles.summaryVal} style={{ color: 'var(--color-neon-green)' }}>{alumnes.length}</span>
-            <span className={styles.summaryLbl}>alumnes</span>
-          </div>
-          <div className={styles.summaryItem}>
-            <span className={styles.summaryVal} style={{ color: 'var(--color-gold)' }}>{actius}</span>
-            <span className={styles.summaryLbl}>actius avui/ahir</span>
-          </div>
-          <div className={styles.summaryItem}>
-            <span className={styles.summaryVal} style={{ color: 'var(--color-neon-orange)' }}>
-              {alumnes.reduce((s, a) => s + (a.xp_setmana || 0), 0).toLocaleString()}
-            </span>
-            <span className={styles.summaryLbl}>XP grup setmana</span>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className={styles.controls}>
-          <span className={styles.sortLabel}>ORDENAR PER:</span>
-          {[
-            { key: 'xp_setmana', label: 'XP/SETMANA' },
-            { key: 'nodes',      label: 'PROGRÉS' },
-            { key: 'ratxa',      label: 'RATXA' },
-            { key: 'ultima',     label: 'ACTIVITAT' },
-          ].map(s => (
-            <button
-              key={s.key}
-              className={`${styles.sortBtn} ${sort === s.key ? styles.sortActive : ''}`}
-              onClick={() => setSort(s.key)}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid d'alumnes */}
-        {loading ? (
-          <div className={styles.loading}>Carregant dades del grup...</div>
-        ) : error ? (
-          <div className={styles.errorMsg}>{error}</div>
+        {grups === null ? (
+          <div className={styles.loading}>Carregant...</div>
+        ) : grups.length === 0 ? (
+          <SenseGrup onGrupCreat={onGrupCreat} />
         ) : (
-          <div className={styles.grid}>
-            {sorted.map(a => <AlumneCard key={a.id} a={a} />)}
-          </div>
+          <>
+            <GrupHeader grups={grups} />
+
+            <div className={styles.summary}>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryVal} style={{ color: 'var(--color-neon-green)' }}>{alumnes.length}</span>
+                <span className={styles.summaryLbl}>alumnes</span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryVal} style={{ color: 'var(--color-gold)' }}>{actius}</span>
+                <span className={styles.summaryLbl}>actius avui/ahir</span>
+              </div>
+              <div className={styles.summaryItem}>
+                <span className={styles.summaryVal} style={{ color: 'var(--color-neon-orange)' }}>
+                  {alumnes.reduce((s, a) => s + (a.xp_setmana || 0), 0).toLocaleString()}
+                </span>
+                <span className={styles.summaryLbl}>XP grup setmana</span>
+              </div>
+            </div>
+
+            <div className={styles.controls}>
+              <span className={styles.sortLabel}>ORDENAR PER:</span>
+              {[
+                { key: 'xp_setmana', label: 'XP/SETMANA' },
+                { key: 'nodes',      label: 'PROGRÉS' },
+                { key: 'ratxa',      label: 'RATXA' },
+                { key: 'ultima',     label: 'ACTIVITAT' },
+              ].map(s => (
+                <button
+                  key={s.key}
+                  className={`${styles.sortBtn} ${sort === s.key ? styles.sortActive : ''}`}
+                  onClick={() => setSort(s.key)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {loadingAlumnes ? (
+              <div className={styles.loading}>Carregant alumnes...</div>
+            ) : alumnes.length === 0 ? (
+              <div className={styles.senseAlumnes}>
+                Encara no hi ha alumnes al grup. Comparteix el codi per a que es puguin unir.
+              </div>
+            ) : (
+              <div className={styles.grid}>
+                {sorted.map(a => <AlumneCard key={a.id} a={a} />)}
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

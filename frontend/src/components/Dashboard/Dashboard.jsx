@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useProgress } from '../../hooks/useProgress';
+import { api } from '../../services/api';
 import CharacterPanel from './CharacterPanel';
 import XPBar from './XPBar';
 import BossTimer from './BossTimer';
@@ -35,6 +36,26 @@ export default function Dashboard() {
 
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
   const totalNodes = skillTree.length;
+
+  // Grup de l'alumne
+  const [grups, setGrups]           = useState(null);
+  const [codiGrup, setCodiGrup]     = useState('');
+  const [unintGrup, setUnintGrup]   = useState(false);
+  const [errorGrup, setErrorGrup]   = useState('');
+
+  useEffect(() => {
+    api.grup.meus().then(setGrups).catch(() => setGrups([]));
+  }, []);
+
+  async function unirGrup() {
+    if (codiGrup.trim().length < 4) return;
+    setErrorGrup('');
+    try {
+      const data = await api.grup.unir(codiGrup.trim());
+      setGrups([{ ...data.grup, num_alumnes: 0, num_monitors: 0 }]);
+      setUnintGrup(true);
+    } catch (err) { setErrorGrup(err.error || 'Codi incorrecte'); }
+  }
 
   return (
     <div className={styles.page}>
@@ -131,6 +152,34 @@ export default function Dashboard() {
               <span className={styles.nodeTotal}> / {totalNodes}</span>
             </span>
             <span className={styles.statSub}>temes completats</span>
+          </div>
+
+          <div className={styles.divider} />
+
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>GRUP</span>
+            {grups === null ? (
+              <span className={styles.statSub}>...</span>
+            ) : grups.length > 0 ? (
+              <span className={styles.statSub} style={{ color: 'var(--color-neon-green)' }}>
+                {grups[0].nom}
+              </span>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <input
+                  className={styles.grupInput}
+                  placeholder="Codi del grup"
+                  value={codiGrup}
+                  onChange={e => setCodiGrup(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && unirGrup()}
+                  maxLength={8}
+                />
+                <button className={styles.toggleBtn} style={{ borderColor: 'var(--color-neon-green)', color: 'var(--color-neon-green)' }} onClick={unirGrup}>
+                  UNIR-ME
+                </button>
+                {errorGrup && <span style={{ fontSize: 10, color: 'var(--color-neon-red)', fontFamily: 'var(--font-body)' }}>{errorGrup}</span>}
+              </div>
+            )}
           </div>
 
           <div className={styles.divider} />

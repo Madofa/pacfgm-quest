@@ -61,4 +61,25 @@ async function enviarBenvinguda(email, nom, alias) {
   });
 }
 
-module.exports = { enviarRecuperacioContrasenya, enviarBenvinguda };
+async function enviarFeedback({ alias, tipus, descripcio, url_page }) {
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+  const transport = getTransport();
+  const tipusLabel = { bug: '🐛 BUG', suggeriment: '💡 SUGGERIMENT', pregunta: '❓ PREGUNTA' }[tipus] || tipus;
+  await transport.sendMail({
+    from:    `"PACFGM Quest" <${process.env.SMTP_USER}>`,
+    to:      adminEmail,
+    subject: `[PACFGM Quest] ${tipusLabel} de ${alias}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:540px;margin:0 auto;padding:32px;background:#1a1a2e;color:#e0e0e0;border-radius:8px;">
+        <h2 style="color:#ffd700;font-family:monospace;letter-spacing:2px;">PACFGM QUEST — ${tipusLabel}</h2>
+        <p><strong>Usuari:</strong> ${alias}</p>
+        ${url_page ? `<p><strong>Pàgina:</strong> ${url_page}</p>` : ''}
+        <div style="background:#0d1117;border-left:4px solid #ffd700;padding:16px;margin:16px 0;border-radius:4px;">
+          <p style="margin:0;white-space:pre-wrap;">${descripcio}</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+module.exports = { enviarRecuperacioContrasenya, enviarBenvinguda, enviarFeedback };
