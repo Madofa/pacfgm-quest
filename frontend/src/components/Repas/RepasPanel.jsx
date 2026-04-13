@@ -61,7 +61,7 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
           {carregant ? (
             <div className={styles.drawerCarregant}>
               <span className={styles.drawerSpinner}>⏳</span>
-              <span>Gemini està pensant...</span>
+              <span>Buscant la millor explicació...</span>
             </div>
           ) : (
             <div className={styles.drawerExplicacio}>{explicacio}</div>
