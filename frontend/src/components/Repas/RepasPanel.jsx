@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { api } from '../../services/api';
@@ -7,31 +7,74 @@ import styles from './RepasPanel.module.css';
 
 const OPCIONS_LLETRES = ['A', 'B', 'C', 'D'];
 
-function ErrorCard({ error, nodeId, onExplicar }) {
-  const [expandit, setExpandit]         = useState(false);
-  const [explicacioAmpliada, setEA]     = useState('');
-  const [carregantEA, setCarregantEA]   = useState(false);
+// ── Drawer lateral amb explicació detallada ──────────────────────────────────
+function ExplicacioDrawer({ error, nodeId, onTancar }) {
+  const [explicacio, setExplicacio] = useState('');
+  const [carregant, setCarregant]   = useState(true);
   const cfg = getMateriaConfig(nodeId?.split('-')[0] || 'mates');
 
-  async function demanarExplicacio() {
-    if (explicacioAmpliada) { setExpandit(true); return; }
-    setCarregantEA(true);
-    try {
-      const data = await api.pregunta.explicar(
-        error.pregunta_text,
-        error.opcions,
-        error.resposta_correcta,
-        nodeId
-      );
-      setEA(data.explicacio_ampliada);
-      setExpandit(true);
-    } catch {
-      setEA('Error generant l\'explicació. Torna-ho a intentar.');
-      setExpandit(true);
-    } finally {
-      setCarregantEA(false);
-    }
-  }
+  useEffect(() => {
+    setCarregant(true);
+    api.pregunta.explicar(error.pregunta_text, error.opcions, error.resposta_correcta, nodeId)
+      .then(data => setExplicacio(data.explicacio_ampliada))
+      .catch(() => setExplicacio('Error generant l\'explicació. Torna-ho a intentar.'))
+      .finally(() => setCarregant(false));
+  }, [error.pregunta_text]);
+
+  // Tancar amb Escape
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onTancar(); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onTancar]);
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className={styles.drawerOverlay} onClick={onTancar} />
+
+      {/* Drawer */}
+      <div className={styles.drawer} style={{ '--mat-color': cfg.color }}>
+        <div className={styles.drawerHeader}>
+          <div className={styles.drawerTitol} style={{ color: cfg.color }}>
+            {cfg.icon} EXPLICACIÓ DETALLADA
+          </div>
+          <button className={styles.drawerClose} onClick={onTancar} title="Tancar (Esc)">✕</button>
+        </div>
+
+        {/* Pregunta resumida */}
+        <div className={styles.drawerPregunta}>
+          <div className={styles.drawerPreguntaLabel}>PREGUNTA</div>
+          <p className={styles.drawerPreguntaText}>{error.pregunta_text}</p>
+          <div className={styles.drawerResposta}>
+            <span className={styles.drawerRespostaLabel}>RESPOSTA CORRECTA</span>
+            <span className={styles.drawerRespostaVal} style={{ color: cfg.color }}>
+              {error.resposta_correcta} — {error.opcions[OPCIONS_LLETRES.indexOf(error.resposta_correcta)]?.replace(/^[A-D]\.\s*/, '')}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.drawerDivider} style={{ background: cfg.color }} />
+
+        {/* Explicació */}
+        <div className={styles.drawerCos}>
+          {carregant ? (
+            <div className={styles.drawerCarregant}>
+              <span className={styles.drawerSpinner}>⏳</span>
+              <span>Gemini està pensant...</span>
+            </div>
+          ) : (
+            <div className={styles.drawerExplicacio}>{explicacio}</div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Targeta d'error ───────────────────────────────────────────────────────────
+function ErrorCard({ error, nodeId, onObrirDrawer }) {
+  const cfg = getMateriaConfig(nodeId?.split('-')[0] || 'mates');
 
   return (
     <div className={styles.card} style={{ '--mat-color': cfg.color }}>
@@ -42,8 +85,8 @@ function ErrorCard({ error, nodeId, onExplicar }) {
       <div className={styles.opcions}>
         {error.opcions.map((opcio, i) => {
           const lletra = OPCIONS_LLETRES[i];
-          const esCorrecta  = lletra === error.resposta_correcta;
-          const esFallada   = lletra === error.resposta_alumne;
+          const esCorrecta = lletra === error.resposta_correcta;
+          const esFallada  = lletra === error.resposta_alumne;
           return (
             <div
               key={lletra}
@@ -66,28 +109,20 @@ function ErrorCard({ error, nodeId, onExplicar }) {
         </div>
       )}
 
-      {/* Explicació ampliada */}
-      {expandit && explicacioAmpliada && (
-        <div className={styles.explicacioAmpliada}>
-          <span className={styles.explicacioLabel} style={{ color: cfg.color }}>EXPLICACIÓ DETALLADA</span>
-          <div className={styles.explicacioText}>{explicacioAmpliada}</div>
-        </div>
-      )}
-
-      {/* Botó explicació */}
+      {/* Botó obrir drawer */}
       <button
         className={styles.btnExplicar}
         style={{ '--mat-color': cfg.color }}
-        onClick={demanarExplicacio}
-        disabled={carregantEA}
+        onClick={() => onObrirDrawer(error, nodeId)}
       >
-        {carregantEA ? '⏳ GENERANT...' : expandit ? '✓ EXPLICAT' : '💡 EXPLICA\'M MÉS'}
+        💡 EXPLICA'M MÉS
       </button>
     </div>
   );
 }
 
-function NodeGroup({ grup }) {
+// ── Grup per node ─────────────────────────────────────────────────────────────
+function NodeGroup({ grup, onObrirDrawer }) {
   const [obert, setObert] = useState(false);
   const cfg = getMateriaConfig(grup.node_id?.split('-')[0] || 'mates');
 
@@ -109,7 +144,7 @@ function NodeGroup({ grup }) {
       {obert && (
         <div className={styles.nodeErrors}>
           {grup.errors.map((e, i) => (
-            <ErrorCard key={e.log_id || i} error={e} nodeId={grup.node_id} />
+            <ErrorCard key={e.log_id || i} error={e} nodeId={grup.node_id} onObrirDrawer={onObrirDrawer} />
           ))}
         </div>
       )}
@@ -117,12 +152,14 @@ function NodeGroup({ grup }) {
   );
 }
 
+// ── Component principal ───────────────────────────────────────────────────────
 export default function RepasPanel() {
   const { logout } = useAuth();
   const navigate   = useNavigate();
-  const [grups, setGrups]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [grups, setGrups]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
+  const [drawer, setDrawer]       = useState(null); // { error, nodeId }
 
   useEffect(() => {
     api.progres.errorsRecents()
@@ -130,6 +167,12 @@ export default function RepasPanel() {
       .catch(err => setError(err.error || 'Error carregant errors'))
       .finally(() => setLoading(false));
   }, []);
+
+  const obrirDrawer = useCallback((error, nodeId) => {
+    setDrawer({ error, nodeId });
+  }, []);
+
+  const tancarDrawer = useCallback(() => setDrawer(null), []);
 
   const totalErrors = grups.reduce((s, g) => s + g.errors.length, 0);
 
@@ -165,11 +208,22 @@ export default function RepasPanel() {
             </div>
 
             <div className={styles.grups}>
-              {grups.map(g => <NodeGroup key={g.node_id} grup={g} />)}
+              {grups.map(g => (
+                <NodeGroup key={g.node_id} grup={g} onObrirDrawer={obrirDrawer} />
+              ))}
             </div>
           </>
         )}
       </main>
+
+      {/* Drawer lateral */}
+      {drawer && (
+        <ExplicacioDrawer
+          error={drawer.error}
+          nodeId={drawer.nodeId}
+          onTancar={tancarDrawer}
+        />
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Login from './components/Auth/Login';
 import ResetPassword from './components/Auth/ResetPassword';
 import VerificacioEmail from './components/Auth/VerificacioEmail';
+import AjudaPanel from './components/Ajuda/AjudaPanel';
 import Dashboard from './components/Dashboard/Dashboard';
 import SkillTree from './components/SkillTree/SkillTree';
 import BattleScreen from './components/Battle/BattleScreen';
@@ -33,6 +34,7 @@ function App() {
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/monitor" element={<ProtectedRoute><MonitorPanel /></ProtectedRoute>} />
           <Route path="/repas"   element={<ProtectedRoute><RepasPanel /></ProtectedRoute>} />
+          <Route path="/ajuda"   element={<ProtectedRoute><AjudaPanel /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <FeedbackWidget />

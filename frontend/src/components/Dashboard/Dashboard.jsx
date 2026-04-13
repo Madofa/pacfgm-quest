@@ -108,6 +108,7 @@ export default function Dashboard() {
           <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
           <button className={styles.navBtn} onClick={() => navigate('/leaderboard')}>RÀNQUING</button>
           <button className={styles.navBtn} onClick={() => navigate('/repas')}>REPÀS</button>
+          <button className={styles.navBtn} onClick={() => navigate('/ajuda')}>?</button>
           <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SORTIR</button>
         </nav>
       </header>

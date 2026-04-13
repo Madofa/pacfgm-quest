@@ -328,9 +328,166 @@
 }
 .btnPrimary:hover { opacity: 0.85; transform: translateY(-2px); }
 
+/* ── Drawer lateral ─────────────────────────────────────────────────────────── */
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(480px, 92vw);
+  background: var(--color-bg-panel);
+  border-left: 1px solid var(--mat-color, var(--color-border));
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.drawerTitol {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  letter-spacing: 3px;
+}
+
+.drawerClose {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.drawerClose:hover {
+  border-color: var(--color-neon-red);
+  color: var(--color-neon-red);
+}
+
+.drawerPregunta {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.drawerPreguntaLabel {
+  font-family: var(--font-game);
+  font-size: 9px;
+  color: var(--color-text-disabled);
+  letter-spacing: 2px;
+}
+
+.drawerPreguntaText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.drawerResposta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.drawerRespostaLabel {
+  font-family: var(--font-game);
+  font-size: 9px;
+  color: var(--color-text-disabled);
+  letter-spacing: 2px;
+}
+
+.drawerRespostaVal {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.drawerDivider {
+  height: 2px;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.drawerCos {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+}
+
+.drawerCarregant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl) 0;
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-text-disabled);
+  letter-spacing: 2px;
+}
+
+.drawerSpinner {
+  font-size: 32px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.drawerExplicacio {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
 /* Mobile */
 @media (max-width: 600px) {
   .main { padding: var(--spacing-md); }
   .card { padding: var(--spacing-md); }
   .opcio { padding: 6px var(--spacing-sm); }
+  .drawer { width: 100vw; border-left: none; }
 }

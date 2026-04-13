@@ -1,0 +1,142 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(8, 12, 20, 0.95);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.backBtn {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.backBtn:hover { color: var(--color-neon-green); border-color: var(--color-neon-green); }
+
+.title {
+  font-size: var(--font-size-game-md);
+  color: var(--color-text-secondary);
+  letter-spacing: 4px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-xl);
+  max-width: 780px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.intro {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  padding: var(--spacing-md) 0;
+}
+
+/* Índex */
+.index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.indexItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-panel);
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.indexItem:hover {
+  color: var(--color-neon-green);
+  border-color: var(--color-neon-green);
+  box-shadow: 0 0 8px rgba(0, 255, 159, 0.2);
+}
+
+/* Secció */
+.seccio {
+  padding: var(--spacing-xl);
+  scroll-margin-top: 80px;
+}
+
+.seccioHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.seccioIcon { font-size: 24px; }
+
+.seccioTitol {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-md);
+  color: var(--color-neon-green);
+  letter-spacing: 3px;
+  text-shadow: 0 0 8px rgba(0, 255, 159, 0.4);
+}
+
+.seccioCos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Bloc de contingut */
+.bloc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.blocTitol {
+  font-family: var(--font-game);
+  font-size: var(--font-size-game-sm);
+  color: var(--color-gold);
+  letter-spacing: 2px;
+}
+
+.blocText {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+@media (max-width: 600px) {
+  .main { padding: var(--spacing-md); }
+  .seccio { padding: var(--spacing-md); }
+  .index { flex-direction: column; }
+  .indexItem { font-size: 10px; }
+}
