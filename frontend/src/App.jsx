@@ -10,12 +10,14 @@ import SkillTree from './components/SkillTree/SkillTree';
 import BattleScreen from './components/Battle/BattleScreen';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import MonitorPanel from './components/Monitor/MonitorPanel';
+import ParePanel from './components/Pare/ParePanel';
 import RepasPanel from './components/Repas/RepasPanel';
 import FeedbackWidget from './components/Feedback/FeedbackWidget';
 
 // Redirigeix monitors al panel corresponent
 function HomeRoute() {
   const { usuari } = useAuth();
+  if (usuari?.rol === 'monitor' && usuari?.subtipus === 'pare') return <Navigate to="/pare" replace />;
   if (usuari?.rol === 'monitor') return <Navigate to="/monitor" replace />;
   return <Dashboard />;
 }
@@ -33,6 +35,7 @@ function App() {
           <Route path="/battle/:nodeId" element={<ProtectedRoute><BattleScreen /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/monitor" element={<ProtectedRoute><MonitorPanel /></ProtectedRoute>} />
+          <Route path="/pare"    element={<ProtectedRoute><ParePanel /></ProtectedRoute>} />
           <Route path="/repas"   element={<ProtectedRoute><RepasPanel /></ProtectedRoute>} />
           <Route path="/ajuda"   element={<ProtectedRoute><AjudaPanel /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />

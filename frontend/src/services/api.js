@@ -60,6 +60,12 @@ export const api = {
     eliminar:    (alumneId) => request(`/api/grup/membres/${alumneId}`, { method: 'DELETE' }),
     informe:     (alumneId) => request(`/api/grup/informe/${alumneId}`),
   },
+  familia: {
+    vincular:    (alias)   => request('/api/familia/vincular', { method: 'POST', body: JSON.stringify({ alias }) }),
+    fills:       ()        => request('/api/familia/fills'),
+    desvincular: (fillId)  => request(`/api/familia/fills/${fillId}`, { method: 'DELETE' }),
+    informe:     (fillId)  => request(`/api/familia/informe/${fillId}`),
+  },
   feedback: {
     enviar: (tipus, descripcio, url_page) => request('/api/feedback', { method: 'POST', body: JSON.stringify({ tipus, descripcio, url_page }) }),
   },

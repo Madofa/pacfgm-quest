@@ -163,88 +163,83 @@
 .memoriaWrap {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
-.memoriaStats {
+/* Barra segmentada */
+.memoriaSegBar {
   display: flex;
-  gap: 0;
-  border: 1px solid var(--color-border);
+  height: 14px;
+  border-radius: 3px;
+  overflow: hidden;
+  width: 100%;
+  gap: 1px;
+  background: var(--color-bg-deep);
 }
 
-.memStat {
-  flex: 1;
+.memoriaSegFill {
+  height: 100%;
+  transition: width 0.7s ease-out;
+  min-width: 3px;
+}
+
+/* Llegenda */
+.memoriaLlegenda {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 5px;
-  padding: 12px 6px;
-  border-right: 1px solid var(--color-border);
-}
-.memStat:last-child { border-right: none; }
-
-.memIcon { font-size: 14px; line-height: 1; }
-
-.memNum {
-  font-family: var(--font-game);
-  font-size: 20px;
-  line-height: 1;
 }
 
-.memLabel {
-  font-family: var(--font-body);
-  font-size: 10px;
-  color: var(--color-text-disabled);
-  text-align: center;
-  line-height: 1.3;
-}
-
-.memoriaBarres {
+.memLlegItem {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 7px;
 }
 
-.memoriaBarRow {
+.memLlegDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.memLlegNum {
+  font-family: var(--font-game);
+  font-size: 13px;
+  line-height: 1;
+  min-width: 22px;
+}
+
+.memLlegLabel {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Resum final */
+.memoriaResum {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
 }
 
-.memoriaBarLabel {
+.memoriaResumStat {
+  font-family: var(--font-body);
   font-size: 11px;
-  font-family: var(--font-body);
-  width: 82px;
-  flex-shrink: 0;
-}
-
-.memoriaBarTrack {
-  flex: 1;
-  height: 7px;
-  background: var(--color-bg-panel-2);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-}
-
-.memoriaBarFill {
-  height: 100%;
-  transition: width 0.7s ease-out;
-}
-
-.memoriaBarVal {
-  font-family: var(--font-game);
-  font-size: 10px;
-  width: 26px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.memoriaTotal {
-  font-family: var(--font-body);
-  font-size: 10px;
   color: var(--color-text-disabled);
-  text-align: center;
+}
+
+.memoriaResumNum {
+  font-family: var(--font-game);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.memoriaResumDivider {
+  color: var(--color-border);
 }
 
 /* Bloc MILLORA DE MEMÒRIA */

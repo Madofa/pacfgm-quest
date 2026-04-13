@@ -238,6 +238,8 @@ function SenseGrup({ onGrupCreat, esPare }) {
                 value={nomGrup}
                 onChange={e => setNomGrup(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && crear()}
+                type="text"
+                autoComplete="off"
                 maxLength={60}
               />
               <button className={styles.grupBtn} onClick={crear} disabled={loading}>
@@ -257,6 +259,8 @@ function SenseGrup({ onGrupCreat, esPare }) {
             value={codi}
             onChange={e => setCodi(e.target.value.toUpperCase())}
             onKeyDown={e => e.key === 'Enter' && unir()}
+            type="text"
+            autoComplete="off"
             maxLength={8}
           />
           <button className={styles.grupBtn} onClick={unir} disabled={loading}>

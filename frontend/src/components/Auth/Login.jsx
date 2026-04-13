@@ -33,13 +33,15 @@ function LoginForm({ onForgot }) {
         <label className={styles.label} htmlFor="email">EMAIL</label>
         <input id="email" type="email" className={styles.input}
           value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="tu@email.com" required autoFocus />
+          placeholder="tu@email.com" required autoFocus
+          autoComplete="email" />
       </div>
       <div className={styles.field}>
         <label className={styles.label} htmlFor="password">CONTRASENYA</label>
         <input id="password" type="password" className={styles.input}
           value={password} onChange={e => setPassword(e.target.value)}
-          placeholder="••••••••" required />
+          placeholder="••••••••" required
+          autoComplete="current-password" />
       </div>
       {error && <div className={styles.error}>{error}</div>}
       <button className={styles.submitBtn} type="submit" disabled={loading}>

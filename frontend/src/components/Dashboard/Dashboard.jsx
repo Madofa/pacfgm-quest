@@ -11,58 +11,55 @@ import StatsPanel, { MODES } from './StatsPanel';
 import styles from './Dashboard.module.css';
 
 const SR_NIVELLS = [
-  { key: 'dominades',   label: 'Dominades',    color: '#00ff9f' },
-  { key: 'quasi',       label: 'Quasi (14d)',   color: '#69f0ae' },
-  { key: 'consolidant', label: 'Consolidant',   color: '#ffdd57' },
-  { key: 'aprenent',    label: 'Aprenent',      color: '#ff9100' },
-  { key: 'pendents',    label: 'Pendents',      color: '#ff3860' },
+  { key: 'dominades',   label: 'Dominat',   color: '#00ff9f' },
+  { key: 'quasi',       label: 'Quasi',     color: '#69f0ae' },
+  { key: 'consolidant', label: 'Aprenent',  color: '#ffdd57' },
+  { key: 'aprenent',    label: 'Iniciant',  color: '#ff9100' },
+  { key: 'pendents',    label: 'Nou',       color: '#ff3860' },
 ];
 
 function MemoriaBlock({ memoria }) {
   if (!memoria) return <div className={styles.memoriaLoading}>...</div>;
 
-  const max = Math.max(memoria.dominades, memoria.quasi, memoria.consolidant, memoria.aprenent, memoria.pendents, 1);
+  const total = SR_NIVELLS.reduce((s, n) => s + (memoria[n.key] || 0), 0) || 1;
+  const pctDominades = Math.round(((memoria.dominades || 0) / (memoria.total_banc || 1)) * 100);
 
   return (
     <div className={styles.memoriaWrap}>
-      {/* Resum top */}
-      <div className={styles.memoriaStats}>
-        <div className={styles.memStat}>
-          <span className={styles.memIcon} style={{ color: '#00ff9f' }}>■</span>
-          <span className={styles.memNum} style={{ color: '#00ff9f' }}>{memoria.dominades}</span>
-          <span className={styles.memLabel}>dominades</span>
-        </div>
-        <div className={styles.memStat}>
-          <span className={styles.memIcon} style={{ color: '#ffdd57' }}>■</span>
-          <span className={styles.memNum} style={{ color: '#ffdd57' }}>{memoria.consolidant}</span>
-          <span className={styles.memLabel}>consolidant</span>
-        </div>
-        <div className={styles.memStat}>
-          <span className={styles.memIcon} style={{ color: '#ff3860' }}>■</span>
-          <span className={styles.memNum} style={{ color: '#ff3860' }}>{memoria.pendents}</span>
-          <span className={styles.memLabel}>repàs pendent</span>
-        </div>
+      {/* Barra segmentada */}
+      <div className={styles.memoriaSegBar}>
+        {SR_NIVELLS.map(n => {
+          const pct = Math.round(((memoria[n.key] || 0) / total) * 100);
+          if (pct === 0) return null;
+          return (
+            <div
+              key={n.key}
+              className={styles.memoriaSegFill}
+              style={{ width: `${pct}%`, background: n.color, boxShadow: `0 0 6px ${n.color}60` }}
+              title={`${n.label}: ${memoria[n.key]}`}
+            />
+          );
+        })}
       </div>
 
-      {/* Barres per nivell */}
-      <div className={styles.memoriaBarres}>
+      {/* Llegenda */}
+      <div className={styles.memoriaLlegenda}>
         {SR_NIVELLS.map(n => (
-          <div key={n.key} className={styles.memoriaBarRow}>
-            <span className={styles.memoriaBarLabel} style={{ color: n.color }}>{n.label}</span>
-            <div className={styles.memoriaBarTrack}>
-              <div
-                className={styles.memoriaBarFill}
-                style={{ width: `${Math.round((memoria[n.key] / max) * 100)}%`, background: n.color, boxShadow: `0 0 4px ${n.color}80` }}
-              />
-            </div>
-            <span className={styles.memoriaBarVal} style={{ color: n.color }}>{memoria[n.key]}</span>
+          <div key={n.key} className={styles.memLlegItem}>
+            <span className={styles.memLlegDot} style={{ background: n.color }} />
+            <span className={styles.memLlegNum} style={{ color: n.color }}>{memoria[n.key] || 0}</span>
+            <span className={styles.memLlegLabel}>{n.label}</span>
           </div>
         ))}
       </div>
 
-      {/* Total */}
-      <div className={styles.memoriaTotal}>
-        {memoria.vistes} vistes · {memoria.total_banc} al banc
+      {/* Resum */}
+      <div className={styles.memoriaResum}>
+        <span className={styles.memoriaResumStat} style={{ color: '#00ff9f' }}>
+          <span className={styles.memoriaResumNum}>{pctDominades}%</span> dominat
+        </span>
+        <span className={styles.memoriaResumDivider}>·</span>
+        <span className={styles.memoriaResumStat}>{memoria.total_banc} al banc</span>
       </div>
     </div>
   );
@@ -259,6 +256,8 @@ export default function Dashboard() {
                   onChange={e => setCodiGrup(e.target.value.toUpperCase())}
                   onKeyDown={e => e.key === 'Enter' && unirGrup()}
                   maxLength={8}
+                  type="text"
+                  autoComplete="off"
                 />
                 <button className={styles.toggleBtn} style={{ borderColor: 'var(--color-neon-green)', color: 'var(--color-neon-green)' }} onClick={unirGrup}>
                   UNIR-ME
