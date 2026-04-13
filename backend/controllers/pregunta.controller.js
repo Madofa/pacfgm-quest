@@ -616,7 +616,7 @@ ${idiomaResposta}`;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
 
-    const MODEL = 'gemini-2.0-flash';
+    const MODEL = 'gemini-2.5-flash';
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
     const controller = new AbortController();

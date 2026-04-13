@@ -2,7 +2,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 20px;
+  width: 100%;
 }
 
 .countdown {
@@ -20,20 +21,20 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 10px 0;
   width: 100%;
 }
 
 .rowSep {
-  width: 60%;
+  width: 50%;
   height: 1px;
   background: rgba(255, 107, 0, 0.2);
-  margin: 2px auto;
+  margin: 0 auto;
 }
 
 .value {
-  font-size: 36px;
+  font-size: 28px;
   line-height: 1;
   letter-spacing: 2px;
 }
@@ -46,23 +47,24 @@
 }
 
 .dateBtn {
-  background: none;
+  background: rgba(255, 56, 96, 0.06);
   border: 2px solid var(--color-neon-red);
   color: var(--color-neon-red);
   font-family: var(--font-game);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 1px;
-  padding: 8px 14px;
+  padding: 14px 12px;
   cursor: pointer;
   width: 100%;
-  text-shadow: 0 0 6px var(--color-neon-red);
-  box-shadow: 0 0 8px rgba(255, 56, 96, 0.3);
+  text-shadow: 0 0 8px var(--color-neon-red);
+  box-shadow: 0 0 12px rgba(255, 56, 96, 0.35), inset 0 0 16px rgba(255, 56, 96, 0.06);
+  line-height: 1.7;
   transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 .dateBtn:hover {
   border-color: var(--color-neon-orange);
   color: var(--color-neon-orange);
-  box-shadow: 0 0 12px rgba(255, 107, 0, 0.5);
+  box-shadow: 0 0 16px rgba(255, 107, 0, 0.5);
 }
 
 .editWrap {

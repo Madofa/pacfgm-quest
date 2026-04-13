@@ -205,8 +205,8 @@ Analitza el desenvolupament i respon en format JSON:
 
 Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa bé.`;
 
-  // gemini-2.0-flash per a visió: sense thinking ni responseMimeType que provoquen errors multimodal
-  const VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
+  // gemini-2.5-flash per a visió: suporta multimodal, filtrem thinking tokens amb !p.thought
+  const VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
 
   const response = await fetch(`${VISION_URL}?key=${apiKey}`, {
     method: 'POST',

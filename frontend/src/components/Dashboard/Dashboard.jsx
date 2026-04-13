@@ -236,7 +236,7 @@ export default function Dashboard() {
           <div className={styles.divider} />
 
           <div className={styles.bossBlock}>
-            <span className={styles.bossBlockLabel}>⚔ THE FINAL BOSS</span>
+            <span className={styles.bossBlockLabel}>THE FINAL BOSS</span>
             <BossTimer />
           </div>
 
