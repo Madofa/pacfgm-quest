@@ -430,6 +430,7 @@ async function finalitzar(req, res) {
     const xp_guanyat = calcularXpSessio({
       materia:   node?.materia || 'social',
       encerts,
+      total,
       rachaDies: novaRacha,
       totalMs:   total_ms,
     });

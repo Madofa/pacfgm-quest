@@ -34,23 +34,25 @@ function calcularRang(nivell) {
   return 'mestre';
 }
 
-// Calculate XP earned for a completed session (from GAMIFICATION.md)
+// Calculate XP earned for a completed session
 // @param {string} materia   - subject key ('mates', 'catala', etc.)
-// @param {number} encerts   - correct answers (0–5)
+// @param {number} encerts   - correct answers
+// @param {number} total     - total questions in session (variable, not always 5)
 // @param {number} rachaDies - current streak in days
 // @param {number} totalMs   - sum of all response times in ms
-function calcularXpSessio({ materia, encerts, rachaDies, totalMs }) {
+function calcularXpSessio({ materia, encerts, total = 5, rachaDies, totalMs }) {
   const mult = XP_MULTIPLIER[materia] || 1.0;
+  const pct = total > 0 ? encerts / total : 0; // % d'encerts, independent del total
 
-  let xp = 50; // XP_base per completed session
-  xp += encerts * 10; // XP_bonus_encert
+  let xp = 50; // XP_base per completar la sessió
+  xp += Math.round(pct * 50); // XP_bonus_encert: màx 50 XP basat en % (no en nombre absolut)
 
   // Streak bonus
   if (rachaDies >= 7)      xp = Math.floor(xp * 1.25);
   else if (rachaDies >= 3) xp = Math.floor(xp * 1.10);
 
-  // Speed bonus: average response time under 20 seconds
-  if (totalMs > 0 && (totalMs / 5) < 20000) xp += 10;
+  // Speed bonus: temps mitjà per pregunta < 20 seg (usa total real, no hardcoded 5)
+  if (totalMs > 0 && total > 0 && (totalMs / total) < 20000) xp += 10;
 
   return Math.floor(xp * mult);
 }
