@@ -6,7 +6,7 @@
 }
 
 .bossIcon {
-  font-size: 32px;
+  font-size: 48px;
   line-height: 1;
   filter: drop-shadow(0 0 8px var(--color-neon-orange));
 }
@@ -29,9 +29,9 @@
 }
 
 .value {
-  font-size: 24px;
+  font-size: 36px;
   line-height: 1;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
 .unit {
