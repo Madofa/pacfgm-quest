@@ -226,11 +226,13 @@
 .explicacioAmpliada {
   background: rgba(0,0,0,0.3);
   border-left: 3px solid var(--mat-color);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   animation: slide-in 0.25s ease-out;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .explicacioLabel {
@@ -238,14 +240,19 @@
   font-size: 9px;
   color: var(--color-text-disabled);
   letter-spacing: 2px;
+  flex-shrink: 0;
 }
 
 .explicacioText {
   font-family: var(--font-body);
   font-size: var(--font-size-body-sm);
   color: var(--color-text-secondary);
-  line-height: 1.6;
-  white-space: pre-wrap;
+  line-height: 1.7;
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  width: 100%;
+  display: block;
 }
 
 /* Botó explicar */

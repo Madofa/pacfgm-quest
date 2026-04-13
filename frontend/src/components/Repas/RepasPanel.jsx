@@ -62,7 +62,7 @@ function ErrorCard({ error, nodeId, onExplicar }) {
       {error.explicacio && (
         <div className={styles.explicacioBase}>
           <span className={styles.explicacioLabel}>EXPLICACIÓ</span>
-          <p className={styles.explicacioText}>{error.explicacio}</p>
+          <div className={styles.explicacioText}>{error.explicacio}</div>
         </div>
       )}
 
@@ -70,7 +70,7 @@ function ErrorCard({ error, nodeId, onExplicar }) {
       {expandit && explicacioAmpliada && (
         <div className={styles.explicacioAmpliada}>
           <span className={styles.explicacioLabel} style={{ color: cfg.color }}>EXPLICACIÓ DETALLADA</span>
-          <p className={styles.explicacioText}>{explicacioAmpliada}</p>
+          <div className={styles.explicacioText}>{explicacioAmpliada}</div>
         </div>
       )}
 
