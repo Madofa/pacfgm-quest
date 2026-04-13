@@ -154,7 +154,7 @@ Les llistes poden tenir de 0 a 4 elements. Si una categoria no té res rellevant
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 1200,
+        maxOutputTokens: 8192,
         responseMimeType: 'application/json',
       },
     }),
