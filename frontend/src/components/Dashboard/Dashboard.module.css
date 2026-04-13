@@ -286,17 +286,49 @@
   .main {
     grid-template-columns: 1fr;
     padding: var(--spacing-md);
+    gap: var(--spacing-md);
   }
 
   .sidePanel {
     position: static;
+    padding: var(--spacing-md);
   }
+
+  .rightPanel {
+    grid-column: 1;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: var(--spacing-md);
+  }
+
+  .statBlock {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .divider { display: none; }
 
   .header {
     padding: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-sm);
   }
 
-  .logo {
-    font-size: var(--font-size-game-sm);
+  .logo { font-size: var(--font-size-game-sm); letter-spacing: 2px; }
+
+  .nav { gap: 4px; }
+  .navBtn {
+    font-size: 10px;
+    padding: 5px 8px;
+    letter-spacing: 0;
   }
+
+  .ctaBtn {
+    font-size: var(--font-size-game-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    letter-spacing: 2px;
+  }
+
+  .radarPanel { min-height: 260px; }
+  .xpPanel, .radarPanel { padding: var(--spacing-md); }
 }
