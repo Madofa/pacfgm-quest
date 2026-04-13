@@ -14,7 +14,7 @@ jobs:
           host: ${{ secrets.SERED_HOST }}
           username: ${{ secrets.SERED_USER }}
           key: ${{ secrets.SERED_SSH_KEY }}
-          port: 22
+          port: 1020
           script: |
             cd ~/repositories/pacfgm-quest
             git pull origin main
