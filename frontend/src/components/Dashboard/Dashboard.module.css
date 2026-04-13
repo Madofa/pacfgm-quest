@@ -153,6 +153,50 @@
   margin-left: 8px;
 }
 
+/* Barres de retencio SR al panell del personatge */
+.retencioWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.retencioRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.retencioIcon {
+  font-size: 12px;
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.retencioTrack {
+  flex: 1;
+  height: 6px;
+  background: var(--color-bg-panel-2);
+  border: 1px solid var(--color-border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.retencioFill {
+  height: 100%;
+  transition: width 0.8s ease-out;
+  border-radius: 1px;
+}
+
+.retencioPct {
+  font-family: var(--font-game);
+  font-size: 8px;
+  width: 26px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
 .version {
   position: fixed;
   bottom: 6px;

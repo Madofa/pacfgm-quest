@@ -10,6 +10,46 @@ import StreakCounter from './StreakCounter';
 import StatsPanel, { MODES } from './StatsPanel';
 import styles from './Dashboard.module.css';
 
+const MATERIES_SR = [
+  { key: 'mates',      icon: '🔢', label: 'Mat',  color: 'var(--color-mates)'      },
+  { key: 'catala',     icon: '📖', label: 'Cat',  color: 'var(--color-catala)'     },
+  { key: 'castella',   icon: '📝', label: 'Cas',  color: 'var(--color-castella)'   },
+  { key: 'angles',     icon: '🇬🇧', label: 'Ang',  color: 'var(--color-angles)'     },
+  { key: 'ciencies',   icon: '🔬', label: 'Cie',  color: 'var(--color-ciencies)'   },
+  { key: 'tecnologia', icon: '⚙️', label: 'Tec',  color: 'var(--color-tecnologia)' },
+  { key: 'social',     icon: '🌍', label: 'Soc',  color: 'var(--color-social)'     },
+];
+
+function RetencioBarres({ retencio = {} }) {
+  return (
+    <div className={styles.retencioWrap}>
+      {MATERIES_SR.map(m => {
+        const r = retencio[m.key];
+        const pct = r?.pct ?? 0;
+        const teData = r?.total > 0;
+        return (
+          <div key={m.key} className={styles.retencioRow} title={`${m.label}: ${pct}% retencio${r ? ` (${r.fresques}/${r.total} preg.)` : ' — sense dades'}`}>
+            <span className={styles.retencioIcon}>{m.icon}</span>
+            <div className={styles.retencioTrack}>
+              <div
+                className={styles.retencioFill}
+                style={{
+                  width: `${pct}%`,
+                  background: teData ? m.color : 'var(--color-border)',
+                  boxShadow: teData && pct > 0 ? `0 0 4px ${m.color}80` : 'none',
+                }}
+              />
+            </div>
+            <span className={styles.retencioPct} style={{ color: teData ? m.color : 'var(--color-text-disabled)' }}>
+              {pct}%
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { usuari, logout } = useAuth();
   const { progres, skillTree, revisions, retencio, loading } = useProgress();
@@ -76,6 +116,11 @@ export default function Dashboard() {
         {/* Columna esquerra — personatge */}
         <aside className={`${styles.sidePanel} panel-rpg animate-panel-in`}>
           <CharacterPanel usuari={usuari} />
+          <div className={styles.divider} />
+          <div className={styles.statBlock}>
+            <span className={styles.statLabel}>RETENCIO</span>
+            <RetencioBarres retencio={retencio} />
+          </div>
         </aside>
 
         {/* Columna central — stats */}

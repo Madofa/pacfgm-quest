@@ -29,6 +29,7 @@
   height: 18px;
   border-radius: 2px;
   overflow: hidden;
+  position: relative;
 }
 
 .fill {
@@ -37,6 +38,45 @@
   box-shadow: 0 0 12px var(--color-neon-green);
   animation: xp-pulse 2s ease-in-out infinite;
   transition: width 1s ease-out;
+}
+
+.nextLabel {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-game);
+  font-size: 7px;
+  color: var(--color-text-disabled);
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+.remaining {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--color-text-disabled);
+  text-align: right;
+}
+
+.remainingVal {
+  color: var(--color-neon-green);
+  font-family: var(--font-game);
+  font-size: 10px;
+}
+
+.rangCanvi {
+  color: var(--color-gold);
+  font-size: var(--font-size-game-xs);
+  text-shadow: 0 0 6px var(--color-gold);
+  letter-spacing: 2px;
+}
+
+.rangLabel {
+  color: var(--color-gold);
+  font-family: var(--font-game);
+  font-size: 9px;
+  letter-spacing: 1px;
 }
 
 @keyframes xp-pulse {
