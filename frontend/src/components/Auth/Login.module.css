@@ -130,6 +130,20 @@
   color: var(--color-text-disabled);
 }
 
+.inputError {
+  border-color: var(--color-neon-red) !important;
+}
+
+.inputOk {
+  border-color: var(--color-neon-green) !important;
+}
+
+.aliasMsg {
+  font-size: 11px;
+  margin-top: 4px;
+  font-family: var(--font-body);
+}
+
 .error {
   font-family: var(--font-body);
   font-size: var(--font-size-body-sm);

@@ -149,6 +149,18 @@
   color: var(--color-neon-red);
 }
 
+.aliasOkMsg {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-neon-green);
+}
+
+.aliasHint {
+  font-family: var(--font-body);
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-disabled);
+}
+
 .rang {
   font-family: var(--font-game);
   font-size: var(--font-size-game-sm);

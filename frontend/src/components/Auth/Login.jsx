@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { api } from '../../services/api';
@@ -120,9 +120,25 @@ function RegisterForm() {
   const [error, setError]             = useState('');
   const [pendent, setPendent]         = useState(false);
   const [loading, setLoading]         = useState(false);
+  const [aliasEstat, setAliasEstat]   = useState(null); // null | 'comprovant' | 'disponible' | 'ocupat'
+  const aliasTimer = useRef(null);
+
+  useEffect(() => {
+    if (alias.trim().length < 2) { setAliasEstat(null); return; }
+    setAliasEstat('comprovant');
+    clearTimeout(aliasTimer.current);
+    aliasTimer.current = setTimeout(async () => {
+      try {
+        const data = await api.auth.checkAlias(alias.trim());
+        setAliasEstat(data.disponible ? 'disponible' : 'ocupat');
+      } catch { setAliasEstat(null); }
+    }, 500);
+    return () => clearTimeout(aliasTimer.current);
+  }, [alias]);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (aliasEstat === 'ocupat') { setError('Alias no disponible'); return; }
     if (password !== password2) {
       setError('Les contrasenyes no coincideixen');
       return;
@@ -177,9 +193,12 @@ function RegisterForm() {
       {!esMonitor && (
         <div className={styles.field}>
           <label className={styles.label}>ÀLIES (NOM DE JOC)</label>
-          <input type="text" className={styles.input}
+          <input type="text" className={`${styles.input} ${aliasEstat === 'ocupat' ? styles.inputError : aliasEstat === 'disponible' ? styles.inputOk : ''}`}
             value={alias} onChange={e => setAlias(e.target.value)}
             placeholder="DragonSlayer42" required />
+          {aliasEstat === 'ocupat'     && <div className={styles.aliasMsg} style={{ color: 'var(--color-neon-red)' }}>Alias no disponible</div>}
+          {aliasEstat === 'disponible' && <div className={styles.aliasMsg} style={{ color: 'var(--color-neon-green)' }}>Alias disponible</div>}
+          {aliasEstat === 'comprovant' && <div className={styles.aliasMsg} style={{ color: 'var(--color-text-disabled)' }}>Comprovant...</div>}
         </div>
       )}
       {esMonitor && (

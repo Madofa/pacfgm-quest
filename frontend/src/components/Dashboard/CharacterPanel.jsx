@@ -111,11 +111,29 @@ export default function CharacterPanel({ usuari }) {
   const [nouAlias, setNouAlias]   = useState('');
   const [error, setError]         = useState('');
   const [guardant, setGuardant]   = useState(false);
-  const inputRef = useRef(null);
+  const [aliasEstat, setAliasEstat] = useState(null); // null | 'comprovant' | 'disponible' | 'ocupat'
+  const inputRef  = useRef(null);
+  const aliasTimer = useRef(null);
+
+  useEffect(() => {
+    if (!editant) return;
+    const net = nouAlias.trim();
+    if (net.length < 2 || net === usuari?.alias) { setAliasEstat(null); return; }
+    setAliasEstat('comprovant');
+    clearTimeout(aliasTimer.current);
+    aliasTimer.current = setTimeout(async () => {
+      try {
+        const data = await api.auth.checkAlias(net);
+        setAliasEstat(data.disponible ? 'disponible' : 'ocupat');
+      } catch { setAliasEstat(null); }
+    }, 500);
+    return () => clearTimeout(aliasTimer.current);
+  }, [nouAlias, editant]);
 
   function iniciarEdicio() {
     setNouAlias(usuari?.alias || '');
     setError('');
+    setAliasEstat(null);
     setEditant(true);
     setTimeout(() => inputRef.current?.select(), 50);
   }
@@ -123,18 +141,21 @@ export default function CharacterPanel({ usuari }) {
   function cancelar() {
     setEditant(false);
     setError('');
+    setAliasEstat(null);
   }
 
   async function desar() {
     const aliasNet = nouAlias.trim();
     if (aliasNet.length < 2) { setError('Mínim 2 caràcters'); return; }
     if (aliasNet === usuari?.alias) { setEditant(false); return; }
+    if (aliasEstat === 'ocupat') { setError('Alias no disponible'); return; }
     setGuardant(true);
     try {
       const data = await api.auth.perfil(aliasNet);
       updateUsuari({ alias: data.usuari.alias });
       setEditant(false);
       setError('');
+      setAliasEstat(null);
     } catch (err) {
       setError(err.error || 'Error en desar');
     } finally {
@@ -172,10 +193,13 @@ export default function CharacterPanel({ usuari }) {
               disabled={guardant}
             />
             <div className={styles.aliasActions}>
-              <button className={styles.aliasOk} onClick={desar} disabled={guardant} title="Desar">✓</button>
+              <button className={styles.aliasOk} onClick={desar} disabled={guardant || aliasEstat === 'ocupat'} title="Desar">✓</button>
               <button className={styles.aliasCancel} onClick={cancelar} disabled={guardant} title="Cancel·lar">✗</button>
             </div>
             {error && <div className={styles.aliasError}>{error}</div>}
+            {!error && aliasEstat === 'ocupat'     && <div className={styles.aliasError}>Alias no disponible</div>}
+            {!error && aliasEstat === 'disponible' && <div className={styles.aliasOkMsg}>Alias disponible</div>}
+            {!error && aliasEstat === 'comprovant' && <div className={styles.aliasHint}>Comprovant...</div>}
           </div>
         ) : (
           <button className={styles.aliasBtn} onClick={iniciarEdicio} title="Canviar nom del personatge">

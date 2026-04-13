@@ -44,6 +44,12 @@ async function register(req, res) {
   const subtipus = (rol === 'monitor' && SUBTIPUS_MONITOR.includes(subtipusRaw)) ? subtipusRaw : null;
 
   try {
+    // Verificar duplicats amb missatges específics
+    const [[aliasRow]] = await pool.query('SELECT id FROM usuaris WHERE alias = ?', [alias]);
+    if (aliasRow) return res.status(409).json({ error: 'Alias no disponible', camp: 'alias' });
+    const [[emailRow]] = await pool.query('SELECT id FROM usuaris WHERE email = ?', [email]);
+    if (emailRow) return res.status(409).json({ error: 'Aquest email ja està registrat', camp: 'email' });
+
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const [result] = await pool.query(
       'INSERT INTO usuaris (nom, alias, email, password_hash, rol, subtipus) VALUES (?, ?, ?, ?, ?, ?)',
@@ -224,4 +230,11 @@ async function actualitzarPerfil(req, res) {
   }
 }
 
-module.exports = { register, login, me, forgotPassword, resetPassword, verificarEmail, actualitzarPerfil };
+async function checkAlias(req, res) {
+  const alias = (req.query.alias || '').trim();
+  if (alias.length < 2) return res.json({ disponible: false });
+  const [[row]] = await pool.query('SELECT id FROM usuaris WHERE alias = ?', [alias]);
+  return res.json({ disponible: !row });
+}
+
+module.exports = { register, login, me, forgotPassword, resetPassword, verificarEmail, actualitzarPerfil, checkAlias };
