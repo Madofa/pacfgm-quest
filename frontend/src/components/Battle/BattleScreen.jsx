@@ -203,7 +203,7 @@ export default function BattleScreen() {
     const tempsMsResposta = tempsInici ? Date.now() - tempsInici : 0;
     // El bonus de velocitat només aplica si el cronòmetre està activat
     // i no és una pregunta de càlcul de mates (on cal temps per resoldre)
-    const esCalcul = materia === 'mates' && pregunta?.necessita_desenvolupament;
+    const esCalcul = ['mates', 'ciencies', 'tecnologia'].includes(materia);
     const tempsMs = (timerEnabled && !esCalcul) ? tempsMsResposta : 0;
     setRespostaSelec(opcio || 'X');
 
@@ -438,8 +438,8 @@ export default function BattleScreen() {
               </button>
             </div>
 
-            {/* Upload de desenvolupament — només per a preguntes de càlcul */}
-            {materia === 'mates' && pregunta?.necessita_desenvolupament && (
+            {/* Upload de desenvolupament — mates, ciències i tecnologia */}
+            {['mates', 'ciencies', 'tecnologia'].includes(materia) && (
               <UploadDesenvolupament
                 sessioId={sessioId}
                 numeroPregunta={numeroPregunta}

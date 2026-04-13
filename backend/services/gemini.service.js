@@ -186,15 +186,18 @@ async function analitzarDesenvolupament({ base64, mimeType, preguntaText, respos
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
 
-  const prompt = `Ets un professor de matemàtiques que revisa el treball manual d'un alumne que es prepara per a la PACFGM.
+  const materia = nodeId ? nodeId.split('-')[0] : 'mates';
+  const nomMateria = MATERIA_NOMS[materia] || 'Matemàtiques';
+
+  const prompt = `Ets un professor de ${nomMateria} que revisa el treball manual d'un alumne que es prepara per a la PACFGM (Prova d'Accés als Cicles Formatius de Grau Mitjà de Catalunya).
 
 Pregunta de l'examen: ${preguntaText}
 Resposta correcta: ${respostaCorrecta}
 Node/tema: ${nodeId}
 
-A la imatge pots veure el desenvolupament manual que ha fet l'alumne per arribar a la resposta.
+A la imatge pots veure el treball manual que ha fet l'alumne (càlculs, esquemes, anotacions...) per arribar a la resposta.
 
-Analitza el desenvolupament i respon en format JSON:
+Analitza el treball i respon en format JSON:
 {
   "correcte_resultat": true/false,
   "correcte_procediment": true/false,
@@ -220,7 +223,7 @@ Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa 
       }],
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 800,
+        maxOutputTokens: 4096,
       },
     }),
   });
