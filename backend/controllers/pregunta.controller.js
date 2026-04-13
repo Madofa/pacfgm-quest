@@ -587,63 +587,74 @@ async function explicar(req, res) {
 
   const node = NODES[node_id] || {};
   const materia = node_id ? node_id.split('-')[0] : '';
+
+  // Null-safe: les opcions pot haver-hi valors no-string si vénen del format antic
   const opcionsTxt = Array.isArray(opcions)
-    ? opcions.map((o, i) => `${['A','B','C','D'][i]}. ${o.replace(/^[A-D]\.\s*/,'')}`).join('\n')
+    ? opcions.map((o, i) => {
+        const t = typeof o === 'string' ? o.replace(/^[A-D]\.\s*/, '') : String(o || '');
+        return `${['A','B','C','D'][i]}. ${t}`;
+      }).join('\n')
     : '';
 
-  // Idioma de la resposta segons la matèria
   const idiomaResposta = materia === 'castella'
-    ? 'Responde en castellano, de forma cercana y motivadora. No repitas la pregunta.'
+    ? 'Responde en castellano. No repitas la pregunta.'
     : materia === 'angles'
-    ? 'Respon en català. La pregunta és d\'anglès, però explica en català perquè l\'alumne ho entengui bé. No repeteixis la pregunta.'
-    : 'Respon en català, de forma propera i animadora. No repeteixis la pregunta.';
+    ? 'Explain in English. Do not repeat the question.'
+    : 'Respon en català. No repeteixis la pregunta.';
 
-  const prompt = `Ets un professor expert en PACFGM (proves d'accés als cicles formatius de grau mitjà de Catalunya).
-Un alumne ha fallat aquesta pregunta i necessita una explicació pedagògica i detallada.
+  const prompt = `Ets un professor de PACFGM (proves d'accés a cicles formatius de grau mitjà de Catalunya).
+L'alumne ha fallat aquesta pregunta:
 
-Pregunta: ${pregunta_text}
-Opcions:
-${opcionsTxt}
+${pregunta_text}
+${opcionsTxt ? `\nOpcions:\n${opcionsTxt}` : ''}
 Resposta correcta: ${resposta_correcta}
-Matèria: ${node.titol || node_id}
 
-Explica en 3-5 frases clares per a un alumne de nivell ESO:
-1. Per qué la resposta ${resposta_correcta} és correcta (amb el raonament)
-2. Per qué les altres opcions són incorrectes (si és rellevant)
-3. Un consell o truc per recordar-ho
-
+Explica en 3-4 frases clares per a un alumne ESO: per qué ${resposta_correcta} és correcta i un truc per recordar-ho.
 ${idiomaResposta}`;
 
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
 
-    // gemini-2.0-flash: sense thinking tokens — tot el budget va al text de resposta
     const MODEL = 'gemini-2.0-flash';
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-    const response = await fetch(`${API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1500,
-        },
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
-    if (!response.ok) throw new Error(`Gemini error ${response.status}`);
+    let response;
+    try {
+      response = await fetch(`${API_URL}?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 600 },
+        }),
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      throw new Error(`Gemini ${response.status}: ${errBody.slice(0, 200)}`);
+    }
 
     const json = await response.json();
     const parts = json.candidates?.[0]?.content?.parts || [];
     const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
 
+    if (!text) {
+      const reason = json.candidates?.[0]?.finishReason || 'unknown';
+      throw new Error(`Resposta buida de Gemini (finishReason: ${reason})`);
+    }
+
     return res.json({ explicacio_ampliada: text });
   } catch (err) {
     console.error('[explicar]', err.message);
-    return res.status(500).json({ error: 'Error generant explicació' });
+    return res.status(500).json({ error: err.message });
   }
 }
 

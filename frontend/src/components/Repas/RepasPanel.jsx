@@ -16,8 +16,20 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
   useEffect(() => {
     setCarregant(true);
     api.pregunta.explicar(error.pregunta_text, error.opcions, error.resposta_correcta, nodeId)
-      .then(data => setExplicacio(data.explicacio_ampliada))
-      .catch(() => setExplicacio('Error generant l\'explicació. Torna-ho a intentar.'))
+      .then(data => {
+        const text = data.explicacio_ampliada?.trim();
+        // Si Gemini retorna buit, usem l'explicació base guardada
+        setExplicacio(text || error.explicacio || 'Sense explicació disponible.');
+      })
+      .catch((err) => {
+        console.warn('[explicar]', err);
+        // Fallback: mostrem l'explicació breu que ja tenim de la pregunta
+        const fallback = error.explicacio;
+        setExplicacio(fallback
+          ? `${fallback}\n\n(L'explicació detallada no ha pogut carregar: ${err?.error || 'error de connexió'})`
+          : `No s'ha pogut generar l'explicació. ${err?.error || 'Torna-ho a intentar.'}`
+        );
+      })
       .finally(() => setCarregant(false));
   }, [error.pregunta_text]);
 
