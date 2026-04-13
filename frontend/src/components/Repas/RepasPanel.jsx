@@ -46,11 +46,24 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
         <div className={styles.drawerPregunta}>
           <div className={styles.drawerPreguntaLabel}>PREGUNTA</div>
           <p className={styles.drawerPreguntaText}>{error.pregunta_text}</p>
-          <div className={styles.drawerResposta}>
-            <span className={styles.drawerRespostaLabel}>RESPOSTA CORRECTA</span>
-            <span className={styles.drawerRespostaVal} style={{ color: cfg.color }}>
-              {error.resposta_correcta} — {error.opcions[OPCIONS_LLETRES.indexOf(error.resposta_correcta)]?.replace(/^[A-D]\.\s*/, '')}
-            </span>
+          <div className={styles.drawerOpcions}>
+            {error.opcions.map((opcio, i) => {
+              const lletra = OPCIONS_LLETRES[i];
+              const esCorrecta = lletra === error.resposta_correcta;
+              const esFallada  = lletra === error.resposta_alumne;
+              const text = typeof opcio === 'string' ? opcio.replace(/^[A-D]\.\s*/, '') : String(opcio);
+              return (
+                <div
+                  key={lletra}
+                  className={`${styles.drawerOpcio} ${esCorrecta ? styles.drawerOpcioCorrecta : ''} ${esFallada && !esCorrecta ? styles.drawerOpcioFallada : ''}`}
+                >
+                  <span className={styles.drawerOpcioLletra} style={esCorrecta ? { color: cfg.color } : {}}>{lletra}</span>
+                  <span className={styles.drawerOpcioText}>{text}</span>
+                  {esCorrecta && <span className={styles.drawerOpcioBadge} style={{ color: cfg.color, borderColor: cfg.color }}>✓</span>}
+                  {esFallada && !esCorrecta && <span className={styles.drawerOpcioBadgeErr}>✗</span>}
+                </div>
+              );
+            })}
           </div>
         </div>
 

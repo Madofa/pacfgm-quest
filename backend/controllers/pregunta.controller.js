@@ -606,7 +606,8 @@ Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
 
-    const MODEL = 'gemini-2.5-flash';
+    // gemini-2.0-flash: sense thinking tokens — tot el budget va al text de resposta
+    const MODEL = 'gemini-2.0-flash';
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
     const response = await fetch(`${API_URL}?key=${apiKey}`, {
@@ -616,8 +617,7 @@ Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
-          thinkingConfig: { thinkingBudget: 0 },
+          maxOutputTokens: 1500,
         },
       }),
     });
