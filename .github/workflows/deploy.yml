@@ -13,7 +13,7 @@ jobs:
         with:
           host: ${{ secrets.SERED_HOST }}
           username: ${{ secrets.SERED_USER }}
-          password: ${{ secrets.SERED_PASS }}
+          key: ${{ secrets.SERED_SSH_KEY }}
           port: 22
           script: |
             cd ~/repositories/pacfgm-quest
