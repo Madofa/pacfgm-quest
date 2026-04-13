@@ -115,4 +115,65 @@ async function srDots(req, res) {
   }
 }
 
-module.exports = { meu, skillTree, revisionsAvui, srDots };
+async function errorsRecents(req, res) {
+  const usuariId = req.usuari.id;
+  try {
+    const [rows] = await pool.query(
+      `SELECT
+         pl.id,
+         pl.pregunta_text,
+         pl.opcions,
+         pl.resposta_correcta,
+         pl.resposta_alumne,
+         pl.explicacio,
+         pl.pregunta_bank_id,
+         pl.sessio_id,
+         se.node_id,
+         se.creat_at AS sessio_data
+       FROM preguntes_log pl
+       JOIN sessions_estudi se ON se.id = pl.sessio_id
+       WHERE se.usuari_id = ?
+         AND pl.correcte = FALSE
+         AND pl.resposta_alumne IS NOT NULL
+         AND se.creat_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+       ORDER BY se.creat_at DESC
+       LIMIT 50`,
+      [usuariId]
+    );
+
+    // Agrupar per node
+    const perNode = {};
+    for (const r of rows) {
+      const nid = r.node_id;
+      if (!perNode[nid]) {
+        perNode[nid] = {
+          node_id: nid,
+          titol:   NODES[nid]?.titol || nid,
+          materia: NODES[nid]?.materia || '',
+          errors:  [],
+        };
+      }
+      let opcions = [];
+      try { opcions = JSON.parse(r.opcions); } catch {}
+      if (!Array.isArray(opcions)) opcions = opcions?.opcions || [];
+
+      perNode[nid].errors.push({
+        log_id:            r.id,
+        pregunta_bank_id:  r.pregunta_bank_id,
+        pregunta_text:     r.pregunta_text,
+        opcions,
+        resposta_correcta: r.resposta_correcta,
+        resposta_alumne:   r.resposta_alumne,
+        explicacio:        r.explicacio || '',
+        sessio_data:       r.sessio_data,
+      });
+    }
+
+    return res.json(Object.values(perNode));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Error intern' });
+  }
+}
+
+module.exports = { meu, skillTree, revisionsAvui, srDots, errorsRecents };

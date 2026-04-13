@@ -30,15 +30,17 @@ export const api = {
     resetPassword:  (token, password) => request('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
   },
   progres: {
-    meu:        () => request('/api/progres/meu'),
-    skillTree:  () => request('/api/progres/skill-tree'),
-    revisions:  () => request('/api/progres/revisions'),
-    srDots:     () => request('/api/progres/sr-dots'),
+    meu:           () => request('/api/progres/meu'),
+    skillTree:     () => request('/api/progres/skill-tree'),
+    revisions:     () => request('/api/progres/revisions'),
+    srDots:        () => request('/api/progres/sr-dots'),
+    errorsRecents: () => request('/api/progres/errors-recents'),
   },
   pregunta: {
     generar:    (node_id, idioma = 'castella') => request('/api/pregunta/generar', { method: 'POST', body: JSON.stringify({ node_id, idioma }) }),
     resposta:   (sessio_id, resposta, temps_ms) => request('/api/pregunta/resposta', { method: 'POST', body: JSON.stringify({ sessio_id, resposta, temps_ms }) }),
     finalitzar: (sessio_id) => request('/api/pregunta/finalitzar', { method: 'POST', body: JSON.stringify({ sessio_id }) }),
+    explicar:   (pregunta_text, opcions, resposta_correcta, node_id) => request('/api/pregunta/explicar', { method: 'POST', body: JSON.stringify({ pregunta_text, opcions, resposta_correcta, node_id }) }),
   },
   grup: {
     leaderboard: () => request('/api/grup/leaderboard'),

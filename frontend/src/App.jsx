@@ -8,6 +8,7 @@ import SkillTree from './components/SkillTree/SkillTree';
 import BattleScreen from './components/Battle/BattleScreen';
 import Leaderboard from './components/Leaderboard/Leaderboard';
 import MonitorPanel from './components/Monitor/MonitorPanel';
+import RepasPanel from './components/Repas/RepasPanel';
 
 // Redirigeix monitors al panel corresponent
 function HomeRoute() {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/battle/:nodeId" element={<ProtectedRoute><BattleScreen /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/monitor" element={<ProtectedRoute><MonitorPanel /></ProtectedRoute>} />
+          <Route path="/repas"   element={<ProtectedRoute><RepasPanel /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

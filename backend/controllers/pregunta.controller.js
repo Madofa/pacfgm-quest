@@ -64,6 +64,89 @@ async function actualitzarSR(usuariId, preguntaBankId, esCorrecte) {
   }
 }
 
+// ── HELPERS GENERACIÓ ─────────────────────────────────────────────────────────
+
+async function inserirQaLog(sessioId, slot, q) {
+  const opcions = typeof q.opcions === 'string' ? q.opcions : JSON.stringify(q.opcions);
+  await pool.query(
+    `INSERT INTO preguntes_log
+       (sessio_id, numero_pregunta, pregunta_bank_id, pregunta_text, opcions,
+        resposta_correcta, explicacio)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [sessioId, slot, q.id, q.pregunta_text, opcions, q.resposta_correcta, q.explicacio]
+  );
+}
+
+async function generarIInserirUnaQ(sessioId, slot, nodeId, node, idioma, textsUsats) {
+  try {
+    const q = await generarPregunta(nodeId, node.temari, idioma, textsUsats);
+    const [ins] = await pool.query(
+      `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
+       VALUES (?, ?, ?, ?, ?)`,
+      [nodeId, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+    );
+    const qRow = {
+      id: ins.insertId, pregunta_text: q.pregunta,
+      opcions: JSON.stringify(q.opcions), resposta_correcta: q.correcta, explicacio: q.explicacio,
+    };
+    await inserirQaLog(sessioId, slot, qRow);
+    return qRow;
+  } catch (err) {
+    console.warn(`[generar] Gemini slot ${slot}: ${err.message} — usant banc`);
+    const [bf] = await pool.query(
+      'SELECT * FROM preguntes_bank WHERE node_id = ? ORDER BY RAND() LIMIT 1', [nodeId]
+    );
+    if (bf.length > 0) {
+      await inserirQaLog(sessioId, slot, bf[0]);
+      return bf[0];
+    }
+    return null;
+  }
+}
+
+// Genera els slots pendents en background (crida paral·lela a Gemini)
+async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsUsats, fromSlot) {
+  const count = 5 - fromSlot + 1;
+  if (count <= 0) return;
+  console.log(`[bg] sessió ${sessioId}: generant slots ${fromSlot}-5 en paral·lel`);
+
+  const promises = Array.from({ length: count }, (_, i) =>
+    generarPregunta(nodeId, node.temari, idioma, textsUsats)
+      .catch(err => { console.warn(`[bg] Gemini slot ${fromSlot + i}: ${err.message}`); return null; })
+  );
+  const results = await Promise.all(promises);
+
+  for (let i = 0; i < results.length; i++) {
+    const slot = fromSlot + i;
+    const q = results[i];
+    let qRow = null;
+
+    if (q) {
+      try {
+        const [ins] = await pool.query(
+          `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
+           VALUES (?, ?, ?, ?, ?)`,
+          [nodeId, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+        );
+        qRow = { id: ins.insertId, pregunta_text: q.pregunta, opcions: JSON.stringify(q.opcions), resposta_correcta: q.correcta, explicacio: q.explicacio };
+      } catch (e) { console.warn(`[bg] bank insert slot ${slot}: ${e.message}`); }
+    }
+
+    if (!qRow) {
+      const [bf] = await pool.query(
+        'SELECT * FROM preguntes_bank WHERE node_id = ? ORDER BY RAND() LIMIT 1', [nodeId]
+      );
+      if (bf.length > 0) qRow = bf[0];
+    }
+
+    if (qRow) {
+      try { await inserirQaLog(sessioId, slot, qRow); }
+      catch (e) { console.warn(`[bg] log insert slot ${slot}: ${e.message}`); }
+    }
+  }
+  console.log(`[bg] sessió ${sessioId}: slots ${fromSlot}-5 completats`);
+}
+
 // ── GENERAR ───────────────────────────────────────────────────────────────────
 
 async function generar(req, res) {
@@ -75,7 +158,7 @@ async function generar(req, res) {
   if (!node) return res.status(404).json({ error: 'Node no trobat' });
 
   try {
-    // Verificar que el node és accessible
+    // Verificar accés
     const [progresRows] = await pool.query(
       'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
       [usuariId, node_id]
@@ -85,128 +168,107 @@ async function generar(req, res) {
       return res.status(403).json({ error: 'Node bloquejat. Completa el node anterior primer.' });
     }
 
-    // Comprovar si hi ha sessió oberta amb preguntes pendents
+    // Comprovar si hi ha sessió oberta amb pregunta pendent
     const [openSessions] = await pool.query(
-      `SELECT s.id,
-              COUNT(p.id)                                    AS total_preguntes,
-              SUM(p.resposta_alumne IS NOT NULL)             AS respostes
-       FROM sessions_estudi s
-       LEFT JOIN preguntes_log p ON p.sessio_id = s.id
+      `SELECT s.id FROM sessions_estudi s
        WHERE s.usuari_id = ? AND s.node_id = ? AND s.completada = FALSE
-       GROUP BY s.id
        ORDER BY s.creat_at DESC LIMIT 1`,
       [usuariId, node_id]
     );
 
-    let sessioId;
-
-    if (openSessions.length > 0 && parseInt(openSessions[0].total_preguntes) >= 5
-        && parseInt(openSessions[0].respostes) < 5) {
-      // Reprendre sessió existent — preguntes ja carregades
-      sessioId = openSessions[0].id;
-    } else {
-      // Nova sessió — construir el conjunt de 5 preguntes
-      const [newSessio] = await pool.query(
-        'INSERT INTO sessions_estudi (usuari_id, node_id) VALUES (?, ?)',
-        [usuariId, node_id]
+    if (openSessions.length > 0) {
+      const sessioId = openSessions[0].id;
+      const [pending] = await pool.query(
+        `SELECT * FROM preguntes_log WHERE sessio_id = ? AND resposta_alumne IS NULL
+         ORDER BY numero_pregunta ASC LIMIT 1`,
+        [sessioId]
       );
-      sessioId = newSessio.insertId;
-
-      // 1. Preguntes de repàs pendents per a aquest node i usuari
-      const avui = new Date().toISOString().split('T')[0];
-      const [dueRows] = await pool.query(
-        `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio
-         FROM sr_pregunta sr
-         JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
-         WHERE sr.usuari_id = ? AND pb.node_id = ? AND sr.propera_revisio <= ?
-         ORDER BY sr.propera_revisio ASC, sr.consecutives_correctes ASC
-         LIMIT 5`,
-        [usuariId, node_id, avui]
-      );
-
-      // 2. Generar preguntes noves per als llocs restants — en paral·lel
-      const newCount = 5 - dueRows.length;
-      const textsUsats = dueRows.map(q => q.pregunta_text);
-      const newBankRows = [];
-
-      if (newCount > 0) {
-        // Llançar totes les crides Gemini simultàniament
-        const geminiPromises = Array.from({ length: newCount }, (_, i) =>
-          generarPregunta(node_id, node.temari, idioma, textsUsats)
-            .catch(err => { console.warn(`[generar] Gemini slot ${i+1} error: ${err.message}`); return null; })
-        );
-        const geminiResults = await Promise.all(geminiPromises);
-
-        for (let i = 0; i < geminiResults.length; i++) {
-          const q = geminiResults[i];
-          if (q) {
-            // Gemini ok — inserir al banc
-            const [ins] = await pool.query(
-              `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
-               VALUES (?, ?, ?, ?, ?)`,
-              [node_id, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
-            );
-            newBankRows.push({
-              id:                ins.insertId,
-              pregunta_text:     q.pregunta,
-              opcions:           JSON.stringify(q.opcions),
-              resposta_correcta: q.correcta,
-              explicacio:        q.explicacio,
-            });
-          } else {
-            // Fallback al banc existent
-            const usedIds = [...dueRows.map(r => r.id), ...newBankRows.map(r => r.id)];
-            const placeholders = usedIds.length > 0 ? `AND id NOT IN (${usedIds.map(() => '?').join(',')})` : '';
-            const [bankFallback] = await pool.query(
-              `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
-              [node_id, ...usedIds]
-            );
-            if (bankFallback.length > 0) newBankRows.push(bankFallback[0]);
-          }
-        }
+      if (pending.length > 0) {
+        const preg = pending[0];
+        return res.json({
+          sessio_id: sessioId, numero_pregunta: preg.numero_pregunta,
+          total_preguntes: 5, pregunta: preg.pregunta_text, opcions: parseOpcions(preg.opcions),
+        });
       }
 
-      // 3. Combinar: repàs primer, noves al final
-      const allQ = [...dueRows, ...newBankRows];
-
-      // 4. Pre-popular preguntes_log amb totes les preguntes de la sessió
-      for (let i = 0; i < allQ.length; i++) {
-        const q = allQ[i];
-        const opcions = typeof q.opcions === 'string' ? q.opcions : JSON.stringify(q.opcions);
-        await pool.query(
-          `INSERT INTO preguntes_log
-             (sessio_id, numero_pregunta, pregunta_bank_id, pregunta_text, opcions,
-              resposta_correcta, explicacio)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [sessioId, i + 1, q.id, q.pregunta_text, opcions, q.resposta_correcta, q.explicacio]
-        );
+      // La sessió existeix però el background encara no ha inserit la pròxima pregunta
+      const [countRow] = await pool.query(
+        'SELECT COUNT(*) AS total FROM preguntes_log WHERE sessio_id = ?', [sessioId]
+      );
+      const loaded = parseInt(countRow[0].total);
+      if (loaded >= 5) {
+        return res.status(409).json({ error: 'No hi ha preguntes pendents. Crida /finalitzar.' });
       }
+
+      // Generar on-the-fly la següent (cas rar: l'alumne és molt ràpid)
+      const nextSlot = loaded + 1;
+      const [textsRows] = await pool.query(
+        'SELECT pregunta_text FROM preguntes_log WHERE sessio_id = ?', [sessioId]
+      );
+      const textsUsats = textsRows.map(r => r.pregunta_text);
+      const qRow = await generarIInserirUnaQ(sessioId, nextSlot, node_id, node, idioma, textsUsats);
+      if (!qRow) return res.status(500).json({ error: 'Error generant la pregunta' });
+      return res.json({
+        sessio_id: sessioId, numero_pregunta: nextSlot,
+        total_preguntes: 5, pregunta: qRow.pregunta_text, opcions: parseOpcions(qRow.opcions),
+      });
     }
 
-    // Retornar la pròxima pregunta sense respondre
-    const [pending] = await pool.query(
-      `SELECT * FROM preguntes_log
-       WHERE sessio_id = ? AND resposta_alumne IS NULL
-       ORDER BY numero_pregunta ASC LIMIT 1`,
-      [sessioId]
+    // ── Nova sessió ──────────────────────────────────────────────────────────
+    const [newSessio] = await pool.query(
+      'INSERT INTO sessions_estudi (usuari_id, node_id) VALUES (?, ?)', [usuariId, node_id]
+    );
+    const sessioId = newSessio.insertId;
+
+    // 1. Preguntes SR pendents (de la BD, ràpid)
+    const avui = new Date().toISOString().split('T')[0];
+    const [dueRows] = await pool.query(
+      `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio
+       FROM sr_pregunta sr JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
+       WHERE sr.usuari_id = ? AND pb.node_id = ? AND sr.propera_revisio <= ?
+       ORDER BY sr.propera_revisio ASC, sr.consecutives_correctes ASC LIMIT 5`,
+      [usuariId, node_id, avui]
     );
 
-    if (!pending.length) {
-      return res.status(409).json({ error: 'No hi ha preguntes pendents. Crida /finalitzar.' });
+    // 2. Inserir preguntes SR al log (operació DB, immediata)
+    const textsUsats = [];
+    let slotActual = 1;
+    for (const q of dueRows) {
+      await inserirQaLog(sessioId, slotActual++, q);
+      textsUsats.push(q.pregunta_text);
     }
 
-    const preg = pending[0];
+    // 3. Slot 1 de Gemini (si no n'hi ha de SR per slot 1)
+    let slot1Q = dueRows.length > 0 ? dueRows[0] : null;
 
-    return res.json({
-      sessio_id:       sessioId,
-      numero_pregunta: preg.numero_pregunta,
-      total_preguntes: 5,
-      pregunta:        preg.pregunta_text,
-      opcions:         parseOpcions(preg.opcions),
+    if (!slot1Q) {
+      // Una sola crida Gemini — retornem molt més ràpid que abans
+      const qRow = await generarIInserirUnaQ(sessioId, 1, node_id, node, idioma, textsUsats);
+      if (!qRow) return res.status(500).json({ error: 'No s\'ha pogut generar la pregunta' });
+      slot1Q = qRow;
+      textsUsats.push(qRow.pregunta_text);
+      slotActual = 2;
+    }
+
+    // 4. Retornar slot 1 IMMEDIATAMENT
+    res.json({
+      sessio_id: sessioId, numero_pregunta: 1,
+      total_preguntes: 5, pregunta: slot1Q.pregunta_text, opcions: parseOpcions(slot1Q.opcions),
     });
+
+    // 5. Generar slots restants en background (l'alumne respon Q1 mentre es genera)
+    if (slotActual <= 5) {
+      setImmediate(() => {
+        generarQuestionsBackground(sessioId, node_id, node, idioma, textsUsats, slotActual)
+          .catch(e => console.error('[bg]', e.message));
+      });
+    }
+
   } catch (err) {
     console.error('Error generant pregunta:', err);
-    return res.status(500).json({ error: 'Error generant la pregunta', detall: err?.message || String(err) });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'Error generant la pregunta', detall: err?.message || String(err) });
+    }
   }
 }
 
@@ -483,4 +545,62 @@ async function finalitzar(req, res) {
   }
 }
 
-module.exports = { generar, resposta, finalitzar };
+// ── EXPLICAR (ampliada) ───────────────────────────────────────────────────────
+
+async function explicar(req, res) {
+  const { pregunta_text, opcions, resposta_correcta, node_id } = req.body;
+  if (!pregunta_text || !resposta_correcta) {
+    return res.status(400).json({ error: 'Falten pregunta_text i resposta_correcta' });
+  }
+
+  const node = NODES[node_id] || {};
+  const opcionsTxt = Array.isArray(opcions)
+    ? opcions.map((o, i) => `${['A','B','C','D'][i]}. ${o.replace(/^[A-D]\.\s*/,'')}`).join('\n')
+    : '';
+
+  const prompt = `Ets un professor expert en PACFGM (proves d'accés als cicles formatius de grau mitjà de Catalunya).
+Un alumne ha fallat aquesta pregunta i necessita una explicació pedagògica i detallada.
+
+Pregunta: ${pregunta_text}
+Opcions:
+${opcionsTxt}
+Resposta correcta: ${resposta_correcta}
+Matèria: ${node.titol || node_id}
+
+Explica en 3-5 frases clares per a un alumne de nivell ESO:
+1. Per qué la resposta ${resposta_correcta} és correcta (amb el raonament)
+2. Per qué les altres opcions són incorrectes (si és rellevant)
+3. Un consell o truc per recordar-ho
+
+Respon en català, de forma propera i animadora. No repeteixis la pregunta.`;
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
+
+    const MODEL = 'gemini-2.5-flash';
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+
+    const response = await fetch(`${API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 512 },
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Gemini error ${response.status}`);
+
+    const json = await response.json();
+    const parts = json.candidates?.[0]?.content?.parts || [];
+    const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
+
+    return res.json({ explicacio_ampliada: text });
+  } catch (err) {
+    console.error('[explicar]', err.message);
+    return res.status(500).json({ error: 'Error generant explicació' });
+  }
+}
+
+module.exports = { generar, resposta, finalitzar, explicar };
