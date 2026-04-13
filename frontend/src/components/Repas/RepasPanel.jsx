@@ -27,9 +27,11 @@ function ExplicacioDrawer({ error, nodeId, onTancar }) {
 
   // Index de la resposta correcta per obtenir el text complet
   const idxCorrecta = OPCIONS_LLETRES.indexOf(error.resposta_correcta);
-  const textCorrecta = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
+  const rawText = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
     ? getOpcioText(error.opcions[idxCorrecta])
     : error.resposta_correcta;
+  const isBadData = rawText.length <= 1;
+  const textCorrecta = isBadData ? (error.explicacio || error.resposta_correcta) : rawText;
 
   useEffect(() => {
     setCarregant(true);
@@ -109,9 +111,15 @@ function ErrorCard({ error, nodeId, onObrirDrawer, onDismiss }) {
   const cfg = getMateriaConfig(nodeId?.split('-')[0] || 'mates');
 
   const idxCorrecta = OPCIONS_LLETRES.indexOf(error.resposta_correcta);
-  const textCorrecta = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
+  const rawText = idxCorrecta >= 0 && error.opcions?.[idxCorrecta]
     ? getOpcioText(error.opcions[idxCorrecta])
     : error.resposta_correcta;
+  // Dades corruptes (opcions antigues guardaven només la lletra): usar explicació com a context
+  const isBadData = rawText.length <= 1;
+  const textCorrecta = isBadData ? null : rawText;
+
+  // Si totes les opcions són d'un caràcter, les dades estan corrompudes → no mostrar llistat
+  const opcionsBones = error.opcions?.length > 0 && !error.opcions.every(o => getOpcioText(o).length <= 1);
 
   return (
     <div className={styles.card} style={{ '--mat-color': cfg.color }}>
@@ -124,28 +132,33 @@ function ErrorCard({ error, nodeId, onObrirDrawer, onDismiss }) {
       {/* Resposta correcta destacada */}
       <div className={styles.respostaDestacada} style={{ borderColor: cfg.color, background: `color-mix(in srgb, ${cfg.color} 8%, transparent)` }}>
         <span className={styles.respostaDestacadaLabel} style={{ color: cfg.color }}>RESPOSTA CORRECTA</span>
-        <span className={styles.respostaDestacadaVal}>{error.resposta_correcta}. {textCorrecta}</span>
+        {textCorrecta
+          ? <span className={styles.respostaDestacadaVal}>{error.resposta_correcta}. {textCorrecta}</span>
+          : <span className={styles.respostaDestacadaVal}>{error.resposta_correcta}. {error.explicacio || '—'}</span>
+        }
       </div>
 
-      {/* Opcions */}
-      <div className={styles.opcions}>
-        {error.opcions.map((opcio, i) => {
-          const lletra = OPCIONS_LLETRES[i];
-          const esCorrecta = lletra === error.resposta_correcta;
-          const esFallada  = lletra === error.resposta_alumne;
-          return (
-            <div
-              key={lletra}
-              className={`${styles.opcio} ${esCorrecta ? styles.opcioCorrecta : ''} ${esFallada && !esCorrecta ? styles.opcioFallada : ''}`}
-            >
-              <span className={styles.opcioLletra}>{lletra}</span>
-              <span className={styles.opcioText}>{getOpcioText(opcio)}</span>
-              {esCorrecta && <span className={styles.badge}>✓ CORRECTA</span>}
-              {esFallada && !esCorrecta && <span className={styles.badgeError}>✗ LA TEVA</span>}
-            </div>
-          );
-        })}
-      </div>
+      {/* Opcions (només si les dades no estan corrompudes) */}
+      {opcionsBones && (
+        <div className={styles.opcions}>
+          {error.opcions.map((opcio, i) => {
+            const lletra = OPCIONS_LLETRES[i];
+            const esCorrecta = lletra === error.resposta_correcta;
+            const esFallada  = lletra === error.resposta_alumne;
+            return (
+              <div
+                key={lletra}
+                className={`${styles.opcio} ${esCorrecta ? styles.opcioCorrecta : ''} ${esFallada && !esCorrecta ? styles.opcioFallada : ''}`}
+              >
+                <span className={styles.opcioLletra}>{lletra}</span>
+                <span className={styles.opcioText}>{getOpcioText(opcio)}</span>
+                {esCorrecta && <span className={styles.badge}>✓ CORRECTA</span>}
+                {esFallada && !esCorrecta && <span className={styles.badgeError}>✗ LA TEVA</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Explicació base */}
       {error.explicacio && (
