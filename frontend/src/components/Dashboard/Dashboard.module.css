@@ -312,10 +312,13 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-lg);
   border: 1px solid var(--color-neon-orange);
   box-shadow: 0 0 16px rgba(255, 107, 0, 0.2), inset 0 0 24px rgba(255, 107, 0, 0.05);
   background: rgba(255, 107, 0, 0.04);
+  overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bossBlockLabel {
