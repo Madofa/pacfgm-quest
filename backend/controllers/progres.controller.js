@@ -144,7 +144,7 @@ async function errorsRecents(req, res) {
       `SELECT
          pl.id,
          pl.pregunta_text,
-         COALESCE(pl.opcions, pb.opcions) AS opcions,
+         COALESCE(pb.opcions, pl.opcions) AS opcions,
          pl.resposta_correcta,
          pl.resposta_alumne,
          pl.explicacio,
