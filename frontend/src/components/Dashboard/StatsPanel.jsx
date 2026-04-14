@@ -65,11 +65,11 @@ function calcStats(nodes = [], retencio = {}) {
 }
 
 // ── Opció 1: Barres horitzontals ──────────────────────────────────────────────
-function BarresView({ data }) {
+function BarresView({ data, onNavigate }) {
   return (
     <div className={styles.barresList}>
       {data.map(m => (
-        <div key={m.key} className={styles.barRow}>
+        <div key={m.key} className={`${styles.barRow} ${styles.clickable}`} onClick={() => onNavigate(m.key)}>
           <div className={styles.barHeader}>
             <span className={styles.barName}>{m.icon} {m.label}</span>
             <span className={styles.barPct} style={{ color: m.color }}>{m.pct}%</span>
@@ -92,11 +92,11 @@ function BarresView({ data }) {
 }
 
 // ── Opció 2: Hexàgons ─────────────────────────────────────────────────────────
-function HexView({ data }) {
+function HexView({ data, onNavigate }) {
   return (
     <div className={styles.hexGrid}>
       {data.map(m => (
-        <div key={m.key} className={styles.hexWrap}>
+        <div key={m.key} className={`${styles.hexWrap} ${styles.clickable}`} onClick={() => onNavigate(m.key)}>
           <div className={styles.hex} style={{ '--hex-color': m.color }}>
             <div className={styles.hexBg} />
             <div className={styles.hexGlow} style={{ background: `${m.color}22` }} />
@@ -116,13 +116,13 @@ function HexView({ data }) {
 const R = 24;
 const CIRC = 2 * Math.PI * R;
 
-function DonutView({ data }) {
+function DonutView({ data, onNavigate }) {
   return (
     <div className={styles.donutGrid}>
       {data.map(m => {
         const offset = CIRC - (m.pct / 100) * CIRC;
         return (
-          <div key={m.key} className={styles.donutItem}>
+          <div key={m.key} className={`${styles.donutItem} ${styles.clickable}`} onClick={() => onNavigate(m.key)}>
             <svg width="64" height="64" viewBox="0 0 64 64" style={{ transform: 'rotate(-90deg)' }}>
               <circle cx="32" cy="32" r={R} fill="none" stroke="var(--color-bg-panel-2)" strokeWidth="8" />
               <circle
@@ -154,11 +154,11 @@ function DonutView({ data }) {
 }
 
 // ── Opció 4: Tarjetes compactes ───────────────────────────────────────────────
-function CardsView({ data }) {
+function CardsView({ data, onNavigate }) {
   return (
     <div className={styles.cardsList}>
       {data.map(m => (
-        <div key={m.key} className={styles.statCard} style={{ '--card-color': m.color }}>
+        <div key={m.key} className={`${styles.statCard} ${styles.clickable}`} style={{ '--card-color': m.color }} onClick={() => onNavigate(m.key)}>
           <span className={styles.cardIcon}>{m.icon}</span>
           <div className={styles.cardInfo}>
             <div className={styles.cardTop}>
@@ -183,15 +183,16 @@ const MODES = [
   { key: 'cards', label: '▤ TARJETES' },
 ];
 
-export default function StatsPanel({ nodes = [], retencio = {}, mode, onModeChange }) {
+export default function StatsPanel({ nodes = [], retencio = {}, mode, onNavigate }) {
   const data = calcStats(nodes, retencio);
+  const nav = onNavigate || (() => {});
 
   return (
     <div className={styles.wrapper}>
-      {mode === 'bars'  && <BarresView data={data} />}
-      {mode === 'hex'   && <HexView   data={data} />}
-      {mode === 'donut' && <DonutView data={data} />}
-      {mode === 'cards' && <CardsView data={data} />}
+      {mode === 'bars'  && <BarresView data={data} onNavigate={nav} />}
+      {mode === 'hex'   && <HexView   data={data} onNavigate={nav} />}
+      {mode === 'donut' && <DonutView data={data} onNavigate={nav} />}
+      {mode === 'cards' && <CardsView data={data} onNavigate={nav} />}
     </div>
   );
 }

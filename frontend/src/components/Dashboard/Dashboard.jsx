@@ -268,7 +268,7 @@ export default function Dashboard() {
             {loading ? (
               <div className={styles.loading}>Carregant...</div>
             ) : (
-              <StatsPanel nodes={skillTree} retencio={retencio} mode={statsMode} />
+              <StatsPanel nodes={skillTree} retencio={retencio} mode={statsMode} onNavigate={mat => navigate(`/skill-tree?materia=${mat}`)} />
             )}
           </div>
 

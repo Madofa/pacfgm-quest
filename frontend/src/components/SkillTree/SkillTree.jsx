@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
 import { useProgress } from '../../hooks/useProgress';
 import { MATERIES, getMateriaConfig } from '../../data/skillTree';
@@ -11,7 +11,12 @@ export default function SkillTree() {
   const { logout } = useAuth();
   const { skillTree, loading } = useProgress();
   const navigate = useNavigate();
-  const [materiaActiva, setMateriaActiva] = useState('mates');
+  const [searchParams] = useSearchParams();
+  const materiaParam = searchParams.get('materia');
+  const validMateries = MATERIES.map(m => m.key);
+  const [materiaActiva, setMateriaActiva] = useState(
+    materiaParam && validMateries.includes(materiaParam) ? materiaParam : 'mates'
+  );
   const [srDots, setSrDots] = useState({});
   const [errorsPerNode, setErrorsPerNode] = useState(new Set());
   const [confirmNode, setConfirmNode] = useState(null); // node que espera confirmació
