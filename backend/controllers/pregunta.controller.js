@@ -252,23 +252,25 @@ async function generar(req, res) {
       );
       const loaded = parseInt(countRow[0].total);
       if (loaded >= 5) {
-        return res.status(409).json({ error: 'No hi ha preguntes pendents. Crida /finalitzar.' });
+        // Sessió plena i totes contestades: tancar i crear nova sessió a continuació
+        await pool.query('UPDATE sessions_estudi SET completada = TRUE WHERE id = ?', [sessioId]);
+        // (fall through a nova sessió)
+      } else {
+        // Generar on-the-fly la següent (cas rar: l'alumne és molt ràpid)
+        const nextSlot = loaded + 1;
+        const [textsRows] = await pool.query(
+          'SELECT pregunta_text FROM preguntes_log WHERE sessio_id = ?', [sessioId]
+        );
+        const textsUsats = textsRows.map(r => r.pregunta_text);
+        const qRow = await generarIInserirUnaQ(sessioId, nextSlot, node_id, node, idioma, textsUsats);
+        if (!qRow) return res.status(500).json({ error: 'Error generant la pregunta' });
+        return res.json({
+          sessio_id: sessioId, numero_pregunta: nextSlot,
+          total_preguntes: 5, pregunta: qRow.pregunta_text, opcions: parseOpcions(qRow.opcions),
+          necessita_desenvolupament: !!qRow.necessita_desenvolupament,
+          font_oficial: !!qRow.font_oficial,
+        });
       }
-
-      // Generar on-the-fly la següent (cas rar: l'alumne és molt ràpid)
-      const nextSlot = loaded + 1;
-      const [textsRows] = await pool.query(
-        'SELECT pregunta_text FROM preguntes_log WHERE sessio_id = ?', [sessioId]
-      );
-      const textsUsats = textsRows.map(r => r.pregunta_text);
-      const qRow = await generarIInserirUnaQ(sessioId, nextSlot, node_id, node, idioma, textsUsats);
-      if (!qRow) return res.status(500).json({ error: 'Error generant la pregunta' });
-      return res.json({
-        sessio_id: sessioId, numero_pregunta: nextSlot,
-        total_preguntes: 5, pregunta: qRow.pregunta_text, opcions: parseOpcions(qRow.opcions),
-        necessita_desenvolupament: !!qRow.necessita_desenvolupament,
-        font_oficial: !!qRow.font_oficial,
-      });
     }
 
     // ── Nova sessió ──────────────────────────────────────────────────────────
