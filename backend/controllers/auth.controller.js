@@ -37,6 +37,15 @@ async function register(req, res) {
   if (!nom || !alias || !email || !password) {
     return res.status(400).json({ error: 'Falten camps obligatoris: nom, alias, email, password' });
   }
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 6 caràcters' });
+  }
+  if (alias.trim().length < 2 || alias.trim().length > 20) {
+    return res.status(400).json({ error: 'L\'àlies ha de tenir entre 2 i 20 caràcters' });
+  }
+  if (nom.trim().length < 2 || nom.trim().length > 60) {
+    return res.status(400).json({ error: 'El nom ha de tenir entre 2 i 60 caràcters' });
+  }
 
   // Únicament s'accepten rols vàlids; qualsevol altra cosa és 'alumne'
   const SUBTIPUS_MONITOR = ['pare', 'professor', 'equip'];

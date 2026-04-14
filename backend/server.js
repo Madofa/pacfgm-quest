@@ -9,6 +9,9 @@ const app = express();
 // cPanel/Passenger inyecta PORT como URL — forzar número
 const PORT = parseInt(process.env.PORT) || 3000;
 
+// Confiar en el proxy invers (Passenger/Nginx) per obtenir la IP real del client
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -21,17 +24,6 @@ app.use('/api/feedback', require('./routes/feedback.routes'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-app.get('/api/gemini-models', async (req, res) => {
-  try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`);
-    const data = await r.json();
-    const names = (data.models || []).map(m => m.name);
-    res.json({ models: names });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 // Servir frontend estàtic

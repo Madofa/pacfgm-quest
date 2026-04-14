@@ -401,6 +401,15 @@ async function finalitzar(req, res) {
 
     const sessio = sessions[0];
 
+    // Verificar que totes les preguntes han estat respostes
+    const [[pendents]] = await pool.query(
+      'SELECT COUNT(*) AS n FROM preguntes_log WHERE sessio_id = ? AND resposta_alumne IS NULL',
+      [sessio_id]
+    );
+    if (parseInt(pendents.n) > 0) {
+      return res.status(409).json({ error: 'Encara hi ha preguntes pendents de respondre' });
+    }
+
     const [resultats] = await pool.query(
       `SELECT
          COUNT(*)                           AS total,
@@ -419,9 +428,9 @@ async function finalitzar(req, res) {
     const [usuaris] = await pool.query('SELECT * FROM usuaris WHERE id = ?', [usuariId]);
     const usuari = usuaris[0];
 
-    // Actualitzar ratxa
-    const avui = new Date().toISOString().split('T')[0];
-    const ahir = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    // Actualitzar ratxa (hora local Espanya — evita trencaments per UTC vs Europe/Madrid)
+    const avui = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Madrid' });
+    const ahir = new Date(Date.now() - 86400000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Madrid' });
     let novaRacha = 1;
     if (usuari.ultima_sessio === avui)      novaRacha = usuari.racha_dies;
     else if (usuari.ultima_sessio === ahir) novaRacha = usuari.racha_dies + 1;
@@ -669,8 +678,12 @@ ${idiomaResposta}`;
 async function analitzarImatge(req, res) {
   const { sessio_id, pregunta_idx, base64, mime_type, pregunta_text, resposta_correcta, node_id } = req.body;
 
+  const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/gif'];
   if (!base64 || !mime_type) {
     return res.status(400).json({ error: 'Cal enviar base64 i mime_type de la imatge' });
+  }
+  if (!ALLOWED_MIME.includes(mime_type)) {
+    return res.status(400).json({ error: 'Tipus de fitxer no permès' });
   }
   // Limitar mida (base64 de ~4MB = 3MB de raw)
   if (base64.length > 5_500_000) {
@@ -689,28 +702,40 @@ async function analitzarImatge(req, res) {
     // Guardar el text al log i actualitzar SR basant-se en el procediment
     if (sessio_id && pregunta_idx !== undefined) {
       const idx = parseInt(pregunta_idx, 10);
+      if (isNaN(idx) || idx < 0 || idx > 4) {
+        return res.status(400).json({ error: 'pregunta_idx invàlid' });
+      }
       const textGuardar = JSON.stringify(analisi);
 
-      // Guardar anàlisi al log
-      await pool.query(
-        `UPDATE preguntes_log SET desenvolupament_text = ?
-         WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ${idx}`,
-        [textGuardar, sessio_id]
-      ).catch(() => {});
+      // Guardar anàlisi al log: obtenim l'ID primer per evitar interpolació en OFFSET
+      const [targetRows] = await pool.query(
+        `SELECT id FROM preguntes_log WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ?`,
+        [sessio_id, idx]
+      );
+      if (targetRows[0]?.id) {
+        await pool.query(
+          `UPDATE preguntes_log SET desenvolupament_text = ? WHERE id = ?`,
+          [textGuardar, targetRows[0].id]
+        ).catch(() => {});
+      }
 
       // Actualitzar SR basant-se en correcte_procediment (no en la resposta test)
       // Només per a mates/ciències/tecnologia
       const materia = node_id?.split('-')[0];
       if (['mates', 'ciencies', 'tecnologia'].includes(materia)) {
         try {
-          const [logRows] = await pool.query(
-            `SELECT pregunta_bank_id FROM preguntes_log
-             WHERE sessio_id = ? ORDER BY id LIMIT 1 OFFSET ?`,
-            [sessio_id, idx]
-          );
-          const bankId = logRows[0]?.pregunta_bank_id;
-          if (bankId && req.usuari?.id) {
-            await actualitzarSR(req.usuari.id, bankId, !!analisi.correcte_procediment);
+          // Reutilitzem targetRows (ja tenim l'ID de la fila)
+          if (targetRows[0]?.id) {
+            const [[logRow]] = await pool.query(
+              `SELECT pregunta_bank_id, correcte FROM preguntes_log WHERE id = ?`,
+              [targetRows[0].id]
+            );
+            const bankId = logRow?.pregunta_bank_id;
+            // Evitar doble actualització: si ja s'ha actualitzat per resposta incorrecta,
+            // només tornem a cridar SR si la resposta era correcta (SR no va baixar)
+            if (bankId && req.usuari?.id && logRow?.correcte !== false) {
+              await actualitzarSR(req.usuari.id, bankId, !!analisi.correcte_procediment);
+            }
           }
         } catch (e) {
           console.warn('[analitzar-imatge] SR update:', e.message);

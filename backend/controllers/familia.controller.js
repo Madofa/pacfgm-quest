@@ -8,6 +8,13 @@ function soloPare(req, res, next) {
   next();
 }
 
+function soloAlumne(req, res, next) {
+  if (req.usuari.rol !== 'alumne') {
+    return res.status(403).json({ error: 'Accés restringit a alumnes' });
+  }
+  next();
+}
+
 // ── VINCULAR FILL (envia sol·licitud pendent) ─────────────────────────────────
 
 async function vincularFill(req, res) {
@@ -74,7 +81,7 @@ async function desvincularFill(req, res) {
   if (!fillId) return res.status(400).json({ error: 'ID invàlid' });
 
   try {
-    await pool.query('DELETE FROM familia WHERE pare_id = ? AND fill_id = ?', [pareId, fillId]);
+    await pool.query("DELETE FROM familia WHERE pare_id = ? AND fill_id = ? AND estat = 'actiu'", [pareId, fillId]);
     return res.json({ ok: true });
   } catch (err) {
     console.error('[familia] desvincular:', err.message);
@@ -272,6 +279,6 @@ async function informeFill(req, res) {
 }
 
 module.exports = {
-  soloPare, vincularFill, cancellarPeticio, desvincularFill,
+  soloPare, soloAlumne, vincularFill, cancellarPeticio, desvincularFill,
   getFills, getPeticionsRebudes, acceptarPeticio, rebutjarPeticio, informeFill,
 };

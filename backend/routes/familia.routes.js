@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { verificarToken } = require('../middleware/auth.middleware');
 const { geminiLimiter } = require('../middleware/rateLimiter.middleware');
 const {
-  soloPare, vincularFill, cancellarPeticio, desvincularFill,
+  soloPare, soloAlumne, vincularFill, cancellarPeticio, desvincularFill,
   getFills, getPeticionsRebudes, acceptarPeticio, rebutjarPeticio, informeFill,
 } = require('../controllers/familia.controller');
 
@@ -14,8 +14,8 @@ router.delete('/peticions/:fill_id',        verificarToken, soloPare, cancellarP
 router.get('/informe/:fill_id',             verificarToken, soloPare, geminiLimiter, informeFill);
 
 // Alumne
-router.get('/peticions-rebudes',            verificarToken, getPeticionsRebudes);
-router.patch('/peticions/:pare_id/aprovar', verificarToken, acceptarPeticio);
-router.delete('/peticions/:pare_id/rebutjar', verificarToken, rebutjarPeticio);
+router.get('/peticions-rebudes',            verificarToken, soloAlumne, getPeticionsRebudes);
+router.patch('/peticions/:pare_id/aprovar', verificarToken, soloAlumne, acceptarPeticio);
+router.delete('/peticions/:pare_id/rebutjar', verificarToken, soloAlumne, rebutjarPeticio);
 
 module.exports = router;
