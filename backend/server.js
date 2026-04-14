@@ -15,11 +15,8 @@ app.set('trust proxy', 1);
 
 if (helmet) app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-// Límit global 1mb; la ruta analitzar-imatge té el seu propi límit de 6mb
-app.use((req, res, next) => {
-  const limit = req.path === '/api/pregunta/analitzar-imatge' ? '6mb' : '1mb';
-  express.json({ limit })(req, res, next);
-});
+// Límit global reduït (era 10mb); analitzar-imatge fa validació addicional al controlador
+app.use(express.json({ limit: '6mb' }));
 
 app.use('/api/auth',     require('./routes/auth.routes'));
 app.use('/api/pregunta', require('./routes/pregunta.routes'));
