@@ -199,14 +199,18 @@ function AfegirFill({ onAfegit }) {
   const [alias, setAlias]   = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState('');
+  const [ok, setOk]         = useState('');
 
   async function afegir() {
     if (alias.trim().length < 2) { setError('Introdueix l\'àlies del teu fill/a'); return; }
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setOk('');
     try {
-      await api.familia.vincular(alias.trim());
-      onAfegit();
+      const data = await api.familia.vincular(alias.trim());
       setAlias('');
+      if (data.pendent) {
+        setOk(`Sol·licitud enviada a ${data.fill.alias}. Pendent d'acceptació.`);
+      }
+      onAfegit();
     } catch (err) {
       setError(err.error || 'No s\'ha trobat cap alumne amb aquest àlies');
     } finally {
@@ -238,6 +242,7 @@ function AfegirFill({ onAfegit }) {
         </button>
       </div>
       {error && <div className={styles.afegirError}>{error}</div>}
+      {ok    && <div className={styles.afegirOk}>{ok}</div>}
     </div>
   );
 }
@@ -246,7 +251,9 @@ function AfegirFill({ onAfegit }) {
 
 export default function ParePanel() {
   const { usuari, logout } = useAuth();
-  const [fills, setFills]   = useState(null); // null = loading
+  const [fills, setFills]       = useState(null); // null = loading
+  const [pendents, setPendents] = useState([]);
+  const [mostrarAfegir, setMostrarAfegir] = useState(false);
   const [fillInforme, setFillInforme] = useState(null);
   const [confirmDel, setConfirmDel]   = useState(null);
 
@@ -254,7 +261,12 @@ export default function ParePanel() {
   const tancarInforme = useCallback(() => setFillInforme(null), []);
 
   function carregar() {
-    api.familia.fills().then(setFills).catch(() => setFills([]));
+    api.familia.fills()
+      .then(data => {
+        setFills(data.fills || []);
+        setPendents(data.pendents || []);
+      })
+      .catch(() => { setFills([]); setPendents([]); });
   }
 
   useEffect(() => { carregar(); }, []);
@@ -267,6 +279,15 @@ export default function ParePanel() {
     setConfirmDel(null);
   }
 
+  async function cancellarPeticio(fillId) {
+    try {
+      await api.familia.cancellar(fillId);
+      setPendents(ps => ps.filter(p => p.id !== fillId));
+    } catch {}
+  }
+
+  const teBuida = fills !== null && fills.length === 0 && pendents.length === 0;
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -278,35 +299,62 @@ export default function ParePanel() {
       <main className={styles.main}>
         {fills === null ? (
           <div className={styles.loading}>Carregant...</div>
-        ) : fills.length === 0 ? (
+        ) : teBuida && !mostrarAfegir ? (
           <AfegirFill onAfegit={carregar} />
         ) : (
           <>
             <div className={styles.fillsHeader}>
               <span className={styles.fillsTitle}>ELS MEUS FILLS/ES</span>
-              <button className={styles.afegirMes} onClick={() => setFills(f => [...f, '__ADD__'])}>
+              <button className={styles.afegirMes} onClick={() => setMostrarAfegir(true)}>
                 + AFEGIR FILL/A
               </button>
             </div>
 
-            {/* Formulari d'afegir si s'ha premut el botó */}
-            {fills.includes('__ADD__') && (
+            {/* Formulari d'afegir */}
+            {mostrarAfegir && (
               <AfegirFill onAfegit={() => {
-                setFills(f => f.filter(x => x !== '__ADD__'));
+                setMostrarAfegir(false);
                 carregar();
               }} />
             )}
 
-            <div className={styles.cards}>
-              {fills.filter(f => f !== '__ADD__').map(f => (
-                <FillCard
-                  key={f.id}
-                  f={f}
-                  onInforme={obrirInforme}
-                  onDesvincular={f => setConfirmDel(f)}
-                />
-              ))}
-            </div>
+            {/* Sol·licituds enviades pendents d'acceptació */}
+            {pendents.length > 0 && (
+              <div className={styles.pendentsWrap}>
+                <div className={styles.pendentsTitle}>SOL·LICITUDS PENDENTS</div>
+                <div className={styles.pendentsList}>
+                  {pendents.map(p => (
+                    <div key={p.id} className={styles.pendentItem}>
+                      <div className={styles.pendentInfo}>
+                        <span className={styles.pendentAlias}>{p.alias}</span>
+                        <span className={styles.pendentNom}>{p.nom}</span>
+                      </div>
+                      <span className={styles.pendentSub}>Pendent d'acceptació</span>
+                      <button
+                        className={styles.pendentCancelBtn}
+                        onClick={() => cancellarPeticio(p.id)}
+                        title="Cancel·lar sol·licitud"
+                      >
+                        Cancel·lar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {fills.length > 0 && (
+              <div className={styles.cards}>
+                {fills.map(f => (
+                  <FillCard
+                    key={f.id}
+                    f={f}
+                    onInforme={obrirInforme}
+                    onDesvincular={f => setConfirmDel(f)}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>

@@ -63,10 +63,14 @@ export const api = {
     informe:     (alumneId) => request(`/api/grup/informe/${alumneId}`),
   },
   familia: {
-    vincular:    (alias)   => request('/api/familia/vincular', { method: 'POST', body: JSON.stringify({ alias }) }),
-    fills:       ()        => request('/api/familia/fills'),
-    desvincular: (fillId)  => request(`/api/familia/fills/${fillId}`, { method: 'DELETE' }),
-    informe:     (fillId)  => request(`/api/familia/informe/${fillId}`),
+    vincular:         (alias)   => request('/api/familia/vincular', { method: 'POST', body: JSON.stringify({ alias }) }),
+    fills:            ()        => request('/api/familia/fills'),
+    desvincular:      (fillId)  => request(`/api/familia/fills/${fillId}`, { method: 'DELETE' }),
+    cancellar:        (fillId)  => request(`/api/familia/peticions/${fillId}`, { method: 'DELETE' }),
+    informe:          (fillId)  => request(`/api/familia/informe/${fillId}`),
+    peticionsRebudes: ()        => request('/api/familia/peticions-rebudes'),
+    acceptar:         (pareId)  => request(`/api/familia/peticions/${pareId}/aprovar`, { method: 'PATCH' }),
+    rebutjar:         (pareId)  => request(`/api/familia/peticions/${pareId}/rebutjar`, { method: 'DELETE' }),
   },
   feedback: {
     enviar: (tipus, descripcio, url_page) => request('/api/feedback', { method: 'POST', body: JSON.stringify({ tipus, descripcio, url_page }) }),

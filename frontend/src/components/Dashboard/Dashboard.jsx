@@ -123,6 +123,28 @@ export default function Dashboard() {
     api.progres.errorsCount().then(d => setErrorsCount(d.count || 0)).catch(() => {});
   }, []);
 
+  // Sol·licituds de família pendents (alumne)
+  const [peticionsFamily, setPeticionsFamily] = useState([]);
+  useEffect(() => {
+    if (usuari?.rol === 'alumne') {
+      api.familia.peticionsRebudes().then(setPeticionsFamily).catch(() => {});
+    }
+  }, [usuari?.rol]);
+
+  async function acceptarFamily(pareId) {
+    try {
+      await api.familia.acceptar(pareId);
+      setPeticionsFamily(ps => ps.filter(p => p.pare_id !== pareId));
+    } catch {}
+  }
+
+  async function rebutjarFamily(pareId) {
+    try {
+      await api.familia.rebutjar(pareId);
+      setPeticionsFamily(ps => ps.filter(p => p.pare_id !== pareId));
+    } catch {}
+  }
+
   // Grup de l'alumne
   const [grups, setGrups]           = useState(null);
   const [codiGrup, setCodiGrup]     = useState('');
@@ -182,6 +204,35 @@ export default function Dashboard() {
                   className={styles.repasBarDismiss}
                   onClick={() => dismissRevision(r.node_id)}
                   title="Descartar"
+                >✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Barra notificació sol·licituds família */}
+      {peticionsFamily.length > 0 && (
+        <div className={styles.repasBar} style={{ background: 'rgba(255,153,0,0.08)', borderColor: 'rgba(255,153,0,0.3)' }}>
+          <span className={styles.repasBarIcon}>👨‍👩‍👧</span>
+          <span className={styles.repasBarLabel} style={{ color: 'var(--color-neon-orange)' }}>SOL·LICITUD FAMÍLIA</span>
+          <div className={styles.repasBarItems}>
+            {peticionsFamily.map(p => (
+              <div key={p.pare_id} className={styles.repasBarItem}>
+                <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--color-text-primary)' }}>
+                  <strong>{p.alias}</strong> ({p.subtipus}) vol vincular el teu compte
+                </span>
+                <button
+                  className={styles.repasBarBtn}
+                  style={{ color: 'var(--color-neon-green)', borderColor: 'var(--color-neon-green)' }}
+                  onClick={() => acceptarFamily(p.pare_id)}
+                >
+                  Acceptar
+                </button>
+                <button
+                  className={styles.repasBarDismiss}
+                  onClick={() => rebutjarFamily(p.pare_id)}
+                  title="Rebutjar"
                 >✕</button>
               </div>
             ))}
