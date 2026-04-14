@@ -484,13 +484,26 @@ async function finalitzar(req, res) {
 
     const sessio = sessions[0];
 
-    // Verificar que totes les preguntes han estat respostes
+    // Si hi ha preguntes supèrflues no respostes (race condition background vs on-the-fly),
+    // tancar-les automàticament com a incorrectes abans de puntuar
     const [[pendents]] = await pool.query(
       'SELECT COUNT(*) AS n FROM preguntes_log WHERE sessio_id = ? AND resposta_alumne IS NULL',
       [sessio_id]
     );
     if (parseInt(pendents.n) > 0) {
-      return res.status(409).json({ error: 'Encara hi ha preguntes pendents de respondre' });
+      const [[respostes]] = await pool.query(
+        'SELECT COUNT(*) AS n FROM preguntes_log WHERE sessio_id = ? AND resposta_alumne IS NOT NULL',
+        [sessio_id]
+      );
+      if (parseInt(respostes.n) < 5) {
+        return res.status(409).json({ error: 'Encara hi ha preguntes pendents de respondre' });
+      }
+      // Almenys 5 respostes → tancar les sobrants com a incorrectes
+      await pool.query(
+        `UPDATE preguntes_log SET resposta_alumne = 'X', correcte = FALSE, temps_resposta_ms = 0
+         WHERE sessio_id = ? AND resposta_alumne IS NULL`,
+        [sessio_id]
+      );
     }
 
     const [resultats] = await pool.query(

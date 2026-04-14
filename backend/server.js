@@ -38,6 +38,7 @@ async function ensureColumns() {
     'ALTER TABLE preguntes_bank ADD COLUMN font_oficial BOOLEAN NOT NULL DEFAULT FALSE',
     'ALTER TABLE preguntes_bank ADD INDEX idx_bank_oficial (node_id, font_oficial)',
     'ALTER TABLE preguntes_bank ADD COLUMN necessita_desenvolupament BOOLEAN NOT NULL DEFAULT FALSE',
+    'ALTER TABLE preguntes_log ADD UNIQUE INDEX idx_log_sessio_slot (sessio_id, numero_pregunta)',
   ];
   for (const sql of alteracions) {
     try { await pool.query(sql); }
