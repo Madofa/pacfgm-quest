@@ -227,7 +227,8 @@ Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa 
       }],
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
+        thinkingConfig: { thinkingBudget: 1024 },
       },
     }),
   });
@@ -240,14 +241,21 @@ Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa 
   const json = await response.json();
   const parts = json.candidates?.[0]?.content?.parts || [];
   const text = parts.filter(p => p.text && !p.thought).map(p => p.text).join('').trim();
-  if (!text) throw new Error('Resposta buida de Gemini Vision');
+  if (!text) {
+    console.error('[analitzar-imatge] Resposta buida. finishReason:', json.candidates?.[0]?.finishReason, 'parts:', JSON.stringify(parts).slice(0, 300));
+    throw new Error('Resposta buida de Gemini Vision');
+  }
 
-  const jsonStr = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+  // Extreure JSON robust: eliminar markdown, agafar el primer bloc {...}
+  const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
   try {
-    return JSON.parse(jsonStr);
+    return JSON.parse(cleaned);
   } catch {
-    const match = jsonStr.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try { return JSON.parse(match[0]); } catch { /* continua */ }
+    }
+    console.error('[analitzar-imatge] JSON invàlid. Raw text:', text.slice(0, 500));
     throw new Error('JSON invàlid a la resposta de Gemini Vision');
   }
 }
