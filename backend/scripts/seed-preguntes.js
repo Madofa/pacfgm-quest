@@ -137,7 +137,7 @@ Cada pregunta ha de:
 - Tenir UNA SOLA resposta correcta entre les 4 opcions
 - Les opcions incorrectes han de ser plausibles però clarament incorrectes si saps el tema
 - L'explicació ha de ser breu i didàctica (1-2 línies màxim)
-- Estar en català (excepte per al node angles-* que ha de ser en anglès)
+- Estar en català (excepte per al node angles-* que ha de ser en anglès, i per al node castella-* que ha de ser en castellano)
 
 IMPORTANT — Varietat de tipus de pregunta. Distribueix les ${n} preguntes entre aquests tipus:
 - Conceptual: definició o concepte teòric

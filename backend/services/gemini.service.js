@@ -20,18 +20,44 @@ function tipusAleatori(pregsAnteriors) {
 }
 
 async function generarPregunta(nodeId, temari, idioma = 'catala', pregsAnteriors = []) {
-  const idiomaText = idioma === 'castella'
-    ? 'en castellano (pregunta, opcions i explicació en castellano)'
-    : idioma === 'angles'
-    ? 'La pregunta i les opcions han de ser en anglès (és l\'assignatura d\'anglès). PERÒ l\'explicació ("explicacio") ha d\'estar SEMPRE en català, per ajudar l\'alumne a entendre l\'error en la seva llengua.'
-    : 'en català. IMPORTANT: tota la resposta ha d\'estar en català, inclosa l\'explicació. MAI en castellà, ni encara que el contingut tracti sobre gramàtica catalana o castellana.';
   const tipus = tipusAleatori(pregsAnteriors);
 
   const evitarBlock = pregsAnteriors.length > 0
     ? `\nIMPORTANT: Aquestes preguntes ja s'han fet — NO les repeteixis ni facis variacions similars:\n${pregsAnteriors.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n`
     : '';
 
-  const prompt = `Ets un professor expert que prepara estudiants per a les proves d'accés als cicles formatius de grau mitjà de Catalunya (PACFGM).
+  // Per a castellà, el prompt sencer és en castellà per evitar que Gemini ignori la instrucció d'idioma
+  let prompt;
+  if (idioma === 'castella') {
+    prompt = `Eres un profesor experto que prepara estudiantes para las pruebas de acceso a los ciclos formativos de grado medio de Cataluña (PACFGM).
+
+Materia/Nodo: ${nodeId}
+Contenido oficial: ${temari}
+Nivel: ESO básico (PACFGM)
+IDIOMA OBLIGATORIO: castellano. Toda la respuesta debe estar en castellano: pregunta, opciones y explicación. NUNCA en catalán.
+${evitarBlock}
+Tipo de pregunta a generar: ${tipus}
+
+Genera UNA sola pregunta de tipo test con 4 opciones. La pregunta debe ser clara, breve y adecuada al nivel. Las opciones deben tener una sola respuesta claramente correcta. La explicación debe ser breve y didáctica (máximo 2 líneas).
+
+IMPORTANTE: Usa siempre texto plano sin LaTeX, sin Markdown, sin backticks y sin símbolos como \\cdot, ^2, \\frac, etc. Para matemáticas usa caracteres Unicode directos: × · ÷ √ ² ³ ¼ ½ ¾ y paréntesis normales. NUNCA escribas comillas simples ni backticks alrededor de expresiones.
+
+Responde en formato JSON:
+{
+  "pregunta": "texto de la pregunta",
+  "opcions": ["A. primera opción", "B. segunda opción", "C. tercera opción", "D. cuarta opción"],
+  "correcta": "A",
+  "explicacio": "explicación breve de por qué A es correcta",
+  "necessita_desenvolupament": false
+}
+
+El campo "necessita_desenvolupament" debe ser true SOLO si la pregunta requiere hacer cálculos en papel para llegar a la respuesta. Para preguntas conceptuales, de definición, comprensión o gramática, debe ser false.`;
+  } else {
+    const idiomaText = idioma === 'angles'
+      ? 'La pregunta i les opcions han de ser en anglès (és l\'assignatura d\'anglès). PERÒ l\'explicació ("explicacio") ha d\'estar SEMPRE en català, per ajudar l\'alumne a entendre l\'error en la seva llengua.'
+      : 'en català. IMPORTANT: tota la resposta ha d\'estar en català, inclosa l\'explicació. MAI en castellà, ni encara que el contingut tracti sobre gramàtica catalana o castellana.';
+
+    prompt = `Ets un professor expert que prepara estudiants per a les proves d'accés als cicles formatius de grau mitjà de Catalunya (PACFGM).
 
 Matèria/Node: ${nodeId}
 Contingut oficial: ${temari}
@@ -42,7 +68,7 @@ Tipus de pregunta que has de generar: ${tipus}
 
 Genera UNA sola pregunta de tipus test amb 4 opcions. La pregunta ha de ser clara, breu i adequada al nivell. Les opcions han de tenir una sola resposta clarament correcta. L'explicació ha de ser breu i didàctica (màxim 2 línies).
 
-IMPORTANT: Usa SEMPRE text pla sense LaTeX, sense Markdown, sense backticks i sense símbols com \cdot, ^2, \frac, etc. Per a matemàtiques usa caràcters Unicode directes: × · ÷ √ ² ³ ¼ ½ ¾ i parèntesis normals. Exemple correcte: "20 - 5 · (6 - 2)²". MAI escriguis cometes simples ni backticks al voltant d'expressions.
+IMPORTANT: Usa SEMPRE text pla sense LaTeX, sense Markdown, sense backticks i sense símbols com \\cdot, ^2, \\frac, etc. Per a matemàtiques usa caràcters Unicode directes: × · ÷ √ ² ³ ¼ ½ ¾ i parèntesis normals. Exemple correcte: "20 - 5 · (6 - 2)²". MAI escriguis cometes simples ni backticks al voltant d'expressions.
 
 Respon en format JSON:
 {
@@ -54,6 +80,7 @@ Respon en format JSON:
 }
 
 El camp "necessita_desenvolupament" ha de ser true NOMÉS si la pregunta requereix fer càlculs sobre paper per arribar a la resposta (tipus càlcul o resolució). Per a preguntes conceptuals, de definició, de comprensió o de gramàtica, ha de ser false.`;
+  }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');

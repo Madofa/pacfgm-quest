@@ -4,7 +4,7 @@ const rateLimit = require('express-rate-limit');
 // 60 generacions per hora — evita que un usuari esgoti la quota global
 const geminiLimiter = rateLimit({
   windowMs:        60 * 60 * 1000,
-  max:             60,
+  max:             200,
   message:         { error: 'Has arribat al límit de preguntes per hora. Torna-ho a intentar en 1 hora.' },
   keyGenerator:    (req) => String(req.usuari?.id || req.ip),
   standardHeaders: true,
