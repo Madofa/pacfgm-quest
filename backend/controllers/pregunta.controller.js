@@ -195,8 +195,11 @@ async function generar(req, res) {
     if (openSessions.length > 0) {
       const sessioId = openSessions[0].id;
       const [pending] = await pool.query(
-        `SELECT * FROM preguntes_log WHERE sessio_id = ? AND resposta_alumne IS NULL
-         ORDER BY numero_pregunta ASC LIMIT 1`,
+        `SELECT pl.*, pb.font_oficial
+         FROM preguntes_log pl
+         LEFT JOIN preguntes_bank pb ON pb.id = pl.pregunta_bank_id
+         WHERE pl.sessio_id = ? AND pl.resposta_alumne IS NULL
+         ORDER BY pl.numero_pregunta ASC LIMIT 1`,
         [sessioId]
       );
       if (pending.length > 0) {
@@ -205,6 +208,7 @@ async function generar(req, res) {
           sessio_id: sessioId, numero_pregunta: preg.numero_pregunta,
           total_preguntes: 5, pregunta: preg.pregunta_text, opcions: parseOpcions(preg.opcions),
           necessita_desenvolupament: false,
+          font_oficial: !!preg.font_oficial,
         });
       }
 
@@ -229,6 +233,7 @@ async function generar(req, res) {
         sessio_id: sessioId, numero_pregunta: nextSlot,
         total_preguntes: 5, pregunta: qRow.pregunta_text, opcions: parseOpcions(qRow.opcions),
         necessita_desenvolupament: !!qRow.necessita_desenvolupament,
+        font_oficial: !!qRow.font_oficial,
       });
     }
 
@@ -241,7 +246,8 @@ async function generar(req, res) {
     // 1. Preguntes SR pendents (de la BD, ràpid)
     const avui = new Date().toISOString().split('T')[0];
     const [dueRows] = await pool.query(
-      `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio
+      `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio,
+              pb.font_oficial, pb.necessita_desenvolupament
        FROM sr_pregunta sr JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
        WHERE sr.usuari_id = ? AND pb.node_id = ? AND sr.propera_revisio <= ?
        ORDER BY sr.propera_revisio ASC, sr.consecutives_correctes ASC LIMIT 5`,
@@ -269,8 +275,35 @@ async function generar(req, res) {
       if (!textsUsats.includes(r.pregunta_text)) textsUsats.push(r.pregunta_text);
     });
 
-    // 3. Slot 1 de Gemini (si no n'hi ha de SR per slot 1)
-    let slot1Q = dueRows.length > 0 ? dueRows[0] : null;
+    // 2b. Preguntes oficials no vistes (màx 2 per sessió per mantenir varietat)
+    let oficialSlot1Q = null;
+    if (slotActual <= 5) {
+      const slotsOficials = Math.min(2, 6 - slotActual);
+      const srIds = dueRows.map(q => q.id).filter(Boolean);
+      const phSr = srIds.length > 0
+        ? `AND pb.id NOT IN (${srIds.map(() => '?').join(',')})` : '';
+      const [oficials] = await pool.query(
+        `SELECT pb.* FROM preguntes_bank pb
+         WHERE pb.node_id = ? AND pb.font_oficial = TRUE ${phSr}
+         AND pb.id NOT IN (
+           SELECT COALESCE(pl.pregunta_bank_id, -1)
+           FROM preguntes_log pl
+           JOIN sessions_estudi se ON se.id = pl.sessio_id
+           WHERE se.usuari_id = ? AND se.node_id = ? AND pl.resposta_alumne IS NOT NULL
+         )
+         ORDER BY pb.id ASC LIMIT ?`,
+        [node_id, ...srIds, usuariId, node_id, slotsOficials]
+      );
+      for (const q of oficials) {
+        if (slotActual > 5) break;
+        if (slotActual === 1) oficialSlot1Q = q;
+        await inserirQaLog(sessioId, slotActual++, q);
+        textsUsats.push(q.pregunta_text);
+      }
+    }
+
+    // 3. Slot 1 (SR → oficial → Gemini)
+    let slot1Q = dueRows.length > 0 ? dueRows[0] : (oficialSlot1Q || null);
 
     if (!slot1Q) {
       // Una sola crida Gemini — retornem molt més ràpid que abans
@@ -286,6 +319,7 @@ async function generar(req, res) {
       sessio_id: sessioId, numero_pregunta: 1,
       total_preguntes: 5, pregunta: slot1Q.pregunta_text, opcions: parseOpcions(slot1Q.opcions),
       necessita_desenvolupament: !!slot1Q.necessita_desenvolupament,
+      font_oficial: !!slot1Q.font_oficial,
     });
 
     // 5. Generar slots restants en background (l'alumne respon Q1 mentre es genera)

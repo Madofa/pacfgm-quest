@@ -126,6 +126,22 @@
   flex: 1;
 }
 
+/* Badge pregunta oficial */
+.oficialBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-game);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--color-bg-deep);
+  background: var(--color-gold, #ffd700);
+  padding: 3px 10px 3px 8px;
+  border-radius: 2px;
+  margin-bottom: var(--spacing-md);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
 /* Pregunta */
 .questionCard {
   padding: var(--spacing-xl);

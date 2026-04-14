@@ -416,6 +416,11 @@ export default function BattleScreen() {
       <main className={styles.main}>
         {/* Pregunta */}
         <div className={`${styles.questionCard} panel-rpg`} style={{ borderColor: cfg.color + '40' }}>
+          {pregunta?.font_oficial && (
+            <div className={styles.oficialBadge}>
+              <span>★</span> EXAMEN OFICIAL GENERALITAT
+            </div>
+          )}
           <p className={styles.questionText}>{pregunta?.pregunta}</p>
         </div>
 
