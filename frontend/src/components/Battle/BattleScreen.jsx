@@ -179,7 +179,7 @@ export default function BattleScreen() {
     return () => clearInterval(id);
   }, [fase, numeroPregunta, timerEnabled]);
 
-  async function carregarPregunta() {
+  async function carregarPregunta(currentSessioId) {
     setFase('carregant');
     setRespostaSelec(null);
     setFeedback(null);
@@ -194,8 +194,19 @@ export default function BattleScreen() {
       setTempsInici(Date.now());
       setFase('pregunta');
     } catch (err) {
-      setError(err.error || 'Error carregant la pregunta');
-      setFase('error');
+      // Sessió completa (409): finalitzar en lloc de mostrar error
+      if (err.status === 409 || err.error?.includes('pendents')) {
+        const sid = currentSessioId ?? sessioId;
+        if (sid) {
+          await finalitzarAmbSessio(sid);
+        } else {
+          setError(err.error || 'Error carregant la pregunta');
+          setFase('error');
+        }
+      } else {
+        setError(err.error || 'Error carregant la pregunta');
+        setFase('error');
+      }
     }
   }
 
@@ -231,15 +242,25 @@ export default function BattleScreen() {
   }
 
   async function finalitzar() {
+    await finalitzarAmbSessio(sessioId);
+  }
+
+  async function finalitzarAmbSessio(sid) {
     setFase('carregant');
     try {
-      const data = await api.pregunta.finalitzar(sessioId);
+      const data = await api.pregunta.finalitzar(sid);
       setResultatFinal(data);
       setFase('final');
     } catch (err) {
       setError(err.error || 'Error en finalitzar');
       setFase('error');
     }
+  }
+
+  function continuarEntrenant() {
+    setSessioId(null);
+    setResultatFinal(null);
+    carregarPregunta(null);
   }
 
   const pctTemps = (temps / TEMPS_LIMIT) * 100;
@@ -336,8 +357,11 @@ export default function BattleScreen() {
           )}
 
           <div className={styles.finalBtns}>
+            <button className={styles.btnPrimary} style={{ '--btn-color': cfg.color }} onClick={continuarEntrenant}>
+              CONTINUAR ENTRENANT ▶
+            </button>
             {!superat && (
-              <button className={styles.btnPrimary} style={{ '--btn-color': cfg.color }} onClick={carregarPregunta}>
+              <button className={styles.btnSecondary} onClick={() => carregarPregunta(null)}>
                 TORNAR A INTENTAR
               </button>
             )}
