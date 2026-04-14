@@ -97,6 +97,10 @@ async function register(req, res) {
   }
 }
 
+// Hash fictici per fer bcrypt.compare fins i tot quan l'usuari no existeix
+// (evita timing attack: sense això, l'absència de l'usuari retorna en ~1ms vs ~100ms)
+const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
+
 async function login(req, res) {
   const { email, password } = req.body;
 
@@ -106,14 +110,17 @@ async function login(req, res) {
 
   try {
     const [rows] = await pool.query('SELECT * FROM usuaris WHERE email = ?', [email]);
-    if (rows.length === 0) {
+    const usuari = rows[0] || null;
+
+    // Sempre fer bcrypt.compare per evitar timing attack
+    const valid = await bcrypt.compare(password, usuari?.password_hash || DUMMY_HASH);
+
+    if (!usuari || !valid) {
       return res.status(401).json({ error: 'Credencials incorrectes' });
     }
 
-    const usuari = rows[0];
-    const valid = await bcrypt.compare(password, usuari.password_hash);
-    if (!valid) {
-      return res.status(401).json({ error: 'Credencials incorrectes' });
+    if (!usuari.actiu) {
+      return res.status(403).json({ error: 'Aquest compte ha estat desactivat' });
     }
 
     if (!usuari.email_verificat) {
