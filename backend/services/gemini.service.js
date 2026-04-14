@@ -195,22 +195,25 @@ async function analitzarDesenvolupament({ base64, mimeType, preguntaText, respos
 
   const prompt = `Ets un professor de ${nomMateria} que revisa el treball manual d'un alumne que es prepara per a la PACFGM (Prova d'Accés als Cicles Formatius de Grau Mitjà de Catalunya).
 
-Pregunta de l'examen: ${preguntaText}
-Resposta correcta: ${respostaCorrecta}
+PREGUNTA DE L'EXAMEN: ${preguntaText}
+RESPOSTA CORRECTA: ${respostaCorrecta}
 Node/tema: ${nodeId}
 
-A la imatge pots veure el treball manual que ha fet l'alumne (càlculs, esquemes, anotacions...) per arribar a la resposta.
+A la imatge pots veure el treball manual que ha fet l'alumne.
 
-Analitza el treball i respon en format JSON:
+IMPORTANT — PRIMER comprova si el treball de la imatge resol aquesta pregunta concreta:
+- Si la imatge mostra càlculs o un plantejament DIFERENT a la pregunta, posa "correcte_procediment": false i indica-ho clarament als errors_detectats ("El treball no correspon a la pregunta plantejada").
+- Si la imatge és il·legible, en blanc o no mostra cap treball relacionat, posa tots els camps false i explica-ho.
+- Només si el treball SÍ resol aquesta pregunta, avalua si el procediment i el resultat són correctes.
+
+Respon en format JSON:
 {
   "correcte_resultat": true/false,
   "correcte_procediment": true/false,
-  "errors_detectats": ["descripció de l'error 1", "..."],
-  "punts_positius": ["cosa que ha fet bé 1", "..."],
-  "consell": "consell concret per millorar (1-2 frases, en català)"
-}
-
-Sigues específic sobre on s'equivoca (si s'equivoca) i positiu sobre el que fa bé.`;
+  "errors_detectats": ["descripció de l'error o raó per la qual no correspon a la pregunta", "..."],
+  "punts_positius": ["cosa que ha fet bé, si escau", "..."],
+  "consell": "consell concret i accionable (1-2 frases, en català)"
+}`;
 
   // gemini-2.5-flash per a visió: suporta multimodal, filtrem thinking tokens amb !p.thought
   const VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;

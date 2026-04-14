@@ -396,7 +396,7 @@ async function resposta(req, res) {
   if (!sessio_id || !respostaAlumne) {
     return res.status(400).json({ error: 'Falten sessio_id i resposta' });
   }
-  if (!['A', 'B', 'C', 'D'].includes(respostaAlumne.toUpperCase())) {
+  if (!['A', 'B', 'C', 'D', 'X'].includes(respostaAlumne.toUpperCase())) {
     return res.status(400).json({ error: 'Resposta ha de ser A, B, C o D' });
   }
 

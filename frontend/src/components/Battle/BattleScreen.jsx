@@ -15,8 +15,14 @@ function UploadDesenvolupament({ sessioId, numeroPregunta, preguntaText, respost
   const [analisi, setAnalisi] = useState(null);
   const inputRef = useRef(null);
 
+  const MAX_MIDA_MB = 4;
+
   function llegirFitxer(file) {
     if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > MAX_MIDA_MB * 1024 * 1024) {
+      setEstat('error_mida');
+      return;
+    }
     setMimeType(file.type);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -76,6 +82,7 @@ function UploadDesenvolupament({ sessioId, numeroPregunta, preguntaText, respost
         >
           <span className={styles.uploadIcon}>📷</span>
           <span className={styles.uploadText}>Fes clic o arrossega la foto del teu treball</span>
+          <span className={styles.uploadLimit}>Màx. {MAX_MIDA_MB} MB</span>
           <input ref={inputRef} type="file" accept="image/*" className={styles.uploadInput} onChange={onInput} />
         </div>
       )}
@@ -125,9 +132,16 @@ function UploadDesenvolupament({ sessioId, numeroPregunta, preguntaText, respost
         </div>
       )}
 
+      {estat === 'error_mida' && (
+        <div className={styles.uploadError}>
+          La imatge és massa gran (màx. {MAX_MIDA_MB} MB). Fes una foto amb menys resolució o comprimeix-la.
+          <button className={styles.uploadBtnSec} onClick={reiniciar}>Tornar</button>
+        </div>
+      )}
+
       {estat === 'error' && (
         <div className={styles.uploadError}>
-          Error analitzant la imatge.
+          Error analitzant la imatge. Prova amb una foto diferent.
           <button className={styles.uploadBtnSec} onClick={reiniciar}>Tornar</button>
         </div>
       )}

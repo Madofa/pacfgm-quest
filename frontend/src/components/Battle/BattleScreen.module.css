@@ -505,6 +505,13 @@
   text-align: center;
 }
 
+.uploadLimit {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--color-text-disabled);
+  opacity: 0.6;
+}
+
 .uploadInput { display: none; }
 
 .uploadPreview {
