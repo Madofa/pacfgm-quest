@@ -129,8 +129,8 @@ export default function SkillTree() {
                 </div>
               ))}
 
-              {/* Repàs aleatori — disponible si hi ha algun tema no bloquejat */}
-              {nodesActius.some(n => n.estat !== 'bloquejat') && (
+              {/* Repàs aleatori — disponible si hi ha almenys 2 temes iniciats */}
+              {nodesActius.filter(n => n.estat !== 'bloquejat').length >= 2 && (
                 <div className={styles.nodeWrapper}>
                   <div
                     className={`${styles.connector} ${styles.connectorActive}`}
@@ -145,9 +145,9 @@ export default function SkillTree() {
                     }}
                     onClick={() => navigate(`/battle/${materiaActiva}-aleatori`)}
                   >
-                    <span className={styles.aleatoriBtnLabel}>REPAS ALEATORI</span>
+                    <span className={styles.aleatoriBtnLabel}>REPÀS ALEATORI</span>
                     <span className={styles.aleatoriBtnDesc}>
-                      Preguntes de tots<br />els temes mesclades
+                      Preguntes de tots<br />els temes mesclats
                     </span>
                   </button>
                 </div>

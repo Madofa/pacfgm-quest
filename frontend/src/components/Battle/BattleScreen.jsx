@@ -385,7 +385,7 @@ export default function BattleScreen() {
         <button className={styles.backBtn} onClick={() => navigate('/skill-tree')}>◄</button>
         <div className={styles.headerCenter}>
           <span className={styles.nodeLabel} style={{ color: cfg.color }}>
-            {cfg.icon} {nodeId?.endsWith('-aleatori') ? 'REPAS ALEATORI' : nodeId?.split('-').slice(1).join(' ').toUpperCase()}
+            {cfg.icon} {nodeId?.endsWith('-aleatori') ? 'REPÀS ALEATORI' : nodeId?.split('-').slice(1).join(' ').toUpperCase()}
           </span>
           <div className={styles.bullets}>
             {[1,2,3,4,5].map(i => (

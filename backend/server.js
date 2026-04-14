@@ -33,9 +33,22 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
+async function ensureColumns() {
+  const alteracions = [
+    'ALTER TABLE preguntes_bank ADD COLUMN font_oficial BOOLEAN NOT NULL DEFAULT FALSE',
+    'ALTER TABLE preguntes_bank ADD INDEX idx_bank_oficial (node_id, font_oficial)',
+    'ALTER TABLE preguntes_bank ADD COLUMN necessita_desenvolupament BOOLEAN NOT NULL DEFAULT FALSE',
+  ];
+  for (const sql of alteracions) {
+    try { await pool.query(sql); }
+    catch (e) { if (e.errno !== 1060 && e.errno !== 1061) console.warn('[migration]', e.message); }
+  }
+}
+
 if (require.main === module) {
   app.listen(PORT, async () => {
     console.log(`PACFGM Quest API running on port ${PORT}`);
+    await ensureColumns();
     await migrateNodes(pool);
   });
 }

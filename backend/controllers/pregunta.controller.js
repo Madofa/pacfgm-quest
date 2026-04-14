@@ -193,13 +193,20 @@ async function generar(req, res) {
   try {
     // Verificar accés
     if (isAleatori) {
-      const [anyAvail] = await pool.query(
-        `SELECT 1 FROM progres_nodes WHERE usuari_id = ? AND node_id LIKE ? AND estat != 'bloquejat' LIMIT 1`,
+      // Obtenir els nodes desbloquejats de la matèria per a aquest usuari
+      const [availRows] = await pool.query(
+        `SELECT node_id FROM progres_nodes WHERE usuari_id = ? AND node_id LIKE ? AND estat != 'bloquejat'`,
         [usuariId, `${materia}-%`]
       );
-      if (anyAvail.length === 0) {
-        return res.status(403).json({ error: 'Completa algun tema primer per desbloquejar el repàs aleatori.' });
+      if (availRows.length < 2) {
+        return res.status(403).json({ error: 'Necessites almenys 2 temes iniciats per al repàs aleatori.' });
       }
+      // Restringir subjectNodes als nodes realment desbloquejats
+      const availIds = new Set(availRows.map(r => r.node_id));
+      subjectNodes.length = 0;
+      Object.values(NODES)
+        .filter(n => n.materia === materia && availIds.has(n.id))
+        .forEach(n => subjectNodes.push(n));
     } else {
       const [progresRows] = await pool.query(
         'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
