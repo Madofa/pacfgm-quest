@@ -28,20 +28,20 @@ function LoginForm({ onForgot }) {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={styles.form} onSubmit={handleSubmit} autoComplete="off">
       <div className={styles.field}>
         <label className={styles.label} htmlFor="email">EMAIL</label>
         <input id="email" type="email" className={styles.input}
           value={email} onChange={e => setEmail(e.target.value)}
           placeholder="tu@email.com" required autoFocus
-          autoComplete="email" />
+          autoComplete="off" />
       </div>
       <div className={styles.field}>
         <label className={styles.label} htmlFor="password">CONTRASENYA</label>
         <input id="password" type="password" className={styles.input}
           value={password} onChange={e => setPassword(e.target.value)}
           placeholder="••••••••" required
-          autoComplete="current-password" />
+          autoComplete="off" />
       </div>
       {error && <div className={styles.error}>{error}</div>}
       <button className={styles.submitBtn} type="submit" disabled={loading}>
