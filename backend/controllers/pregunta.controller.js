@@ -613,7 +613,7 @@ async function explicar(req, res) {
 
   const idiomaResposta = materia === 'castella'
     ? 'Responde en castellano. No repitas la pregunta.'
-    : 'Respon en català. No repeteixis la pregunta.';
+    : 'IMPORTANT: Respon SEMPRE en català, independentment del contingut de la pregunta. MAI en castellà. No repeteixis la pregunta.';
 
   const prompt = `Ets un professor de PACFGM (proves d'accés a cicles formatius de grau mitjà de Catalunya).
 L'alumne ha fallat aquesta pregunta:

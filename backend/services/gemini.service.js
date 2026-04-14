@@ -24,7 +24,7 @@ async function generarPregunta(nodeId, temari, idioma = 'catala', pregsAnteriors
     ? 'en castellano (pregunta, opcions i explicació en castellano)'
     : idioma === 'angles'
     ? 'La pregunta i les opcions han de ser en anglès (és l\'assignatura d\'anglès). PERÒ l\'explicació ("explicacio") ha d\'estar SEMPRE en català, per ajudar l\'alumne a entendre l\'error en la seva llengua.'
-    : 'en català (pregunta, opcions i explicació en català)';
+    : 'en català. IMPORTANT: tota la resposta ha d\'estar en català, inclosa l\'explicació. MAI en castellà, ni encara que el contingut tracti sobre gramàtica catalana o castellana.';
   const tipus = tipusAleatori(pregsAnteriors);
 
   const evitarBlock = pregsAnteriors.length > 0
