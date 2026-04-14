@@ -196,7 +196,7 @@ export default function Dashboard() {
               <div key={r.node_id} className={styles.repasBarItem}>
                 <button
                   className={styles.repasBarBtn}
-                  onClick={() => { dismissRevision(r.node_id); navigate(`/battle/${r.node_id}`); }}
+                  onClick={() => navigate('/repas')}
                 >
                   {r.titol}
                 </button>
