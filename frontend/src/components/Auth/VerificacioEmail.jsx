@@ -36,7 +36,7 @@ export default function VerificacioEmail() {
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div className={`${styles.logo} text-neon-green text-game`}>PACFGM</div>
+          <div className={`${styles.logo} text-neon-green text-game`}><img src="/favicon.svg" alt="" style={{ height: '28px', marginRight: '12px', verticalAlign: 'middle', marginTop: '-3px' }} />PACFGM</div>
           <div className={`${styles.subtitle} text-game`}>QUEST</div>
         </div>
         <div className={`${styles.card} panel-rpg animate-panel-in`}>

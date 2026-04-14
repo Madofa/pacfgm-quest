@@ -291,7 +291,7 @@ export default function ParePanel() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={`${styles.logo} text-game`}>PACFGM QUEST</div>
+        <div className={`${styles.logo} text-game`}><img src="/favicon.svg" alt="" style={{ height: '22px', marginRight: '10px', verticalAlign: 'middle', marginTop: '-2px' }} />PACFGM QUEST</div>
         <div className={styles.pareBadge}>FAMÍLIA: {usuari?.alias}</div>
         <button className={styles.logoutBtn} onClick={logout}>SORTIR</button>
       </header>

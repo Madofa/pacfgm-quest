@@ -170,7 +170,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className={styles.header}>
         <div className={`${styles.logo} text-neon-green text-game`}>
-          PACFGM QUEST <span className={styles.betaBadge}>BETA</span>
+          <img src="/favicon.svg" alt="" style={{ height: '22px', marginRight: '10px', verticalAlign: 'middle', marginTop: '-2px' }} />PACFGM QUEST <span className={styles.betaBadge}>BETA</span>
         </div>
         <nav className={styles.nav}>
           <button className={styles.navBtn} onClick={() => navigate('/skill-tree')}>ARBRE</button>
