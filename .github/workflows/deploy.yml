@@ -39,6 +39,7 @@ jobs:
             cp -rf ~/repositories/pacfgm-quest/backend/db/. ~/quest.sinilos.com/db/
             cp -f  ~/repositories/pacfgm-quest/backend/server.js ~/quest.sinilos.com/server.js
             cp -f  ~/repositories/pacfgm-quest/backend/package.json ~/quest.sinilos.com/package.json
+            cd ~/quest.sinilos.com && npm install --production --quiet
             rm -rf ~/quest.sinilos.com/public/assets
             mkdir -p ~/quest.sinilos.com/tmp
             touch ~/quest.sinilos.com/tmp/restart.txt

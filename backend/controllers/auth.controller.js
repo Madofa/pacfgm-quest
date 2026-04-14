@@ -11,7 +11,7 @@ function signToken(usuari) {
   return jwt.sign(
     { id: usuari.id, email: usuari.email, rol: usuari.rol, alias: usuari.alias, subtipus: usuari.subtipus || null },
     process.env.JWT_SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: '7d' }
   );
 }
 
@@ -37,8 +37,8 @@ async function register(req, res) {
   if (!nom || !alias || !email || !password) {
     return res.status(400).json({ error: 'Falten camps obligatoris: nom, alias, email, password' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 6 caràcters' });
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 8 caràcters' });
   }
   if (alias.trim().length < 2 || alias.trim().length > 20) {
     return res.status(400).json({ error: 'L\'àlies ha de tenir entre 2 i 20 caràcters' });
@@ -178,7 +178,7 @@ async function forgotPassword(req, res) {
 async function resetPassword(req, res) {
   const { token, password } = req.body;
   if (!token || !password) return res.status(400).json({ error: 'Falten dades' });
-  if (password.length < 6) return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 6 caràcters' });
+  if (password.length < 8) return res.status(400).json({ error: 'La contrasenya ha de tenir mínim 8 caràcters' });
 
   try {
     const [rows] = await pool.query(

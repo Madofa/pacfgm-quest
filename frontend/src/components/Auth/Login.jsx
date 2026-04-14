@@ -223,14 +223,14 @@ function RegisterForm() {
         <label className={styles.label}>CONTRASENYA</label>
         <input type="password" className={styles.input}
           value={password} onChange={e => setPassword(e.target.value)}
-          placeholder="Mínim 6 caràcters" required minLength={6}
+          placeholder="Mínim 8 caràcters" required minLength={8}
           autoComplete="new-password" />
       </div>
       <div className={styles.field}>
         <label className={styles.label}>REPETIR CONTRASENYA</label>
         <input type="password" className={styles.input}
           value={password2} onChange={e => setPassword2(e.target.value)}
-          placeholder="Repeteix la contrasenya" required minLength={6}
+          placeholder="Repeteix la contrasenya" required minLength={8}
           autoComplete="new-password" />
       </div>
       {error && <div className={styles.error}>{error}</div>}

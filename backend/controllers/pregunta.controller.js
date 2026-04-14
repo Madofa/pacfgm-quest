@@ -173,7 +173,9 @@ async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsU
 // ── GENERAR ───────────────────────────────────────────────────────────────────
 
 async function generar(req, res) {
-  const { node_id, idioma = 'catala' } = req.body;
+  const { node_id, idioma: idiomaRaw = 'catala' } = req.body;
+  const IDIOMES_VALIDS = ['catala', 'castella', 'angles'];
+  const idioma = IDIOMES_VALIDS.includes(idiomaRaw) ? idiomaRaw : 'catala';
   const usuariId = req.usuari.id;
 
   if (!node_id) return res.status(400).json({ error: 'Falta node_id' });
@@ -767,7 +769,7 @@ ${idiomaResposta}`;
     return res.json({ explicacio_ampliada: text });
   } catch (err) {
     console.error('[explicar]', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Error intern' });
   }
 }
 
@@ -805,6 +807,16 @@ async function analitzarImatge(req, res) {
       if (isNaN(idx) || idx < 0 || idx > 4) {
         return res.status(400).json({ error: 'pregunta_idx invàlid' });
       }
+
+      // IDOR: verificar que la sessió pertany a l'usuari autenticat
+      const [[sessioRow]] = await pool.query(
+        `SELECT id FROM sessions_estudi WHERE id = ? AND usuari_id = ?`,
+        [sessio_id, req.usuari.id]
+      );
+      if (!sessioRow) {
+        return res.status(403).json({ error: 'Sessió no autoritzada' });
+      }
+
       const textGuardar = JSON.stringify(analisi);
 
       // Guardar anàlisi al log: obtenim l'ID primer per evitar interpolació en OFFSET
