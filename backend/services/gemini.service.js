@@ -20,7 +20,11 @@ function tipusAleatori(pregsAnteriors) {
 }
 
 async function generarPregunta(nodeId, temari, idioma = 'catala', pregsAnteriors = []) {
-  const idiomaText = idioma === 'castella' ? 'en castellano' : idioma === 'angles' ? 'in English' : 'en català';
+  const idiomaText = idioma === 'castella'
+    ? 'en castellano (pregunta, opcions i explicació en castellano)'
+    : idioma === 'angles'
+    ? 'La pregunta i les opcions han de ser en anglès (és l\'assignatura d\'anglès). PERÒ l\'explicació ("explicacio") ha d\'estar SEMPRE en català, per ajudar l\'alumne a entendre l\'error en la seva llengua.'
+    : 'en català (pregunta, opcions i explicació en català)';
   const tipus = tipusAleatori(pregsAnteriors);
 
   const evitarBlock = pregsAnteriors.length > 0
