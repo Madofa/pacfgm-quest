@@ -1,7 +1,7 @@
 require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
+let helmet; try { helmet = require('helmet'); } catch { /* helmet opcional */ }
 const path = require('path');
 const pool = require('./db/connection');
 const { migrateNodes } = require('./scripts/migrate-nodes');
@@ -13,7 +13,7 @@ const PORT = parseInt(process.env.PORT) || 3000;
 // Confiar en el proxy invers (Passenger/Nginx) per obtenir la IP real del client
 app.set('trust proxy', 1);
 
-app.use(helmet());
+if (helmet) app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 // Límit global 1mb; la ruta analitzar-imatge té el seu propi límit de 6mb
 app.use((req, res, next) => {
