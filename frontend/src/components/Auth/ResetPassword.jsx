@@ -56,13 +56,15 @@ export default function ResetPassword() {
                 <label className={styles.label}>NOVA CONTRASENYA</label>
                 <input type="password" className={styles.input}
                   value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Mínim 6 caràcters" required minLength={6} autoFocus />
+                  placeholder="Mínim 6 caràcters" required minLength={6} autoFocus
+                  autoComplete="new-password" />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>REPETEIX LA CONTRASENYA</label>
                 <input type="password" className={styles.input}
                   value={confirm} onChange={e => setConfirm(e.target.value)}
-                  placeholder="••••••••" required />
+                  placeholder="••••••••" required
+                  autoComplete="new-password" />
               </div>
               {error && <div className={styles.error}>{error}</div>}
               <button className={styles.submitBtn} type="submit" disabled={loading || !token}>

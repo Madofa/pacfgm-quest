@@ -188,14 +188,16 @@ function RegisterForm() {
         <label className={styles.label}>NOM COMPLET</label>
         <input type="text" className={styles.input}
           value={nom} onChange={e => setNom(e.target.value)}
-          placeholder={esMonitor ? 'Ana Martínez' : 'Maria García'} required autoFocus />
+          placeholder={esMonitor ? 'Ana Martínez' : 'Maria García'} required autoFocus
+          autoComplete="name" />
       </div>
       {!esMonitor && (
         <div className={styles.field}>
           <label className={styles.label}>ÀLIES (NOM DE JOC)</label>
           <input type="text" className={`${styles.input} ${aliasEstat === 'ocupat' ? styles.inputError : aliasEstat === 'disponible' ? styles.inputOk : ''}`}
             value={alias} onChange={e => setAlias(e.target.value)}
-            placeholder="DragonSlayer42" required />
+            placeholder="DragonSlayer42" required
+            autoComplete="username" />
           {aliasEstat === 'ocupat'     && <div className={styles.aliasMsg} style={{ color: 'var(--color-neon-red)' }}>Alias no disponible</div>}
           {aliasEstat === 'disponible' && <div className={styles.aliasMsg} style={{ color: 'var(--color-neon-green)' }}>Alias disponible</div>}
           {aliasEstat === 'comprovant' && <div className={styles.aliasMsg} style={{ color: 'var(--color-text-disabled)' }}>Comprovant...</div>}
@@ -206,26 +208,30 @@ function RegisterForm() {
           <label className={styles.label}>NOM DEL GRUP / REFERÈNCIA</label>
           <input type="text" className={styles.input}
             value={alias} onChange={e => setAlias(e.target.value)}
-            placeholder="Ex: Família Martínez / IES Miró" required />
+            placeholder="Ex: Família Martínez / IES Miró" required
+            autoComplete="organization" />
         </div>
       )}
       <div className={styles.field}>
         <label className={styles.label}>EMAIL</label>
         <input type="email" className={styles.input}
           value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="tu@email.com" required />
+          placeholder="tu@email.com" required
+          autoComplete="email" />
       </div>
       <div className={styles.field}>
         <label className={styles.label}>CONTRASENYA</label>
         <input type="password" className={styles.input}
           value={password} onChange={e => setPassword(e.target.value)}
-          placeholder="Mínim 6 caràcters" required minLength={6} />
+          placeholder="Mínim 6 caràcters" required minLength={6}
+          autoComplete="new-password" />
       </div>
       <div className={styles.field}>
         <label className={styles.label}>REPETIR CONTRASENYA</label>
         <input type="password" className={styles.input}
           value={password2} onChange={e => setPassword2(e.target.value)}
-          placeholder="Repeteix la contrasenya" required minLength={6} />
+          placeholder="Repeteix la contrasenya" required minLength={6}
+          autoComplete="new-password" />
       </div>
       {error && <div className={styles.error}>{error}</div>}
       <button className={styles.submitBtn} type="submit" disabled={loading}
@@ -281,7 +287,8 @@ function ForgotForm({ onBack }) {
         <label className={styles.label}>EMAIL</label>
         <input type="email" className={styles.input}
           value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="tu@email.com" required autoFocus />
+          placeholder="tu@email.com" required autoFocus
+          autoComplete="email" />
       </div>
       {error && <div className={styles.error}>{error}</div>}
       <button className={styles.submitBtn} type="submit" disabled={loading}>
