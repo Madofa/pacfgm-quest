@@ -114,13 +114,19 @@ async function generarIInserirUnaQ(sessioId, slot, nodeId, node, idioma, textsUs
 }
 
 // Genera els slots pendents en background (crida paral·lela a Gemini)
-async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsUsats, fromSlot) {
+// subjectNodes: array de nodes de la matèria (per mode aleatori); null per mode normal
+async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsUsats, fromSlot, subjectNodes = null) {
   const count = 5 - fromSlot + 1;
   if (count <= 0) return;
   console.log(`[bg] sessió ${sessioId}: generant slots ${fromSlot}-5 en paral·lel`);
 
-  const promises = Array.from({ length: count }, (_, i) =>
-    generarPregunta(nodeId, node.temari, idioma, textsUsats)
+  // Per a cada slot, triar un node (aleatori si subjectNodes, fix si node normal)
+  const slotNodes = Array.from({ length: count }, () =>
+    subjectNodes ? subjectNodes[Math.floor(Math.random() * subjectNodes.length)] : node
+  );
+
+  const promises = slotNodes.map((slotNode, i) =>
+    generarPregunta(slotNode.id, slotNode.temari, idioma, textsUsats)
       .catch(err => { console.warn(`[bg] Gemini slot ${fromSlot + i}: ${err.message}`); return null; })
   );
   const results = await Promise.all(promises);
@@ -128,6 +134,7 @@ async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsU
   for (let i = 0; i < results.length; i++) {
     const slot = fromSlot + i;
     const q = results[i];
+    const effectiveNodeId = slotNodes[i].id;
     let qRow = null;
 
     if (q) {
@@ -135,7 +142,7 @@ async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsU
         const [ins] = await pool.query(
           `INSERT INTO preguntes_bank (node_id, pregunta_text, opcions, resposta_correcta, explicacio)
            VALUES (?, ?, ?, ?, ?)`,
-          [nodeId, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
+          [effectiveNodeId, q.pregunta, JSON.stringify(q.opcions), q.correcta, q.explicacio]
         );
         qRow = { id: ins.insertId, pregunta_text: q.pregunta, opcions: JSON.stringify(q.opcions), resposta_correcta: q.correcta, explicacio: q.explicacio };
       } catch (e) { console.warn(`[bg] bank insert slot ${slot}: ${e.message}`); }
@@ -150,7 +157,7 @@ async function generarQuestionsBackground(sessioId, nodeId, node, idioma, textsU
       const placeholders = excludeIds.length > 0 ? `AND id NOT IN (${excludeIds.map(() => '?').join(',')})` : '';
       const [bf] = await pool.query(
         `SELECT * FROM preguntes_bank WHERE node_id = ? ${placeholders} ORDER BY RAND() LIMIT 1`,
-        [nodeId, ...excludeIds]
+        [effectiveNodeId, ...excludeIds]
       );
       if (bf.length > 0) qRow = bf[0];
     }
@@ -170,18 +177,38 @@ async function generar(req, res) {
   const usuariId = req.usuari.id;
 
   if (!node_id) return res.status(400).json({ error: 'Falta node_id' });
-  const node = NODES[node_id];
-  if (!node) return res.status(404).json({ error: 'Node no trobat' });
+  const isAleatori = node_id.endsWith('-aleatori');
+  const materia    = node_id.split('-')[0];
+  const node       = NODES[node_id];
+  if (!isAleatori && !node) return res.status(404).json({ error: 'Node no trobat' });
+
+  // Nodes de la matèria (per mode aleatori)
+  const subjectNodes = isAleatori
+    ? Object.values(NODES).filter(n => n.materia === materia)
+    : null;
+  if (isAleatori && subjectNodes.length === 0) {
+    return res.status(404).json({ error: 'Matèria no trobada' });
+  }
 
   try {
     // Verificar accés
-    const [progresRows] = await pool.query(
-      'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
-      [usuariId, node_id]
-    );
-    const estat = progresRows.length > 0 ? progresRows[0].estat : 'bloquejat';
-    if (estat === 'bloquejat') {
-      return res.status(403).json({ error: 'Node bloquejat. Completa el node anterior primer.' });
+    if (isAleatori) {
+      const [anyAvail] = await pool.query(
+        `SELECT 1 FROM progres_nodes WHERE usuari_id = ? AND node_id LIKE ? AND estat != 'bloquejat' LIMIT 1`,
+        [usuariId, `${materia}-%`]
+      );
+      if (anyAvail.length === 0) {
+        return res.status(403).json({ error: 'Completa algun tema primer per desbloquejar el repàs aleatori.' });
+      }
+    } else {
+      const [progresRows] = await pool.query(
+        'SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ?',
+        [usuariId, node_id]
+      );
+      const estat = progresRows.length > 0 ? progresRows[0].estat : 'bloquejat';
+      if (estat === 'bloquejat') {
+        return res.status(403).json({ error: 'Node bloquejat. Completa el node anterior primer.' });
+      }
     }
 
     // Comprovar si hi ha sessió oberta amb pregunta pendent
@@ -244,14 +271,17 @@ async function generar(req, res) {
     const sessioId = newSessio.insertId;
 
     // 1. Preguntes SR pendents (de la BD, ràpid)
+    // Aleatori: busca per tota la matèria (LIKE); normal: node exacte
     const avui = new Date().toISOString().split('T')[0];
+    const srCond  = isAleatori ? 'pb.node_id LIKE ?' : 'pb.node_id = ?';
+    const srParam = isAleatori ? `${materia}-%` : node_id;
     const [dueRows] = await pool.query(
       `SELECT pb.id, pb.pregunta_text, pb.opcions, pb.resposta_correcta, pb.explicacio,
               pb.font_oficial, pb.necessita_desenvolupament
        FROM sr_pregunta sr JOIN preguntes_bank pb ON pb.id = sr.pregunta_id
-       WHERE sr.usuari_id = ? AND pb.node_id = ? AND sr.propera_revisio <= ?
+       WHERE sr.usuari_id = ? AND ${srCond} AND sr.propera_revisio <= ?
        ORDER BY sr.propera_revisio ASC, sr.consecutives_correctes ASC LIMIT 5`,
-      [usuariId, node_id, avui]
+      [usuariId, srParam, avui]
     );
 
     // 2. Inserir preguntes SR al log (operació DB, immediata)
@@ -262,14 +292,16 @@ async function generar(req, res) {
       textsUsats.push(q.pregunta_text);
     }
 
-    // Afegir historial recent per evitar repeticions (últimes 20 preguntes d'aquest node)
+    // Afegir historial recent per evitar repeticions (últimes 20 preguntes)
+    const histCond  = isAleatori ? 'se.node_id LIKE ?' : 'se.node_id = ?';
+    const histParam = isAleatori ? `${materia}-%` : node_id;
     const [historialRows] = await pool.query(
       `SELECT DISTINCT pl.pregunta_text
        FROM preguntes_log pl
        JOIN sessions_estudi se ON se.id = pl.sessio_id
-       WHERE se.usuari_id = ? AND se.node_id = ? AND se.id != ?
+       WHERE se.usuari_id = ? AND ${histCond} AND se.id != ?
        ORDER BY pl.id DESC LIMIT 20`,
-      [usuariId, node_id, sessioId]
+      [usuariId, histParam, sessioId]
     );
     historialRows.forEach(r => {
       if (!textsUsats.includes(r.pregunta_text)) textsUsats.push(r.pregunta_text);
@@ -282,17 +314,21 @@ async function generar(req, res) {
       const srIds = dueRows.map(q => q.id).filter(Boolean);
       const phSr = srIds.length > 0
         ? `AND pb.id NOT IN (${srIds.map(() => '?').join(',')})` : '';
+      const ofCond  = isAleatori ? 'pb.node_id LIKE ?' : 'pb.node_id = ?';
+      const ofParam = isAleatori ? `${materia}-%` : node_id;
+      const sessCond  = isAleatori ? 'se.node_id LIKE ?' : 'se.node_id = ?';
+      const sessParam = isAleatori ? `${materia}-%` : node_id;
       const [oficials] = await pool.query(
         `SELECT pb.* FROM preguntes_bank pb
-         WHERE pb.node_id = ? AND pb.font_oficial = TRUE ${phSr}
+         WHERE ${ofCond} AND pb.font_oficial = TRUE ${phSr}
          AND pb.id NOT IN (
            SELECT COALESCE(pl.pregunta_bank_id, -1)
            FROM preguntes_log pl
            JOIN sessions_estudi se ON se.id = pl.sessio_id
-           WHERE se.usuari_id = ? AND se.node_id = ? AND pl.resposta_alumne IS NOT NULL
+           WHERE se.usuari_id = ? AND ${sessCond} AND pl.resposta_alumne IS NOT NULL
          )
          ORDER BY pb.id ASC LIMIT ?`,
-        [node_id, ...srIds, usuariId, node_id, slotsOficials]
+        [ofParam, ...srIds, usuariId, sessParam, slotsOficials]
       );
       for (const q of oficials) {
         if (slotActual > 5) break;
@@ -306,8 +342,12 @@ async function generar(req, res) {
     let slot1Q = dueRows.length > 0 ? dueRows[0] : (oficialSlot1Q || null);
 
     if (!slot1Q) {
-      // Una sola crida Gemini — retornem molt més ràpid que abans
-      const qRow = await generarIInserirUnaQ(sessioId, 1, node_id, node, idioma, textsUsats);
+      // Una sola crida Gemini — triar node aleatori si cal
+      const slot1Node   = subjectNodes
+        ? subjectNodes[Math.floor(Math.random() * subjectNodes.length)]
+        : node;
+      const slot1NodeId = subjectNodes ? slot1Node.id : node_id;
+      const qRow = await generarIInserirUnaQ(sessioId, 1, slot1NodeId, slot1Node, idioma, textsUsats);
       if (!qRow) return res.status(500).json({ error: 'No s\'ha pogut generar la pregunta' });
       slot1Q = qRow;
       textsUsats.push(qRow.pregunta_text);
@@ -325,7 +365,7 @@ async function generar(req, res) {
     // 5. Generar slots restants en background (l'alumne respon Q1 mentre es genera)
     if (slotActual <= 5) {
       setImmediate(() => {
-        generarQuestionsBackground(sessioId, node_id, node, idioma, textsUsats, slotActual)
+        generarQuestionsBackground(sessioId, node_id, subjectNodes ? subjectNodes[0] : node, idioma, textsUsats, slotActual, subjectNodes)
           .catch(e => console.error('[bg]', e.message));
       });
     }
@@ -469,9 +509,10 @@ async function finalitzar(req, res) {
     if (usuari.ultima_sessio === avui)      novaRacha = usuari.racha_dies;
     else if (usuari.ultima_sessio === ahir) novaRacha = usuari.racha_dies + 1;
 
-    const node = NODES[sessio.node_id];
+    const node          = NODES[sessio.node_id];
+    const isAleatori    = sessio.node_id.endsWith('-aleatori');
     const xp_guanyat = calcularXpSessio({
-      materia:   node?.materia || 'social',
+      materia:   node?.materia || sessio.node_id.split('-')[0] || 'social',
       encerts,
       total,
       rachaDies: novaRacha,
@@ -511,7 +552,10 @@ async function finalitzar(req, res) {
     // ── Estat del node ────────────────────────────────────────────────────────
     let nodesDesbloquejats = [];
 
-    if (superat) {
+    // Sessions aleàtories no actualitzen progres_nodes ni desbloquegen fills
+    if (isAleatori) {
+      // Res a fer aquí
+    } else if (superat) {
       // Comprovar si és la primera vegada que supera el node
       const [existingNode] = await pool.query(
         "SELECT estat FROM progres_nodes WHERE usuari_id = ? AND node_id = ? AND estat IN ('completat','dominat')",

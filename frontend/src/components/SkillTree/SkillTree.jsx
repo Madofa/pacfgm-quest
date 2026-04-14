@@ -128,6 +128,30 @@ export default function SkillTree() {
                   )}
                 </div>
               ))}
+
+              {/* Repàs aleatori — disponible si hi ha algun tema no bloquejat */}
+              {nodesActius.some(n => n.estat !== 'bloquejat') && (
+                <div className={styles.nodeWrapper}>
+                  <div
+                    className={`${styles.connector} ${styles.connectorActive}`}
+                    style={{ '--mat-color': cfg.color }}
+                  />
+                  <button
+                    className={styles.aleatoriBtn}
+                    style={{
+                      '--mat-color': cfg.color,
+                      '--mat-color-alpha': cfg.color + '12',
+                      '--mat-color-alpha-hover': cfg.color + '28',
+                    }}
+                    onClick={() => navigate(`/battle/${materiaActiva}-aleatori`)}
+                  >
+                    <span className={styles.aleatoriBtnLabel}>REPAS ALEATORI</span>
+                    <span className={styles.aleatoriBtnDesc}>
+                      Preguntes de tots<br />els temes mesclades
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>
