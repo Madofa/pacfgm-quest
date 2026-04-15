@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { getMateriaConfig } from '../../data/skillTree';
+import { renderMath } from '../../utils/renderMath';
 import styles from './BattleScreen.module.css';
 
 // ── Upload de desenvolupament (Gemini Vision) ─────────────────────────────────
@@ -437,7 +438,7 @@ export default function BattleScreen() {
               <span>★</span> EXAMEN OFICIAL GENERALITAT
             </div>
           )}
-          <p className={styles.questionText}>{pregunta?.pregunta}</p>
+          <p className={styles.questionText} dangerouslySetInnerHTML={{ __html: renderMath(pregunta?.pregunta) }} />
         </div>
 
         {/* Opciones */}
@@ -460,7 +461,7 @@ export default function BattleScreen() {
                 disabled={fase !== 'pregunta'}
               >
                 <span className={styles.optionLetter}>{opcio}</span>
-                <span className={styles.optionText}>{textOpcio.replace(/^[A-D]\.\s*/, '')}</span>
+                <span className={styles.optionText} dangerouslySetInnerHTML={{ __html: renderMath(textOpcio.replace(/^[A-D]\.\s*/, '')) }} />
               </button>
             );
           })}

@@ -30,6 +30,16 @@ function formatData(d) {
   return new Date(d).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' });
 }
 
+function diesInactiu(ultima_sessio) {
+  if (!ultima_sessio) return { label: 'Mai', color: 'var(--color-text-disabled)' };
+  const avui = new Date().toISOString().split('T')[0];
+  if (ultima_sessio >= avui) return { label: 'Avui', color: 'var(--color-neon-green)' };
+  const dies = Math.floor((Date.now() - new Date(ultima_sessio)) / 86400000);
+  if (dies <= 1) return { label: 'Ahir', color: 'var(--color-gold)' };
+  const color = dies <= 3 ? 'var(--color-neon-orange)' : 'var(--color-neon-red)';
+  return { label: `Fa ${dies} dies`, color };
+}
+
 // ── Drawer informe IA ──────────────────────────────────────────────────────────
 
 const INFORME_SECCIONS = [
@@ -131,6 +141,9 @@ function FillCard({ f, onInforme, onDesvincular }) {
   const rangCfg  = RANG_CONFIG[f.rang] || RANG_CONFIG.novici;
   const pct      = f.nodes_totals > 0 ? Math.round((f.nodes_completats / f.nodes_totals) * 100) : 0;
 
+  const materiesMap = Object.fromEntries((f.materies_stats || []).map(m => [m.materia, m]));
+  const febles = new Set(f.punts_febles || []);
+
   return (
     <div className={styles.card} style={{ '--act-color': actColor, borderColor: `${actColor}60` }}>
       <div className={styles.cardHead}>
@@ -138,17 +151,9 @@ function FillCard({ f, onInforme, onDesvincular }) {
           <span className={styles.alias}>{f.alias}</span>
           <span className={styles.nom}>{f.nom}</span>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
-            {rangCfg.label}
-          </span>
-          <button className={styles.informeBtn} onClick={() => onInforme(f)} title="Informe IA">
-            📋
-          </button>
-          <button className={styles.desvincularBtn} onClick={() => onDesvincular(f)} title="Desvincular fill/a">
-            ✕
-          </button>
-        </div>
+        <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
+          {rangCfg.label}
+        </span>
       </div>
 
       <div className={styles.progBar}>
@@ -156,7 +161,7 @@ function FillCard({ f, onInforme, onDesvincular }) {
       </div>
       <div className={styles.progLabel}>
         <span style={{ color: actColor }}>{f.nodes_completats}</span>
-        <span className={styles.progTotal}>/{f.nodes_totals} temes</span>
+        <span className={styles.progTotal}>/{f.nodes_totals} temes completats</span>
         <span className={styles.progPct} style={{ color: actColor }}>{pct}%</span>
       </div>
 
@@ -167,28 +172,76 @@ function FillCard({ f, onInforme, onDesvincular }) {
         </div>
         <div className={styles.stat}>
           <span className={styles.statVal} style={{ color: f.racha_dies >= 3 ? 'var(--color-neon-orange)' : undefined }}>
-            🔥{f.racha_dies || 0}
+            {f.racha_dies || 0}
           </span>
-          <span className={styles.statLbl}>ratxa</span>
+          <span className={styles.statLbl}>ratxa (dies)</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statVal}>{f.sessions_7d || 0}</span>
+          <span className={styles.statLbl}>sessions 7d</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statVal} style={{ color: diesInactiu(f.ultima_sessio).color }}>
+            {diesInactiu(f.ultima_sessio).label}
+          </span>
+          <span className={styles.statLbl}>inactivitat</span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statVal} style={{ color: actColor }}>{formatData(f.ultima_sessio)}</span>
-          <span className={styles.statLbl}>última sessió</span>
+          <span className={styles.statLbl}>última data</span>
         </div>
       </div>
 
-      {f.punts_febles?.length > 0 && (
-        <div className={styles.puntsFebles}>
-          {f.punts_febles.map(m => {
-            const mc = MAT_LABELS[m] || { label: m.toUpperCase(), color: '#aaa' };
+      <div className={styles.materiesBlock}>
+        <div className={styles.materiesHead}>Per matèria</div>
+        <div className={styles.materiesGrid}>
+          {MATERIES.map(m => {
+            const s = materiesMap[m.key];
+            const mpct = s ? s.pct : 0;
+            const isWeak = febles.has(m.key);
             return (
-              <span key={m} className={styles.febleBadge} style={{ color: mc.color, borderColor: `${mc.color}60` }}>
-                {mc.label}
-              </span>
+              <div key={m.key} className={styles.materiaRow} title={m.label}>
+                <span className={styles.materiaAbbr} style={{ color: m.color, borderColor: `${m.color}60` }}>
+                  {m.abbr}
+                </span>
+                <span className={styles.materiaLabel}>{m.label}</span>
+                <div className={styles.materiaBar}>
+                  <div
+                    className={styles.materiaFill}
+                    style={{ width: `${mpct}%`, background: isWeak ? 'var(--color-neon-red)' : m.color }}
+                  />
+                </div>
+                <span
+                  className={styles.materiaPct}
+                  style={{ color: isWeak ? 'var(--color-neon-red)' : m.color }}
+                >
+                  {s ? `${s.completats}/${s.total}` : '—'}
+                </span>
+                <span className={styles.materiaPctNum} style={{ color: isWeak ? 'var(--color-neon-red)' : 'var(--color-text-secondary)' }}>
+                  {mpct}%
+                </span>
+              </div>
             );
           })}
         </div>
-      )}
+        {febles.size > 0 && (
+          <div className={styles.feblesLegend}>
+            <span className={styles.feblesLegendLbl}>Punts febles (&lt;40%):</span>
+            <span className={styles.feblesLegendVal}>
+              {[...febles].map(k => MAT_LABELS[k]?.label || k.toUpperCase()).join(' · ')}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.cardActions}>
+        <button className={styles.actionPrimary} onClick={() => onInforme(f)}>
+          Generar informe IA
+        </button>
+        <button className={styles.actionSecondary} onClick={() => onDesvincular(f)}>
+          Desvincular
+        </button>
+      </div>
     </div>
   );
 }

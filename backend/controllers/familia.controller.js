@@ -131,18 +131,40 @@ async function getFills(req, res) {
     const [matRows] = await pool.query(
       `SELECT usuari_id, SUBSTRING_INDEX(node_id, '-', 1) AS materia,
               SUM(CASE WHEN estat IN ('completat','dominat') THEN 1 ELSE 0 END) AS completats,
-              COUNT(*) AS total
+              SUM(CASE WHEN estat = 'dominat' THEN 1 ELSE 0 END) AS dominats,
+              COUNT(*) AS total,
+              AVG(CASE WHEN estat IN ('completat','dominat') THEN millor_puntuacio ELSE NULL END) AS puntuacio_mitja
        FROM progres_nodes WHERE usuari_id IN (?)
        GROUP BY usuari_id, materia`,
       [fillIds]
     );
 
+    const materiesStats = {};
     const puntsFebles = {};
     for (const r of matRows) {
-      if (!puntsFebles[r.usuari_id]) puntsFebles[r.usuari_id] = [];
       const pct = r.total > 0 ? Math.round((r.completats / r.total) * 100) : 0;
+      if (!materiesStats[r.usuari_id]) materiesStats[r.usuari_id] = [];
+      materiesStats[r.usuari_id].push({
+        materia: r.materia,
+        total: Number(r.total) || 0,
+        completats: Number(r.completats) || 0,
+        dominats: Number(r.dominats) || 0,
+        pct,
+        puntuacio_mitja: r.puntuacio_mitja != null ? Math.round(Number(r.puntuacio_mitja)) : null,
+      });
+      if (!puntsFebles[r.usuari_id]) puntsFebles[r.usuari_id] = [];
       if (pct < 40) puntsFebles[r.usuari_id].push(r.materia);
     }
+
+    const [sessRows] = await pool.query(
+      `SELECT usuari_id,
+              SUM(CASE WHEN creat_at > DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS s7,
+              SUM(CASE WHEN creat_at > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS s30
+       FROM sessions_estudi WHERE usuari_id IN (?) GROUP BY usuari_id`,
+      [fillIds]
+    );
+    const sessMap = {};
+    for (const s of sessRows) sessMap[s.usuari_id] = { s7: Number(s.s7) || 0, s30: Number(s.s30) || 0 };
 
     const result = fills.map(f => ({
       ...f,
@@ -150,6 +172,9 @@ async function getFills(req, res) {
       nodes_dominats:   progresMap[f.id]?.dominats   || 0,
       nodes_totals:     progresMap[f.id]?.total       || 0,
       punts_febles:     puntsFebles[f.id]             || [],
+      materies_stats:   materiesStats[f.id]           || [],
+      sessions_7d:      sessMap[f.id]?.s7             || 0,
+      sessions_30d:     sessMap[f.id]?.s30            || 0,
     }));
 
     return res.json({ fills: result, pendents });

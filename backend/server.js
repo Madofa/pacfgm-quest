@@ -37,6 +37,20 @@ app.get('*', (req, res) => {
 });
 
 async function ensureColumns() {
+  // Crear taula feedback si no existeix
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      usuari_id   INT NULL,
+      tipus       ENUM('bug','suggeriment','pregunta') DEFAULT 'bug',
+      descripcio  TEXT NOT NULL,
+      url_page    VARCHAR(255) NULL,
+      llegit      BOOLEAN DEFAULT FALSE,
+      creat_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuari_id) REFERENCES usuaris(id) ON DELETE SET NULL
+    )
+  `);
+
   const alteracions = [
     'ALTER TABLE preguntes_bank ADD COLUMN font_oficial BOOLEAN NOT NULL DEFAULT FALSE',
     'ALTER TABLE preguntes_bank ADD INDEX idx_bank_oficial (node_id, font_oficial)',

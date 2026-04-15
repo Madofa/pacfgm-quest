@@ -194,20 +194,57 @@ async function progresGrup(req, res) {
       [req.usuari.id]
     );
 
-    const result = await Promise.all(alumnes.map(async (a) => {
-      const [stats] = await pool.query(
-        `SELECT SUBSTRING_INDEX(node_id, '-', 1) AS materia,
-                COUNT(*) AS total,
-                SUM(CASE WHEN estat IN ('completat','dominat') THEN 1 ELSE 0 END) AS completats
-         FROM progres_nodes WHERE usuari_id = ? GROUP BY materia`,
-        [a.id]
-      );
-      const puntsFebles = stats
-        .filter(m => m.total > 0)
-        .sort((a, b) => (a.completats / a.total) - (b.completats / b.total))
-        .slice(0, 3).map(m => m.materia);
-      return { ...a, punts_febles: puntsFebles };
-    }));
+    if (alumnes.length === 0) return res.json([]);
+    const alumneIds = alumnes.map(a => a.id);
+
+    const [matRows] = await pool.query(
+      `SELECT usuari_id, SUBSTRING_INDEX(node_id, '-', 1) AS materia,
+              COUNT(*) AS total,
+              SUM(CASE WHEN estat IN ('completat','dominat') THEN 1 ELSE 0 END) AS completats,
+              SUM(CASE WHEN estat = 'dominat' THEN 1 ELSE 0 END) AS dominats,
+              AVG(CASE WHEN estat IN ('completat','dominat') THEN millor_puntuacio ELSE NULL END) AS puntuacio_mitja
+       FROM progres_nodes WHERE usuari_id IN (?)
+       GROUP BY usuari_id, materia`,
+      [alumneIds]
+    );
+
+    const matMap = {};
+    for (const r of matRows) {
+      const pct = r.total > 0 ? Math.round((r.completats / r.total) * 100) : 0;
+      if (!matMap[r.usuari_id]) matMap[r.usuari_id] = [];
+      matMap[r.usuari_id].push({
+        materia: r.materia,
+        total: Number(r.total) || 0,
+        completats: Number(r.completats) || 0,
+        dominats: Number(r.dominats) || 0,
+        pct,
+        puntuacio_mitja: r.puntuacio_mitja != null ? Math.round(Number(r.puntuacio_mitja)) : null,
+      });
+    }
+
+    const [sessRows] = await pool.query(
+      `SELECT usuari_id,
+              SUM(CASE WHEN creat_at > DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS s7,
+              SUM(CASE WHEN creat_at > DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS s30
+       FROM sessions_estudi WHERE usuari_id IN (?) GROUP BY usuari_id`,
+      [alumneIds]
+    );
+    const sessMap = {};
+    for (const s of sessRows) sessMap[s.usuari_id] = { s7: Number(s.s7) || 0, s30: Number(s.s30) || 0 };
+
+    const result = alumnes.map(a => {
+      const mats = matMap[a.id] || [];
+      const puntsFebles = mats
+        .filter(m => m.total > 0 && m.pct < 40)
+        .map(m => m.materia);
+      return {
+        ...a,
+        materies_stats: mats,
+        punts_febles: puntsFebles,
+        sessions_7d: sessMap[a.id]?.s7 || 0,
+        sessions_30d: sessMap[a.id]?.s30 || 0,
+      };
+    });
 
     return res.json(result);
   } catch (err) {

@@ -31,6 +31,16 @@ function formatData(d) {
   return new Date(d).toLocaleDateString('ca-ES', { day: '2-digit', month: '2-digit' });
 }
 
+function diesInactiu(ultima_sessio) {
+  if (!ultima_sessio) return { label: 'Mai', color: 'var(--color-text-disabled)' };
+  const avui = new Date().toISOString().split('T')[0];
+  if (ultima_sessio >= avui) return { label: 'Avui', color: 'var(--color-neon-green)' };
+  const dies = Math.floor((Date.now() - new Date(ultima_sessio)) / 86400000);
+  if (dies <= 1) return { label: 'Ahir', color: 'var(--color-gold)' };
+  const color = dies <= 3 ? 'var(--color-neon-orange)' : 'var(--color-neon-red)';
+  return { label: `Fa ${dies} dies`, color };
+}
+
 // ── Drawer informe IA ──────────────────────────────────────────────────────────
 
 const INFORME_SECCIONS = [
@@ -134,29 +144,24 @@ function AlumneCard({ a, onInforme }) {
   const rangCfg  = RANG_CONFIG[a.rang] || RANG_CONFIG.novici;
   const pct      = a.nodes_totals > 0 ? Math.round((a.nodes_completats / a.nodes_totals) * 100) : 0;
 
+  const materiesMap = Object.fromEntries((a.materies_stats || []).map(m => [m.materia, m]));
+  const febles = new Set(a.punts_febles || []);
+
   return (
     <div className={styles.card} style={{ '--act-color': actColor, borderColor: `${actColor}60` }}>
       <div className={styles.cardHead}>
         <span className={styles.alias}>{a.alias}</span>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
-            {rangCfg.label}
-          </span>
-          <button
-            className={styles.informeBtn}
-            onClick={() => onInforme(a)}
-            title="Generar informe IA"
-          >
-            📋
-          </button>
-        </div>
+        <span className={styles.rangBadge} style={{ color: rangCfg.color, borderColor: `${rangCfg.color}60` }}>
+          {rangCfg.label}
+        </span>
       </div>
       <div className={styles.progBar}>
         <div className={styles.progFill} style={{ width: `${pct}%`, background: actColor }} />
       </div>
       <div className={styles.progLabel}>
         <span style={{ color: actColor }}>{a.nodes_completats}</span>
-        <span className={styles.progTotal}>/{a.nodes_totals} temes</span>
+        <span className={styles.progTotal}>/{a.nodes_totals} temes completats</span>
+        <span className={styles.progPct} style={{ color: actColor, marginLeft: 'auto' }}>{pct}%</span>
       </div>
       <div className={styles.stats}>
         <div className={styles.stat}>
@@ -169,27 +174,70 @@ function AlumneCard({ a, onInforme }) {
         </div>
         <div className={styles.stat}>
           <span className={styles.statVal} style={{ color: a.racha_dies >= 3 ? 'var(--color-neon-orange)' : undefined }}>
-            🔥{a.racha_dies || 0}
+            {a.racha_dies || 0}
           </span>
-          <span className={styles.statLbl}>ratxa</span>
+          <span className={styles.statLbl}>ratxa (dies)</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statVal}>{a.sessions_7d || 0}</span>
+          <span className={styles.statLbl}>sessions 7d</span>
+        </div>
+        <div className={styles.stat}>
+          <span className={styles.statVal} style={{ color: diesInactiu(a.ultima_sessio).color }}>
+            {diesInactiu(a.ultima_sessio).label}
+          </span>
+          <span className={styles.statLbl}>inactivitat</span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statVal} style={{ color: actColor }}>{formatData(a.ultima_sessio)}</span>
-          <span className={styles.statLbl}>última</span>
+          <span className={styles.statLbl}>última data</span>
         </div>
       </div>
-      {a.punts_febles?.length > 0 && (
-        <div className={styles.puntsFebles}>
-          {a.punts_febles.map(m => {
-            const mc = MAT_LABELS[m] || { label: m.toUpperCase(), color: '#aaa' };
+
+      <div className={styles.materiesBlock}>
+        <div className={styles.materiesHead}>Per matèria</div>
+        <div className={styles.materiesGrid}>
+          {MATERIES.map(m => {
+            const s = materiesMap[m.key];
+            const mpct = s ? s.pct : 0;
+            const isWeak = febles.has(m.key);
             return (
-              <span key={m} className={styles.febleBadge} style={{ color: mc.color, borderColor: `${mc.color}60` }}>
-                {mc.label}
-              </span>
+              <div key={m.key} className={styles.materiaRow} title={m.label}>
+                <span className={styles.materiaAbbr} style={{ color: m.color, borderColor: `${m.color}60` }}>
+                  {m.abbr}
+                </span>
+                <span className={styles.materiaLabel}>{m.label}</span>
+                <div className={styles.materiaBar}>
+                  <div
+                    className={styles.materiaFill}
+                    style={{ width: `${mpct}%`, background: isWeak ? 'var(--color-neon-red)' : m.color }}
+                  />
+                </div>
+                <span className={styles.materiaPct} style={{ color: isWeak ? 'var(--color-neon-red)' : m.color }}>
+                  {s ? `${s.completats}/${s.total}` : '—'}
+                </span>
+                <span className={styles.materiaPctNum} style={{ color: isWeak ? 'var(--color-neon-red)' : 'var(--color-text-secondary)' }}>
+                  {mpct}%
+                </span>
+              </div>
             );
           })}
         </div>
-      )}
+        {febles.size > 0 && (
+          <div className={styles.feblesLegend}>
+            <span className={styles.feblesLegendLbl}>Punts febles (&lt;40%):</span>
+            <span className={styles.feblesLegendVal}>
+              {[...febles].map(k => MAT_LABELS[k]?.label || k.toUpperCase()).join(' · ')}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.cardActions}>
+        <button className={styles.actionPrimary} onClick={() => onInforme(a)}>
+          Generar informe IA
+        </button>
+      </div>
     </div>
   );
 }

@@ -11,16 +11,17 @@ const SR_Q_INTERVALS = [1, 3, 7, 14, 30];
 
 function parseOpcions(raw) {
   if (!raw) return [];
-  const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-  // Format antic: { opcions: [...], explicacio: "..." }
-  // Format nou: [...]
-  return Array.isArray(parsed) ? parsed : (parsed.opcions || []);
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed : (parsed?.opcions || []);
+  } catch {
+    console.warn('[parseOpcions] JSON invàlid:', String(raw).slice(0, 80));
+    return [];
+  }
 }
 
 function parseExplicacio(preg) {
-  // Format nou: columna explicacio directa
   if (preg.explicacio) return preg.explicacio;
-  // Format antic: dins opcions JSON
   try {
     const parsed = typeof preg.opcions === 'string' ? JSON.parse(preg.opcions) : preg.opcions;
     return parsed?.explicacio || '';

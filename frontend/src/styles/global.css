@@ -86,6 +86,21 @@ body::before {
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-neon-green-dim); }
 
+/* Fórmules matemàtiques */
+sup {
+  font-size: 0.7em;
+  vertical-align: super;
+  line-height: 0;
+}
+.frac-num {
+  font-size: 0.85em;
+  vertical-align: 0.1em;
+}
+.frac-den {
+  font-size: 0.85em;
+  vertical-align: -0.1em;
+}
+
 /* Utilitats */
 .sr-only {
   position: absolute;
