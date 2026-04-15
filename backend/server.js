@@ -1,10 +1,15 @@
 require('dotenv').config({ override: true });
 const express = require('express');
 const cors = require('cors');
-let helmet; try { helmet = require('helmet'); } catch { /* helmet opcional */ }
+const helmet = require('helmet');
 const path = require('path');
 const pool = require('./db/connection');
 const { migrateNodes } = require('./scripts/migrate-nodes');
+
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  console.error('[FATAL] JWT_SECRET no configurat o massa curt (mínim 32 caràcters). Abortant.');
+  process.exit(1);
+}
 
 const app = express();
 // cPanel/Passenger inyecta PORT como URL — forzar número
@@ -13,7 +18,7 @@ const PORT = parseInt(process.env.PORT) || 3000;
 // Confiar en el proxy invers (Passenger/Nginx) per obtenir la IP real del client
 app.set('trust proxy', 1);
 
-if (helmet) app.use(helmet());
+app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 // Límit global reduït (era 10mb); analitzar-imatge fa validació addicional al controlador
 app.use(express.json({ limit: '6mb' }));
