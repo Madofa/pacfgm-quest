@@ -74,7 +74,7 @@ function MemoriaBlock({ memoria }) {
 
 export default function Dashboard() {
   const { usuari, logout } = useAuth();
-  const { progres, skillTree, revisions, retencio, loading } = useProgress();
+  const { progres, skillTree, retencio, loading } = useProgress();
   const navigate = useNavigate();
   const [timerEnabled, setTimerEnabled] = useState(
     localStorage.getItem('timerEnabled') !== 'false'
@@ -104,12 +104,6 @@ export default function Dashboard() {
   const nodesCompletats = skillTree.filter(n => n.estat === 'completat' || n.estat === 'dominat').length;
   const totalNodes = skillTree.length;
 
-  // Repàs pendent — notificació descartable per sessió
-  const [dismissedRevisions, setDismissedRevisions] = useState(new Set());
-  const revisionsVisibles = revisions.filter(r => !dismissedRevisions.has(r.node_id));
-  function dismissRevision(nodeId) {
-    setDismissedRevisions(prev => new Set([...prev, nodeId]));
-  }
 
   // Memòria SR
   const [memoria, setMemoria] = useState(null);
@@ -185,31 +179,6 @@ export default function Dashboard() {
           <button className={`${styles.navBtn} ${styles.navBtnDanger}`} onClick={logout}>SORTIR</button>
         </nav>
       </header>
-
-      {/* Barra notificació repàs pendent */}
-      {revisionsVisibles.length > 0 && (
-        <div className={styles.repasBar}>
-          <span className={styles.repasBarIcon}>⏰</span>
-          <span className={styles.repasBarLabel}>REPÀS PENDENT</span>
-          <div className={styles.repasBarItems}>
-            {revisionsVisibles.map(r => (
-              <div key={r.node_id} className={styles.repasBarItem}>
-                <button
-                  className={styles.repasBarBtn}
-                  onClick={() => navigate('/repas')}
-                >
-                  {r.titol}
-                </button>
-                <button
-                  className={styles.repasBarDismiss}
-                  onClick={() => dismissRevision(r.node_id)}
-                  title="Descartar"
-                >✕</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Barra notificació sol·licituds família */}
       {peticionsFamily.length > 0 && (
