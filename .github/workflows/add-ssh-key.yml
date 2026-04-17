@@ -1,0 +1,22 @@
+name: Add local SSH key to server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  add-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inject local public key via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERED_HOST }}
+          username: ${{ secrets.SERED_USER }}
+          key: ${{ secrets.SERED_SSH_KEY }}
+          port: 1020
+          script: |
+            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+            KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPhaLUMsHISyco+EYMrDZj1dicfqqZfYOpOroSXGsfZF claude-code@mac"
+            grep -qF "$KEY" ~/.ssh/authorized_keys 2>/dev/null || echo "$KEY" >> ~/.ssh/authorized_keys
+            chmod 600 ~/.ssh/authorized_keys
+            echo "Key added OK"
